@@ -30,6 +30,11 @@ anchor-spl = { version = "0.20.1" }
 
 bytemuck = "1.9.1"
 
+# WARNING: Be careful about upgrading the spl-governance dependency!
+#          Recently the discriminator for new VoterWeightRecord accounts has changed, and upgrading
+#          this dependency here without also upgrading the spl-governance program instance beforehand
+#          would lead to VWR accounts that are unusable until the spl-governance program is upgraded.
+#
 # spl-governance 2.2.0 TODO: Upgrade Anchor to spl-token 3.3.0 to refernce directly 
 spl-governance = { git = "https://github.com/solana-labs/solana-program-library", rev = "4c0bc4c968d5d6feaee18b1c633c636f20d66b15", features = ["no-entrypoint"] }
 
