@@ -195,7 +195,7 @@ dependencies = [
  "anchor-lang",
  "solana-program",
  "spl-associated-token-account",
- "spl-token 3.2.0",
+ "spl-token",
 ]
 
 [[package]]
@@ -2804,13 +2804,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "393e2240d521c3dd770806bff25c2c00d761ac962be106e14e22dd912007f428"
 dependencies = [
  "solana-program",
- "spl-token 3.2.0",
+ "spl-token",
 ]
 
 [[package]]
 name = "spl-governance"
-version = "2.2.0"
-source = "git+https://github.com/solana-labs/solana-program-library?rev=4c0bc4c968d5d6feaee18b1c633c636f20d66b15#4c0bc4c968d5d6feaee18b1c633c636f20d66b15"
+version = "2.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c13bfa6d1b1e922fe0dca06ec53a43fd56706906586fe8d0154f420c78af5aa"
 dependencies = [
  "arrayref",
  "bincode",
@@ -2822,14 +2823,15 @@ dependencies = [
  "solana-program",
  "spl-governance-addin-api",
  "spl-governance-tools",
- "spl-token 3.3.0",
+ "spl-token",
  "thiserror",
 ]
 
 [[package]]
 name = "spl-governance-addin-api"
-version = "0.1.0"
-source = "git+https://github.com/solana-labs/solana-program-library?rev=4c0bc4c968d5d6feaee18b1c633c636f20d66b15#4c0bc4c968d5d6feaee18b1c633c636f20d66b15"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9451f56e707e635a40a285965e1927733c956a0049a08f4b6c80215445aba7f1"
 dependencies = [
  "borsh",
  "solana-program",
@@ -2838,8 +2840,9 @@ dependencies = [
 
 [[package]]
 name = "spl-governance-tools"
-version = "0.1.1"
-source = "git+https://github.com/solana-labs/solana-program-library?rev=4c0bc4c968d5d6feaee18b1c633c636f20d66b15#4c0bc4c968d5d6feaee18b1c633c636f20d66b15"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a206f0837415046d919f3075d6b3af9bd3f1f707c887898c335a6210b194627"
 dependencies = [
  "arrayref",
  "bincode",
@@ -2849,28 +2852,15 @@ dependencies = [
  "serde",
  "serde_derive",
  "solana-program",
- "spl-token 3.3.0",
- "thiserror",
-]
-
-[[package]]
-name = "spl-token"
-version = "3.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93bfdd5bd7c869cb565c7d7635c4fafe189b988a0bdef81063cd9585c6b8dc01"
-dependencies = [
- "arrayref",
- "num-derive",
- "num-traits",
- "num_enum",
- "solana-program",
+ "spl-token",
  "thiserror",
 ]
 
 [[package]]
 name = "spl-token"
 version = "3.3.0"
-source = "git+https://github.com/solana-labs/solana-program-library?rev=4c0bc4c968d5d6feaee18b1c633c636f20d66b15#4c0bc4c968d5d6feaee18b1c633c636f20d66b15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0cc67166ef99d10c18cb5e9c208901e6d8255c6513bb1f877977eba48e6cc4fb"
 dependencies = [
  "arrayref",
  "num-derive",
@@ -3325,7 +3315,7 @@ dependencies = [
  "spl-associated-token-account",
  "spl-governance",
  "spl-governance-addin-api",
- "spl-token 3.2.0",
+ "spl-token",
  "static_assertions",
 ]
 
