@@ -1,6 +1,6 @@
 # Voter Stake Registry Changelog
 
-## v0.2.2 - 2022-4-29
+## v0.2.3 - 2022-4-29
 
 ### Program
 - Use spl-governance 2.2.1 as dependency, instead of a specific commit.
@@ -8,6 +8,7 @@
 ### Typescript Client
 - Upgrade the Anchor dependency to v0.24.2
 
+## v0.2.2 - skipped
 
 ## v0.2.1 - 2022-4-3
 
