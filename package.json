@@ -1,6 +1,6 @@
 {
   "name": "@blockworks-foundation/voter-stake-registry-client",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Client for Voter-stake-registry which is a voter weight addin for Solana's spl-governance program.",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -36,7 +36,7 @@
     "trailingComma": "all"
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.18.0",
+    "@project-serum/anchor": "^0.24.2",
     "@project-serum/serum": "^0.13.61"
   },
   "license": "MIT"
