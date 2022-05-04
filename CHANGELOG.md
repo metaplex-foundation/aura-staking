@@ -1,11 +1,11 @@
 # Voter Stake Registry Changelog
 
-## v0.2.4 - Unreleased
+## v0.2.4 - 2022-5-4 - not on mainnet
 
 ### Program
 - Upgrade Anchor to v0.24.2
 
-## v0.2.3 - 2022-4-29
+## v0.2.3 - 2022-4-29 - not on mainnet
 
 ### Program
 - Use spl-governance 2.2.1 as dependency, instead of a specific commit.
@@ -15,7 +15,7 @@
 
 ## v0.2.2 - skipped
 
-## v0.2.1 - 2022-4-3
+## v0.2.1 - 2022-4-3 - mainnet deploy slot 129520307
 
 ### Program
 - Increase the maximum number of lockup periods to 200 * 365 to allow for 200-year cliff and
@@ -29,7 +29,7 @@
 - Update dependencies.
 
 
-## v0.2.0 - 2022-2-14
+## v0.2.0 - 2022-2-14 - mainnet deploy slot 121129331
 
 - First release.
 - Available on devnet at 4Q6WW2ouZ6V3iaNm56MTd5n2tnTm4C5fiH8miFHnAFHo
