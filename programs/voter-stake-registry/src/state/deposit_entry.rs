@@ -119,7 +119,7 @@ impl DepositEntry {
     /// Vote power contribution from locked funds only at `at_ts`, assuming the user does everything
     /// they can to unlock as quickly as possible at `curr_ts`.
     ///
-    /// Currently that means that Constant lockups get turned into Cliff lockups.
+    /// Currently that means that Constant will be unlocked immidiatelly.
     pub fn voting_power_locked_guaranteed(
         &self,
         _curr_ts: i64,
@@ -217,10 +217,6 @@ mod tests {
             reserved: [0; 29],
         };
         let initial_deposit = deposit.clone();
-        let month = deposit.lockup.kind.period_secs() as i64;
-        // function to avoid unaligned references when used with assert!()
-        let amount_initially_locked =
-            |deposit: &DepositEntry| deposit.amount_initially_locked_native;
 
         let mut time = 1001;
         assert_eq!(deposit.vested(time).unwrap(), 0);
@@ -234,37 +230,38 @@ mod tests {
         );
         assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
         assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
-        assert_eq!(amount_initially_locked(&deposit), 30);
+        assert_eq!(deposit.amount_initially_locked_native, 30);
 
+        let month = deposit.lockup.kind.period_secs() as i64;
         time = 1001 + month;
-        assert_eq!(deposit.vested(time).unwrap(), 10);
-        assert_eq!(deposit.lockup.period_current(time).unwrap(), 1);
+        assert_eq!(deposit.vested(time).unwrap(), 0);
+        assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
         assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
         deposit.resolve_vesting(time).unwrap();
         assert_eq!(deposit.vested(time).unwrap(), 0);
-        assert_eq!(deposit.amount_unlocked(time), 15);
+        assert_eq!(deposit.amount_unlocked(time), 5);
         assert_eq!(
             deposit.lockup.seconds_left(time),
             initial_deposit.lockup.seconds_left(time)
         );
         assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.periods_total().unwrap(), 2);
-        assert_eq!(amount_initially_locked(&deposit), 20);
+        assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
+        assert_eq!(deposit.amount_initially_locked_native, 30);
 
         time = 1001 + 3 * month;
-        assert_eq!(deposit.vested(time).unwrap(), 20);
-        assert_eq!(deposit.lockup.period_current(time).unwrap(), 2);
-        assert_eq!(deposit.lockup.periods_total().unwrap(), 2);
+        assert_eq!(deposit.vested(time).unwrap(), 0);
+        assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
+        assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
         deposit.resolve_vesting(time).unwrap();
         assert_eq!(deposit.vested(time).unwrap(), 0);
-        assert_eq!(deposit.amount_unlocked(time), 35);
+        assert_eq!(deposit.amount_unlocked(time), 5);
         assert_eq!(
             deposit.lockup.seconds_left(time),
             initial_deposit.lockup.seconds_left(time)
         );
         assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.periods_total().unwrap(), 0);
-        assert_eq!(amount_initially_locked(&deposit), 0);
+        assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
+        assert_eq!(deposit.amount_initially_locked_native, 30);
 
         Ok(())
     }
@@ -312,32 +309,32 @@ mod tests {
         let withdrawable = deposit.amount_unlocked(100_000);
         assert_eq!(withdrawable, 0);
         let voting_power = deposit.voting_power(&voting_mint_config, 100_000).unwrap();
-        assert_eq!(voting_power, 20_000);
+        assert_eq!(voting_power, 10_000);
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation)
             .unwrap();
-        assert_eq!(voting_power, 20_000);
+        assert_eq!(voting_power, 10_000);
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation + day)
             .unwrap();
-        assert_eq!(voting_power, 20_000);
+        assert_eq!(voting_power, 10_000);
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation + day + 1)
             .unwrap();
-        assert_eq!(voting_power, 19_999);
+        assert_eq!(voting_power, 10_000);
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation + 2 * day)
             .unwrap();
-        assert_eq!(voting_power, 19_000); // the second cliff has only 4/5th of lockup period left
+        assert_eq!(voting_power, 10_000); // the second cliff has only 4/5th of lockup period left
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation + 2 * day + 1)
             .unwrap();
-        assert_eq!(voting_power, 18_999);
+        assert_eq!(voting_power, 10_000);
 
         Ok(())
     }
@@ -374,18 +371,18 @@ mod tests {
                 .unwrap()
         };
 
-        assert_eq!(v(0, 0), 50);
-        assert_eq!(v(-day, 0), 40);
+        assert_eq!(v(0, 0), 0);
+        assert_eq!(v(-day, 0), 0);
         assert_eq!(v(-100 * day, 0), 0);
-        assert_eq!(v(-100 * day, -98 * day), 30);
-        assert_eq!(v(0, day), 40);
+        assert_eq!(v(-100 * day, -98 * day), 0);
+        assert_eq!(v(0, day), 0);
         assert_eq!(v(0, 5 * day), 0);
         assert_eq!(v(0, 50 * day), 0);
-        assert_eq!(v(day, day), 50);
-        assert_eq!(v(day, 2 * day,), 40);
+        assert_eq!(v(day, day), 0);
+        assert_eq!(v(day, 2 * day,), 0);
         assert_eq!(v(day, 20 * day), 0);
-        assert_eq!(v(50 * day, 50 * day), 50);
-        assert_eq!(v(50 * day, 51 * day), 40);
+        assert_eq!(v(50 * day, 50 * day), 0);
+        assert_eq!(v(50 * day, 51 * day), 0);
         assert_eq!(v(50 * day, 80 * day), 0);
 
         Ok(())
