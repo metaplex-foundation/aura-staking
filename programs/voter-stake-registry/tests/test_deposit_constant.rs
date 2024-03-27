@@ -40,7 +40,6 @@ async fn balances(
     }
 }
 
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_deposit_constant() -> Result<(), TransportError> {
     let context = TestContext::new().await;
@@ -170,14 +169,14 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
 
     withdraw(1).await.expect_err("all locked up");
 
-    // Change the whole thing to cliff lockup
+    // Change the whole thing to Constant lockup
     addin
         .reset_lockup(
             &registrar,
             &voter,
             &voter_authority,
             0,
-            voter_stake_registry::state::LockupKind::Cliff,
+            voter_stake_registry::state::LockupKind::Constant,
             1,
         )
         .await
@@ -188,7 +187,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             &voter,
             &voter_authority,
             0,
-            voter_stake_registry::state::LockupKind::Cliff,
+            voter_stake_registry::state::LockupKind::Constant,
             2,
         )
         .await

@@ -5,8 +5,6 @@ use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 use voter_stake_registry::state::LockupKind;
 
 mod program_test;
-
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_voting() -> Result<(), TransportError> {
     let context = TestContext::new().await;

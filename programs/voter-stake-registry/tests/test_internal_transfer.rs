@@ -31,7 +31,6 @@ async fn get_lockup_data(
     )
 }
 
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_internal_transfer() -> Result<(), TransportError> {
     let context = TestContext::new().await;
@@ -111,7 +110,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
     let lockup_status =
         |index: u8| get_lockup_data(&context.solana, voter.address, index, *time_offset.borrow());
 
-    let month = LockupKind::Monthly.period_secs();
+    let month = LockupKind::Constant.period_secs();
     let day = 24 * 60 * 60;
     let hour = 60 * 60;
 
@@ -125,7 +124,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             0,
-            LockupKind::Monthly,
+            LockupKind::Constant,
             None,
             3,
             false,
@@ -142,7 +141,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             1,
-            LockupKind::Daily,
+            LockupKind::Constant,
             None,
             3,
             false,
@@ -223,7 +222,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             3,
-            LockupKind::Cliff,
+            LockupKind::Constant,
             None,
             5,
             false,
@@ -252,7 +251,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             4,
-            LockupKind::Cliff,
+            LockupKind::Constant,
             None,
             8,
             false,

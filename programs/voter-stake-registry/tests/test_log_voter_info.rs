@@ -14,7 +14,6 @@ fn deserialize_event<T: anchor_lang::Event>(event: &str) -> Option<T> {
     T::try_from_slice(&data[8..]).ok()
 }
 
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_print_event() -> Result<(), TransportError> {
     println!(
@@ -27,7 +26,6 @@ async fn test_print_event() -> Result<(), TransportError> {
     Ok(())
 }
 
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_log_voter_info() -> Result<(), TransportError> {
     let context = TestContext::new().await;
@@ -82,7 +80,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
-            LockupKind::Monthly,
+            LockupKind::Constant,
             None,
             12,
             false,
