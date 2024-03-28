@@ -79,18 +79,8 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
         VsrError::InvalidMint
     );
 
-    // Adding funds to a lockup that is already in progress can be complicated
-    // for linear vesting schedules because all added funds should be paid out
-    // gradually over the remaining lockup duration.
-    // The logic used is to:
-    // - realize the vesting by reducing the locked amount and moving the start
-    //   if the lockup forward by the number of expired vesting periods
-    // - add the new funds to the locked up token count, so they will vest over
-    //   the remaining periods.
-    let curr_ts = registrar.clock_unix_timestamp();
-    d_entry.resolve_vesting(curr_ts)?;
-
     // Deposit tokens into the vault and increase the lockup amount too.
+    let curr_ts = registrar.clock_unix_timestamp();
     token::transfer(ctx.accounts.transfer_ctx(), amount)?;
     d_entry.amount_deposited_native = d_entry.amount_deposited_native.checked_add(amount).unwrap();
     d_entry.amount_initially_locked_native = d_entry

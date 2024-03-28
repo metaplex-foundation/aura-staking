@@ -73,15 +73,13 @@ impl<'info> Withdraw<'info> {
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
 pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-    {
-        // Transfer the tokens to withdraw.
-        let voter = &mut ctx.accounts.voter.load()?;
-        let voter_seeds = voter_seeds!(voter);
-        token::transfer(
-            ctx.accounts.transfer_ctx().with_signer(&[voter_seeds]),
-            amount,
-        )?;
-    }
+    // Transfer the tokens to withdraw.
+    let voter = &mut ctx.accounts.voter.load()?;
+    let voter_seeds = voter_seeds!(voter);
+    token::transfer(
+        ctx.accounts.transfer_ctx().with_signer(&[voter_seeds]),
+        amount,
+    )?;
 
     // Load the accounts.
     let registrar = &ctx.accounts.registrar.load()?;

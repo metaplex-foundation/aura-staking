@@ -381,6 +381,7 @@ mod tests {
             reserved: [0u8; 15],
         };
         let days_left = l.periods_left(curr_ts)?;
+        assert_eq!(days_left, 0);
         assert_eq!(days_left, t.expected_days_left);
         Ok(())
     }

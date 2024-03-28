@@ -43,61 +43,16 @@ const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {
     /// # Voting Power Caclulation
-    ///
-    /// Returns the voting power for the deposit, giving locked tokens boosted
-    /// voting power that scales linearly with the lockup time.
-    ///
-    /// For each cliff-locked token, the vote weight is:
-    ///
-    /// ```
-    ///    voting_power = baseline_vote_weight
-    ///                   + lockup_duration_factor * max_extra_lockup_vote_weight
-    /// ```
-    ///
-    /// with
-    ///   - lockup_duration_factor = min(lockup_time_remaining / lockup_saturation_secs, 1)
-    ///   - the VotingMintConfig providing the values for
-    ///     baseline_vote_weight, max_extra_lockup_vote_weight, lockup_saturation_secs
-    ///
-    /// Linear vesting schedules can be thought of as a sequence of cliff-
-    /// locked tokens and have the matching voting weight.
-    ///
-    /// ## Cliff Lockup
-    ///
-    /// The cliff lockup allows one to lockup their tokens for a set period
-    /// of time, unlocking all at once on a given date.
-    ///
-    /// The calculation for this is straightforward and is detailed above.
-    ///
-    /// ### Decay
-    ///
-    /// As time passes, the voting power decays until it's back to just
-    /// fixed_factor when the cliff has passed. This is important because at
-    /// each point in time the lockup should be equivalent to a new lockup
-    /// made for the remaining time period.
-    ///
-    /// ## Linear Vesting Lockup
-    ///
-    /// Daily/monthly linear vesting can be calculated with series sum, see
-    /// voting_power_linear_vesting() below.
-    ///
-    pub fn voting_power(&self, voting_mint_config: &VotingMintConfig, curr_ts: i64) -> Result<u64> {
-        let baseline_vote_weight =
-            voting_mint_config.baseline_vote_weight(self.amount_deposited_native)?;
-        let max_locked_vote_weight =
-            voting_mint_config.max_extra_lockup_vote_weight(self.amount_initially_locked_native)?;
-        let locked_vote_weight = self.voting_power_locked(
-            curr_ts,
-            max_locked_vote_weight,
-            voting_mint_config.lockup_saturation_secs,
-        )?;
-        require_gte!(
-            max_locked_vote_weight,
-            locked_vote_weight,
-            VsrError::InternalErrorBadLockupVoteWeight
-        );
-        baseline_vote_weight
-            .checked_add(locked_vote_weight)
+    /// ### Constant Lockup
+    /// Voting Power will be always equals to 1*(locked + staked)
+    /// since we don't provide any other methods besides constant locking
+    pub fn voting_power(
+        &self,
+        _voting_mint_config: &VotingMintConfig,
+        _curr_ts: i64,
+    ) -> Result<u64> {
+        self.amount_deposited_native
+            .checked_add(self.amount_initially_locked_native)
             .ok_or_else(|| error!(VsrError::VoterWeightOverflow))
     }
 
@@ -105,14 +60,15 @@ impl DepositEntry {
     pub fn voting_power_locked(
         &self,
         curr_ts: i64,
-        max_locked_vote_weight: u64,
+        _max_locked_vote_weight: u64,
         _lockup_saturation_secs: u64,
     ) -> Result<u64> {
-        if self.lockup.expired(curr_ts) || max_locked_vote_weight == 0 {
+        if self.lockup.expired(curr_ts) {
             return Ok(0);
         }
         match self.lockup.kind {
-            LockupKind::None | LockupKind::Constant => Ok(0),
+            LockupKind::None => Ok(0),
+            LockupKind::Constant => Ok(self.amount_initially_locked_native),
         }
     }
 
@@ -130,27 +86,10 @@ impl DepositEntry {
         Ok(0)
     }
 
-    /// Returns the amount of unlocked tokens for this deposit--in native units
-    /// of the original token amount (not scaled by the exchange rate).
-    pub fn vested(&self, curr_ts: i64) -> Result<u64> {
-        if self.lockup.expired(curr_ts) {
-            return Ok(self.amount_initially_locked_native);
-        }
-        match self.lockup.kind {
-            LockupKind::None => Ok(self.amount_initially_locked_native),
-            // LockupKind::Daily => self.vested_linearly(curr_ts),
-            // LockupKind::Monthly => self.vested_linearly(curr_ts),
-            // LockupKind::Cliff => Ok(0),
-            LockupKind::Constant => Ok(0),
-        }
-    }
-
     /// Returns native tokens still locked.
     #[inline(always)]
-    pub fn amount_locked(&self, curr_ts: i64) -> u64 {
+    pub fn amount_locked(&self, _curr_ts: i64) -> u64 {
         self.amount_initially_locked_native
-            .checked_sub(self.vested(curr_ts).unwrap())
-            .unwrap()
     }
 
     /// Returns native tokens that are unlocked given current vesting
@@ -161,110 +100,12 @@ impl DepositEntry {
             .checked_sub(self.amount_locked(curr_ts))
             .unwrap()
     }
-
-    /// Adjusts the deposit and remaining lockup periods such that
-    /// no parts of amount_initially_locked_native have vested.
-    ///
-    /// That makes it easier to deal with changes to the locked
-    /// amount because amount_initially_locked_native represents
-    /// exactly the amount that is locked.
-    ///
-    /// Example:
-    ///   If 30 tokens are locked up over 3 months, vesting each month,
-    ///   then after month 2:
-    ///      amount_initially_locked_native = 30
-    ///      amount_deposited_native = 30
-    ///      vested() = 20
-    ///      period_current() = 2
-    ///      periods_total() = 3
-    ///   And after this function was called:
-    ///      amount_initially_locked_native = 10
-    ///      amount_deposited_native = 30
-    ///      vested() = 0
-    ///      period_current() = 0
-    ///      periods_total() = 1
-    pub fn resolve_vesting(&mut self, curr_ts: i64) -> Result<()> {
-        let vested_amount = self.vested(curr_ts)?;
-        require_gte!(
-            self.amount_initially_locked_native,
-            vested_amount,
-            VsrError::InternalProgramError
-        );
-        self.amount_initially_locked_native = self
-            .amount_initially_locked_native
-            .checked_sub(vested_amount)
-            .unwrap();
-        self.lockup.remove_past_periods(curr_ts)?;
-        require_eq!(self.vested(curr_ts)?, 0, VsrError::InternalProgramError);
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::LockupKind::Constant;
-
-    #[test]
-    pub fn resolve_vesting() -> Result<()> {
-        let mut deposit = DepositEntry {
-            amount_deposited_native: 35,
-            amount_initially_locked_native: 30,
-            lockup: Lockup::new_from_periods(LockupKind::Constant, 1000, 1000, 3).unwrap(),
-            is_used: true,
-            allow_clawback: false,
-            voting_mint_config_idx: 0,
-            reserved: [0; 29],
-        };
-        let initial_deposit = deposit.clone();
-
-        let mut time = 1001;
-        assert_eq!(deposit.vested(time).unwrap(), 0);
-        assert_eq!(deposit.amount_unlocked(time), 5);
-        deposit.resolve_vesting(time).unwrap(); // no effect
-        assert_eq!(deposit.vested(time).unwrap(), 0);
-        assert_eq!(deposit.amount_unlocked(time), 5);
-        assert_eq!(
-            deposit.lockup.seconds_left(time),
-            initial_deposit.lockup.seconds_left(time)
-        );
-        assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
-        assert_eq!(deposit.amount_initially_locked_native, 30);
-
-        let month = deposit.lockup.kind.period_secs() as i64;
-        time = 1001 + month;
-        assert_eq!(deposit.vested(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
-        deposit.resolve_vesting(time).unwrap();
-        assert_eq!(deposit.vested(time).unwrap(), 0);
-        assert_eq!(deposit.amount_unlocked(time), 5);
-        assert_eq!(
-            deposit.lockup.seconds_left(time),
-            initial_deposit.lockup.seconds_left(time)
-        );
-        assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
-        assert_eq!(deposit.amount_initially_locked_native, 30);
-
-        time = 1001 + 3 * month;
-        assert_eq!(deposit.vested(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
-        deposit.resolve_vesting(time).unwrap();
-        assert_eq!(deposit.vested(time).unwrap(), 0);
-        assert_eq!(deposit.amount_unlocked(time), 5);
-        assert_eq!(
-            deposit.lockup.seconds_left(time),
-            initial_deposit.lockup.seconds_left(time)
-        );
-        assert_eq!(deposit.lockup.period_current(time).unwrap(), 0);
-        assert_eq!(deposit.lockup.periods_total().unwrap(), 3);
-        assert_eq!(deposit.amount_initially_locked_native, 30);
-
-        Ok(())
-    }
 
     #[test]
     pub fn far_future_lockup_start_test() -> Result<()> {
@@ -309,32 +150,32 @@ mod tests {
         let withdrawable = deposit.amount_unlocked(100_000);
         assert_eq!(withdrawable, 0);
         let voting_power = deposit.voting_power(&voting_mint_config, 100_000).unwrap();
-        assert_eq!(voting_power, 10_000);
+        assert_eq!(voting_power, 20_000);
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation)
             .unwrap();
-        assert_eq!(voting_power, 10_000);
+        assert_eq!(voting_power, 20_000);
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation + day)
             .unwrap();
-        assert_eq!(voting_power, 10_000);
+        assert_eq!(voting_power, 20_000);
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation + day + 1)
             .unwrap();
-        assert_eq!(voting_power, 10_000);
+        assert_eq!(voting_power, 20_000);
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation + 2 * day)
             .unwrap();
-        assert_eq!(voting_power, 10_000); // the second cliff has only 4/5th of lockup period left
+        assert_eq!(voting_power, 20_000); // the second cliff has only 4/5th of lockup period left
 
         let voting_power = deposit
             .voting_power(&voting_mint_config, lockup_start - saturation + 2 * day + 1)
             .unwrap();
-        assert_eq!(voting_power, 10_000);
+        assert_eq!(voting_power, 20_000);
 
         Ok(())
     }

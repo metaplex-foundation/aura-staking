@@ -42,7 +42,6 @@ pub fn internal_transfer_locked(
     let curr_ts = registrar.clock_unix_timestamp();
 
     let source = voter.active_deposit_mut(source_deposit_entry_index)?;
-    source.resolve_vesting(curr_ts)?;
     let source_seconds_left = source.lockup.seconds_left(curr_ts);
     let source_strictness = source.lockup.kind.strictness();
     let source_mint_idx = source.voting_mint_config_idx;
@@ -66,7 +65,6 @@ pub fn internal_transfer_locked(
 
     // Check target compatibility
     let target = voter.active_deposit_mut(target_deposit_entry_index)?;
-    target.resolve_vesting(curr_ts)?;
     require_eq!(
         target.voting_mint_config_idx,
         source_mint_idx,
