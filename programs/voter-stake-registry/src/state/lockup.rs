@@ -167,7 +167,9 @@ impl Lockup {
 pub enum LockupKind {
     /// No lockup, tokens can be withdrawn as long as not engaged in a proposal.
     None,
-
+    Daily,
+    Montly,
+    Cliff,
     /// Lock up permanently. The number of days specified becomes the minimum
     /// unlock period when the deposit (or a part of it) is changed to None.
     Constant,
@@ -182,6 +184,7 @@ impl LockupKind {
         match self {
             LockupKind::None => 0,
             LockupKind::Constant => SECS_PER_DAY, // arbitrary choice
+            _ => panic!("WRONG LOCKUP KIND PROVIDED")
         }
     }
 
@@ -190,6 +193,7 @@ impl LockupKind {
         match self {
             LockupKind::None => 0,
             LockupKind::Constant => 3,
+            _ => panic!("WRONG LOCKUP KIND PROVIDED")
         }
     }
 
@@ -197,6 +201,7 @@ impl LockupKind {
         match self {
             LockupKind::None => false,
             LockupKind::Constant => false,
+            _ => panic!("WRONG LOCKUP KIND PROVIDED")
         }
     }
 }

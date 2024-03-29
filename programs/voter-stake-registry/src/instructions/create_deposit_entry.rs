@@ -66,6 +66,8 @@ pub fn create_deposit_entry(
 ) -> Result<()> {
     // Load accounts.
     let registrar = &ctx.accounts.registrar.load()?;
+    require!(kind == LockupKind::None || kind == LockupKind::Constant, VsrError::InvalidLockupKind);
+
     let voter = &mut ctx.accounts.voter.load_mut()?;
 
     // Get the exchange rate entry associated with this deposit.
