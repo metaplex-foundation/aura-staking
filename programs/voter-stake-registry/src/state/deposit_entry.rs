@@ -89,8 +89,15 @@ impl DepositEntry {
 
     /// Returns native tokens still locked.
     #[inline(always)]
-    pub fn amount_locked(&self, _curr_ts: i64) -> u64 {
+    pub fn amount_locked(&self, curr_ts: i64) -> u64 {
+        let unlocked_tokens = if self.lockup.expired(curr_ts) {
+            self.amount_initially_locked_native
+        } else {
+            0
+        };
         self.amount_initially_locked_native
+            .checked_sub(unlocked_tokens)
+            .unwrap()
     }
 
     /// Returns native tokens that are unlocked given current vesting
