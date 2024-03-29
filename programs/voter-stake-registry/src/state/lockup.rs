@@ -2,6 +2,7 @@ use crate::error::*;
 use crate::vote_weight_record;
 use anchor_lang::prelude::*;
 use std::convert::TryFrom;
+use std::convert::TryInto;
 
 // Generate a VoteWeightRecord Anchor wrapper, owned by the current program.
 // VoteWeightRecords are unique in that they are defined by the SPL governance
@@ -74,19 +75,29 @@ impl Lockup {
             VsrError::DepositStartTooFarInFuture
         );
         require_gte!(MAX_LOCKUP_PERIODS, periods, VsrError::InvalidLockupPeriod);
+
+        let end_ts = start_ts
+            .checked_add({
+                let periods =
+                    u64::try_from(periods).map_err(|_| VsrError::InvalidTimestampArguments)?;
+                let total_ts = periods
+                    .checked_mul(kind.period_secs())
+                    .ok_or(VsrError::InvalidTimestampArguments)?;
+                i64::try_from(total_ts).map_err(|_| VsrError::InvalidTimestampArguments)?
+            })
+            .unwrap();
+
+        let lockup_period_secs: u64 = (end_ts - start_ts)
+            .try_into()
+            .map_err(|_| VsrError::InvalidTimestampArguments)?;
+        if lockup_period_secs != SECS_PER_DAY * 14 || lockup_period_secs != SECS_PER_MONTH * 2 {
+            return Err(VsrError::InvalidDays.into());
+        }
+
         Ok(Self {
             kind,
             start_ts,
-            end_ts: start_ts
-                .checked_add({
-                    let periods =
-                        u64::try_from(periods).map_err(|_| VsrError::InvalidTimestampArguments)?;
-                    let total_ts = periods
-                        .checked_mul(kind.period_secs())
-                        .ok_or(VsrError::InvalidTimestampArguments)?;
-                    i64::try_from(total_ts).map_err(|_| VsrError::InvalidTimestampArguments)?
-                })
-                .unwrap(),
+            end_ts,
             reserved: [0; 15],
         })
     }
