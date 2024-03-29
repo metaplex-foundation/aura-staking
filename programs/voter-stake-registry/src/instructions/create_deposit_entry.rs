@@ -66,7 +66,10 @@ pub fn create_deposit_entry(
 ) -> Result<()> {
     // Load accounts.
     let registrar = &ctx.accounts.registrar.load()?;
-    require!(kind == LockupKind::None || kind == LockupKind::Constant, VsrError::InvalidLockupKind);
+    require!(
+        kind == LockupKind::None || kind == LockupKind::Constant,
+        VsrError::InvalidLockupKind
+    );
 
     let voter = &mut ctx.accounts.voter.load_mut()?;
 
@@ -84,7 +87,7 @@ pub fn create_deposit_entry(
 
     let curr_ts = registrar.clock_unix_timestamp();
     let start_ts = if let Some(v) = start_ts {
-        i64::try_from(v).unwrap()
+        i64::try_from(v).map_err(|_| VsrError::InvalidTimestampArguments)?
     } else {
         curr_ts
     };

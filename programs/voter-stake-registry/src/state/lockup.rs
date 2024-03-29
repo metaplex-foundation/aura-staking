@@ -78,10 +78,14 @@ impl Lockup {
             kind,
             start_ts,
             end_ts: start_ts
-                .checked_add(
-                    i64::try_from((periods as u64).checked_mul(kind.period_secs()).unwrap())
-                        .unwrap(),
-                )
+                .checked_add({
+                    let periods =
+                        u64::try_from(periods).map_err(|_| VsrError::InvalidTimestampArguments)?;
+                    let total_ts = periods
+                        .checked_mul(kind.period_secs())
+                        .ok_or(VsrError::InvalidTimestampArguments)?;
+                    i64::try_from(total_ts).map_err(|_| VsrError::InvalidTimestampArguments)?
+                })
                 .unwrap(),
             reserved: [0; 15],
         })
@@ -184,7 +188,7 @@ impl LockupKind {
         match self {
             LockupKind::None => 0,
             LockupKind::Constant => SECS_PER_DAY, // arbitrary choice
-            _ => panic!("WRONG LOCKUP KIND PROVIDED")
+            _ => panic!("WRONG LOCKUP KIND PROVIDED"),
         }
     }
 
@@ -193,7 +197,7 @@ impl LockupKind {
         match self {
             LockupKind::None => 0,
             LockupKind::Constant => 3,
-            _ => panic!("WRONG LOCKUP KIND PROVIDED")
+            _ => panic!("WRONG LOCKUP KIND PROVIDED"),
         }
     }
 
@@ -201,7 +205,7 @@ impl LockupKind {
         match self {
             LockupKind::None => false,
             LockupKind::Constant => false,
-            _ => panic!("WRONG LOCKUP KIND PROVIDED")
+            _ => panic!("WRONG LOCKUP KIND PROVIDED"),
         }
     }
 }

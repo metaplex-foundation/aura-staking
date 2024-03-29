@@ -69,7 +69,7 @@ impl DepositEntry {
         match self.lockup.kind {
             LockupKind::None => Ok(0),
             LockupKind::Constant => Ok(self.amount_initially_locked_native),
-            _ => panic!("WRONG LOCKUP KIND PROVIDED")
+            _ => panic!("WRONG LOCKUP KIND PROVIDED"),
         }
     }
 
