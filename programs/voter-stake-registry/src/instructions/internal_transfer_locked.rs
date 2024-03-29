@@ -70,16 +70,16 @@ pub fn internal_transfer_locked(
         source_mint_idx,
         VsrError::InvalidMint
     );
-    require_gte!(
-        target.lockup.seconds_left(curr_ts),
-        source_seconds_left,
-        VsrError::InvalidLockupPeriod
-    );
-    require_gte!(
-        target.lockup.kind.strictness(),
-        source_strictness,
-        VsrError::InvalidLockupKind
-    );
+    // require_gte!(
+    //     target.lockup.seconds_left(curr_ts),
+    //     source_seconds_left,
+    //     VsrError::InvalidLockupPeriod
+    // );
+    // require_gte!(
+    //     target.lockup.kind.strictness(),
+    //     source_strictness,
+    //     VsrError::InvalidLockupKind
+    // );
 
     // Add target amounts
     target.amount_deposited_native = target.amount_deposited_native.checked_add(amount).unwrap();
