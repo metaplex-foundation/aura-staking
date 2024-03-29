@@ -51,9 +51,7 @@ impl DepositEntry {
         _voting_mint_config: &VotingMintConfig,
         _curr_ts: i64,
     ) -> Result<u64> {
-        self.amount_deposited_native
-            .checked_add(self.amount_initially_locked_native)
-            .ok_or_else(|| error!(VsrError::VoterWeightOverflow))
+        Ok(self.amount_deposited_native)
     }
 
     /// Vote power contribution from locked funds only.
