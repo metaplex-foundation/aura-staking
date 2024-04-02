@@ -73,6 +73,7 @@ impl<'info> Withdraw<'info> {
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
 pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+    // NOTE: that block is mandatory because otherwise runtime borrow checking will fail!
     {
         // Transfer the tokens to withdraw.
         let voter = &mut ctx.accounts.voter.load()?;

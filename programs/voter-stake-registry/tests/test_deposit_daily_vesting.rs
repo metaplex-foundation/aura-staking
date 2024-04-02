@@ -41,7 +41,6 @@ async fn balances(
     }
 }
 
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_deposit_daily_vesting() -> Result<(), TransportError> {
     let context = TestContext::new().await;
@@ -135,7 +134,7 @@ async fn test_deposit_daily_vesting() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             0,
-            voter_stake_registry::state::LockupKind::Daily,
+            voter_stake_registry::state::LockupKind::Constant,
             None,
             3,
             false,
@@ -275,7 +274,7 @@ async fn test_deposit_daily_vesting() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             0,
-            voter_stake_registry::state::LockupKind::Daily,
+            voter_stake_registry::state::LockupKind::Constant,
             Some(now - 36 * 60 * 60),
             3,
             false,
@@ -304,7 +303,7 @@ async fn test_deposit_daily_vesting() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             1,
-            voter_stake_registry::state::LockupKind::Daily,
+            voter_stake_registry::state::LockupKind::Constant,
             Some(now + 30 * 60 * 60),
             3,
             false,

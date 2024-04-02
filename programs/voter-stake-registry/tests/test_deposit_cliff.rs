@@ -40,7 +40,6 @@ async fn balances(
     }
 }
 
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_deposit_cliff() -> Result<(), TransportError> {
     let context = TestContext::new().await;
@@ -134,7 +133,7 @@ async fn test_deposit_cliff() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             0,
-            voter_stake_registry::state::LockupKind::Cliff,
+            voter_stake_registry::state::LockupKind::Constant,
             None,
             3, // days
             false,

@@ -31,7 +31,6 @@ async fn get_lockup_data(
     )
 }
 
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_reset_lockup() -> Result<(), TransportError> {
     let context = TestContext::new().await;
@@ -112,11 +111,11 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
     let lockup_status =
         |index: u8| get_lockup_data(&context.solana, voter.address, index, *time_offset.borrow());
 
-    let month = LockupKind::Monthly.period_secs();
+    let month = LockupKind::Constant.period_secs();
     let day = 24 * 60 * 60;
     let hour = 60 * 60;
 
-    // tests for daily vesting
+    // tests for Constant vesting
     addin
         .create_deposit_entry(
             &registrar,
@@ -124,7 +123,7 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             7,
-            LockupKind::Daily,
+            LockupKind::Constant,
             None,
             3,
             false,
@@ -135,10 +134,10 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
     assert_eq!(lockup_status(7).await, (0, 3 * day, 80, 80, 0));
     deposit(7, 10).await.unwrap();
     assert_eq!(lockup_status(7).await, (0, 3 * day, 90, 90, 0));
-    reset_lockup(7, 2, LockupKind::Daily)
+    reset_lockup(7, 2, LockupKind::Constant)
         .await
         .expect_err("can't relock for less periods");
-    reset_lockup(7, 3, LockupKind::Daily).await.unwrap(); // just resets start to current timestamp
+    reset_lockup(7, 3, LockupKind::Constant).await.unwrap(); // just resets start to current timestamp
     assert_eq!(lockup_status(7).await, (0, 3 * day, 90, 90, 0));
 
     // advance more than a day
@@ -148,7 +147,7 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
     assert_eq!(lockup_status(7).await, (day + hour, 3 * day, 90, 90, 30));
     deposit(7, 10).await.unwrap();
     assert_eq!(lockup_status(7).await, (hour, 2 * day, 70, 100, 30));
-    reset_lockup(7, 10, LockupKind::Daily).await.unwrap();
+    reset_lockup(7, 10, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(7).await, (0, 10 * day, 100, 100, 0));
 
     // advance four more days
@@ -164,12 +163,12 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
         lockup_status(7).await,
         (4 * day + hour, 10 * day, 100, 80, 20)
     );
-    reset_lockup(7, 5, LockupKind::Daily)
+    reset_lockup(7, 5, LockupKind::Constant)
         .await
         .expect_err("can't relock for less periods");
-    reset_lockup(7, 6, LockupKind::Daily).await.unwrap();
+    reset_lockup(7, 6, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(7).await, (0, 6 * day, 80, 80, 0));
-    reset_lockup(7, 8, LockupKind::Daily).await.unwrap();
+    reset_lockup(7, 8, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(7).await, (0, 8 * day, 80, 80, 0));
 
     // advance three more days
@@ -187,25 +186,25 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
 
     withdraw(7, 20).await.unwrap(); // partially withdraw vested
     assert_eq!(lockup_status(7).await, (hour, 5 * day, 60, 70, 10));
-    reset_lockup(7, 10, LockupKind::Daily).await.unwrap();
+    reset_lockup(7, 10, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(7).await, (0, 10 * day, 70, 70, 0));
 
-    reset_lockup(7, 1, LockupKind::Monthly).await.unwrap();
+    reset_lockup(7, 1, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(7).await, (0, 1 * month, 70, 70, 0));
 
-    reset_lockup(7, 31, LockupKind::Daily)
+    reset_lockup(7, 31, LockupKind::Constant)
         .await
         .expect_err("decreasing strictness");
     reset_lockup(7, 31, LockupKind::None)
         .await
         .expect_err("decreasing strictness");
-    reset_lockup(7, 30, LockupKind::Cliff)
+    reset_lockup(7, 30, LockupKind::Constant)
         .await
         .expect_err("period shortnend");
-    reset_lockup(7, 31, LockupKind::Cliff).await.unwrap();
+    reset_lockup(7, 31, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(7).await, (0, 31 * day, 70, 70, 0));
 
-    // tests for cliff vesting
+    // tests for Constant vesting
     addin
         .create_deposit_entry(
             &registrar,
@@ -213,7 +212,7 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             5,
-            LockupKind::Cliff,
+            LockupKind::Constant,
             None,
             3,
             false,
@@ -222,24 +221,24 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
         .unwrap();
     deposit(5, 80).await.unwrap();
     assert_eq!(lockup_status(5).await, (0, 3 * day, 80, 80, 0));
-    reset_lockup(5, 2, LockupKind::Cliff)
+    reset_lockup(5, 2, LockupKind::Constant)
         .await
         .expect_err("can't relock for less periods");
-    reset_lockup(5, 3, LockupKind::Cliff).await.unwrap(); // just resets start to current timestamp
+    reset_lockup(5, 3, LockupKind::Constant).await.unwrap(); // just resets start to current timestamp
     assert_eq!(lockup_status(5).await, (0, 3 * day, 80, 80, 0));
-    reset_lockup(5, 4, LockupKind::Cliff).await.unwrap();
+    reset_lockup(5, 4, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(5).await, (0, 4 * day, 80, 80, 0));
 
-    // advance to end of cliff
+    // advance to end of Constant
     advance_time(4 * day + hour).await;
     context.solana.advance_clock_by_slots(2).await;
 
     assert_eq!(lockup_status(5).await, (4 * day, 4 * day, 80, 80, 80));
-    reset_lockup(5, 1, LockupKind::Cliff).await.unwrap();
+    reset_lockup(5, 1, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(5).await, (0, 1 * day, 80, 80, 0));
     withdraw(5, 10).await.expect_err("nothing unlocked");
 
-    // advance to end of cliff again
+    // advance to end of Constant again
     advance_time(day + hour).await;
     context.solana.advance_clock_by_slots(2).await;
 
@@ -248,7 +247,7 @@ async fn test_reset_lockup() -> Result<(), TransportError> {
     assert_eq!(lockup_status(5).await, (day, day, 80, 70, 70));
     deposit(5, 5).await.unwrap();
     assert_eq!(lockup_status(5).await, (0, 0, 5, 75, 75));
-    reset_lockup(5, 1, LockupKind::Cliff).await.unwrap();
+    reset_lockup(5, 1, LockupKind::Constant).await.unwrap();
     assert_eq!(lockup_status(5).await, (0, 1 * day, 75, 75, 0));
     deposit(5, 15).await.unwrap();
     assert_eq!(lockup_status(5).await, (0, 1 * day, 90, 90, 0));

@@ -6,7 +6,6 @@ use program_test::*;
 
 mod program_test;
 
-#[allow(unaligned_references)]
 #[tokio::test]
 async fn test_clawback() -> Result<(), TransportError> {
     let context = TestContext::new().await;
@@ -89,7 +88,7 @@ async fn test_clawback() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
-            voter_stake_registry::state::LockupKind::Daily,
+            voter_stake_registry::state::LockupKind::Constant,
             None,
             10,
             true,
