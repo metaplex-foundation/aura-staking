@@ -87,13 +87,6 @@ impl Lockup {
             })
             .unwrap();
 
-        let lockup_period_secs: u64 = (end_ts - start_ts)
-            .try_into()
-            .map_err(|_| VsrError::InvalidTimestampArguments)?;
-        if lockup_period_secs != SECS_PER_DAY * 14 || lockup_period_secs != SECS_PER_MONTH * 2 {
-            return Err(VsrError::InvalidDays.into());
-        }
-
         Ok(Self {
             kind,
             start_ts,

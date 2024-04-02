@@ -43,7 +43,6 @@ pub fn internal_transfer_locked(
 
     let source = voter.active_deposit_mut(source_deposit_entry_index)?;
     let source_seconds_left = source.lockup.seconds_left(curr_ts);
-    let source_strictness = source.lockup.kind.strictness();
     let source_mint_idx = source.voting_mint_config_idx;
 
     // Allowing transfers from clawback-enabled deposits could be used to avoid
@@ -70,16 +69,11 @@ pub fn internal_transfer_locked(
         source_mint_idx,
         VsrError::InvalidMint
     );
-    // require_gte!(
-    //     target.lockup.seconds_left(curr_ts),
-    //     source_seconds_left,
-    //     VsrError::InvalidLockupPeriod
-    // );
-    // require_gte!(
-    //     target.lockup.kind.strictness(),
-    //     source_strictness,
-    //     VsrError::InvalidLockupKind
-    // );
+    require_gte!(
+        target.lockup.seconds_left(curr_ts),
+        source_seconds_left,
+        VsrError::InvalidLockupPeriod
+    );
 
     // Add target amounts
     target.amount_deposited_native = target.amount_deposited_native.checked_add(amount).unwrap();
