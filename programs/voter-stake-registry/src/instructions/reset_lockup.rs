@@ -25,7 +25,7 @@ pub fn reset_lockup(
     ctx: Context<ResetLockup>,
     deposit_entry_index: u8,
     kind: LockupKind,
-    periods: u32,
+    period: LockupPeriod,
 ) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
@@ -35,7 +35,7 @@ pub fn reset_lockup(
 
     // Must not decrease duration or strictness
     require_gte!(
-        (periods as u64).checked_mul(kind.period_secs()).unwrap(),
+        period.to_secs().checked_mul(kind.period_secs()).unwrap(),
         source.lockup.seconds_left(curr_ts),
         VsrError::InvalidLockupPeriod
     );
@@ -45,16 +45,10 @@ pub fn reset_lockup(
         VsrError::InvalidLockupKind
     );
 
-    // Don't re-lock clawback deposits. Users must withdraw and create a new one.
-    require!(
-        !source.allow_clawback,
-        VsrError::InvalidChangeToClawbackDepositEntry
-    );
-
     // Change the deposit entry.
     let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
     d_entry.amount_initially_locked_native = d_entry.amount_deposited_native;
-    d_entry.lockup = Lockup::new_from_periods(kind, curr_ts, curr_ts, periods)?;
+    d_entry.lockup = Lockup::new(kind, curr_ts, curr_ts, period)?;
 
     Ok(())
 }

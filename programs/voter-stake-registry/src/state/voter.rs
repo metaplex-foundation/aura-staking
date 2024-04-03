@@ -12,24 +12,19 @@ pub struct Voter {
     pub deposits: [DepositEntry; 32],
     pub voter_bump: u8,
     pub voter_weight_record_bump: u8,
-    pub reserved: [u8; 94],
+    pub reserved: [u8; 6],
 }
-const_assert!(std::mem::size_of::<Voter>() == 2 * 32 + 32 * 80 + 2 + 94);
+const_assert!(std::mem::size_of::<Voter>() == 2 * 32 + 32 * 48 + 2 + 6);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
 impl Voter {
     /// The full vote weight available to the voter
-    pub fn weight(&self, registrar: &Registrar) -> Result<u64> {
-        let curr_ts = registrar.clock_unix_timestamp();
+    pub fn weight(&self) -> Result<u64> {
         self.deposits
             .iter()
             .filter(|d| d.is_used)
             .try_fold(0u64, |sum, d| {
-                d.voting_power(
-                    &registrar.voting_mints[d.voting_mint_config_idx as usize],
-                    curr_ts,
-                )
-                .map(|vp| sum.checked_add(vp).unwrap())
+                d.voting_power().map(|vp| sum.checked_add(vp).unwrap())
             })
     }
 
@@ -47,28 +42,12 @@ impl Voter {
 
     /// The extra lockup vote weight that the user is guaranteed to have at `at_ts`, assuming
     /// they withdraw and unlock as much as possible starting from `curr_ts`.
-    pub fn weight_locked_guaranteed(
-        &self,
-        registrar: &Registrar,
-        curr_ts: i64,
-        at_ts: i64,
-    ) -> Result<u64> {
+    pub fn weight_locked_guaranteed(&self, curr_ts: i64, at_ts: i64) -> Result<u64> {
         require_gte!(at_ts, curr_ts, VsrError::InvalidTimestampArguments);
         self.deposits
             .iter()
             .filter(|d| d.is_used)
-            .try_fold(0u64, |sum, d| {
-                let mint_config = &registrar.voting_mints[d.voting_mint_config_idx as usize];
-                let max_locked_vote_weight =
-                    mint_config.max_extra_lockup_vote_weight(d.amount_initially_locked_native)?;
-                let amount = d.voting_power_locked_guaranteed(
-                    curr_ts,
-                    at_ts,
-                    max_locked_vote_weight,
-                    mint_config.lockup_saturation_secs,
-                )?;
-                Ok(sum.checked_add(amount).unwrap())
-            })
+            .try_fold(0u64, |sum, _d| Ok(sum))
     }
 
     pub fn active_deposit_mut(&mut self, index: u8) -> Result<&mut DepositEntry> {

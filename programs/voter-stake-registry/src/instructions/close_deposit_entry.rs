@@ -26,16 +26,6 @@ pub fn close_deposit_entry(ctx: Context<CloseDepositEntry>, deposit_entry_index:
     let d = voter.active_deposit_mut(deposit_entry_index)?;
     require_eq!(d.amount_deposited_native, 0, VsrError::VotingTokenNonZero);
 
-    // Deposits that have clawback enabled are guaranteed to live until the end
-    // of their locking period. That ensures a deposit can't be closed and reopenend
-    // with a different locking kind or locking end time before funds are deposited.
-    if d.allow_clawback {
-        require!(
-            d.lockup.expired(Clock::get()?.unix_timestamp),
-            VsrError::DepositStillLocked
-        );
-    }
-
     *d = DepositEntry::default();
     d.is_used = false;
 

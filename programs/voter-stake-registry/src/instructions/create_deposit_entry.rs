@@ -48,21 +48,18 @@ pub struct CreateDepositEntry<'info> {
 /// - `deposit_entry_index`: deposit entry to use
 /// - `kind`: Type of lockup to use.
 /// - `start_ts`: Start timestamp in seconds, defaults to current clock.
-///    The lockup will end after `start + periods * period_secs()`.
+///    The lockup will end after `start + LockupPeriod::to_ts + COOLDOWNS_SECS.
 ///
 ///    Note that tokens will already be locked before start_ts, it only defines
 ///    the vesting start time and the anchor for the periods computation.
 ///
-/// - `periods`: How long to lock up, depending on `kind`. See LockupKind::period_secs()
-/// - `allow_clawback`: When enabled, the the realm_authority is allowed to
-///    unilaterally claim locked tokens.
+/// - `period`: An enum that represents possible options for locking up
 pub fn create_deposit_entry(
     ctx: Context<CreateDepositEntry>,
     deposit_entry_index: u8,
     kind: LockupKind,
     start_ts: Option<u64>,
-    periods: u32,
-    allow_clawback: bool,
+    period: LockupPeriod,
 ) -> Result<()> {
     // Load accounts.
     let registrar = &ctx.accounts.registrar.load()?;
@@ -97,8 +94,7 @@ pub fn create_deposit_entry(
     d_entry.voting_mint_config_idx = mint_idx as u8;
     d_entry.amount_deposited_native = 0;
     d_entry.amount_initially_locked_native = 0;
-    d_entry.allow_clawback = allow_clawback;
-    d_entry.lockup = Lockup::new_from_periods(kind, curr_ts, start_ts, periods)?;
+    d_entry.lockup = Lockup::new(kind, curr_ts, start_ts, period)?;
 
     Ok(())
 }

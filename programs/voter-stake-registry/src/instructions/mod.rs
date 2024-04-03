@@ -1,4 +1,3 @@
-pub use clawback::*;
 pub use close_deposit_entry::*;
 pub use close_voter::*;
 pub use configure_voting_mint::*;
@@ -6,7 +5,6 @@ pub use create_deposit_entry::*;
 pub use create_registrar::*;
 pub use create_voter::*;
 pub use deposit::*;
-pub use grant::*;
 pub use internal_transfer_locked::*;
 pub use internal_transfer_unlocked::*;
 pub use log_voter_info::*;
@@ -16,7 +14,6 @@ pub use update_max_vote_weight::*;
 pub use update_voter_weight_record::*;
 pub use withdraw::*;
 
-mod clawback;
 mod close_deposit_entry;
 mod close_voter;
 mod configure_voting_mint;
@@ -24,7 +21,6 @@ mod create_deposit_entry;
 mod create_registrar;
 mod create_voter;
 mod deposit;
-mod grant;
 mod internal_transfer_locked;
 mod internal_transfer_unlocked;
 mod log_voter_info;

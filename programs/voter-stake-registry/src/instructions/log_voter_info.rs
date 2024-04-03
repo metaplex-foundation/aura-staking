@@ -30,7 +30,7 @@ pub fn log_voter_info(
 
     msg!("voter");
     emit!(VoterInfo {
-        voting_power: voter.weight(registrar)?,
+        voting_power: voter.weight()?,
         voting_power_baseline: voter.weight_baseline(registrar)?,
     });
 
@@ -69,7 +69,7 @@ pub fn log_voter_info(
             deposit_entry_index: deposit_index as u8,
             voting_mint_config_index: deposit.voting_mint_config_idx,
             unlocked: deposit.amount_unlocked(curr_ts),
-            voting_power: deposit.voting_power(voting_mint_config, curr_ts)?,
+            voting_power: deposit.voting_power()?,
             voting_power_baseline: voting_mint_config
                 .baseline_vote_weight(deposit.amount_deposited_native)?,
             locking: locking_info,
