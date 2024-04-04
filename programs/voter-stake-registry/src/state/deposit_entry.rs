@@ -89,8 +89,9 @@ mod tests {
                 start_ts: lockup_start,
                 kind: Constant,
                 period,
+                unlock_requested: false,
                 end_ts: lockup_start + COOLDOWN_SECS as i64 + 0i64, // start + cooldown + period
-                reserved: [0; 6],
+                reserved: [0; 5],
             },
             is_used: true,
             voting_mint_config_idx: 0,

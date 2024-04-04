@@ -40,6 +40,9 @@ pub struct Lockup {
     /// End of the lockup.
     pub(crate) end_ts: i64,
 
+    /// Cooldown period
+    pub unlock_requested: bool,
+
     /// Type of lockup.
     pub kind: LockupKind,
 
@@ -47,9 +50,9 @@ pub struct Lockup {
     pub period: LockupPeriod,
 
     /// padding + reserved
-    pub reserved: [u8; 6],
+    pub reserved: [u8; 5],
 }
-const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 1 + 1 + 6);
+const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 1 + 1 + 1 + 5);
 const_assert!(std::mem::size_of::<Lockup>() % 8 == 0);
 
 impl Lockup {
@@ -77,7 +80,8 @@ impl Lockup {
             start_ts,
             end_ts,
             period,
-            reserved: [0; 6],
+            unlock_requested: false,
+            reserved: [0; 5],
         })
     }
 
@@ -222,13 +226,6 @@ impl LockupKind {
         match self {
             LockupKind::None => 0,
             LockupKind::Constant => 3,
-        }
-    }
-
-    pub fn is_vesting(&self) -> bool {
-        match self {
-            LockupKind::None => false,
-            LockupKind::Constant => false,
         }
     }
 }
@@ -412,7 +409,8 @@ mod tests {
             start_ts,
             end_ts,
             period: LockupPeriod::TwoWeeks,
-            reserved: [0u8; 6],
+            unlock_requested: false,
+            reserved: [0u8; 5],
         };
         let days_left = l.periods_left(curr_ts)?;
         assert_eq!(days_left, 0);
@@ -429,7 +427,8 @@ mod tests {
             start_ts,
             end_ts,
             period: LockupPeriod::TwoWeeks,
-            reserved: [0u8; 6],
+            unlock_requested: false,
+            reserved: [0u8; 5],
         };
         let months_left = l.periods_left(curr_ts)?;
         assert_eq!(months_left, t.expected_months_left);
