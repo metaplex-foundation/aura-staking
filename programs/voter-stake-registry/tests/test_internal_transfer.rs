@@ -4,7 +4,7 @@ use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
 use std::cell::RefCell;
 use std::sync::Arc;
-use voter_stake_registry::state::LockupKind;
+use voter_stake_registry::state::{LockupKind, LockupPeriod};
 
 mod program_test;
 
@@ -126,8 +126,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             0,
             LockupKind::Constant,
             None,
-            3,
-            false,
+            LockupPeriod::Flex,
         )
         .await
         .unwrap();
@@ -143,8 +142,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             None,
-            3,
-            false,
+            LockupPeriod::Flex,
         )
         .await
         .unwrap();
@@ -209,8 +207,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             2,
             LockupKind::Constant,
             None,
-            5,
-            false,
+            LockupPeriod::Flex,
         )
         .await
         .unwrap();
@@ -224,8 +221,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             3,
             LockupKind::Constant,
             None,
-            5,
-            false,
+            LockupPeriod::Flex,
         )
         .await
         .unwrap();
@@ -253,8 +249,7 @@ async fn test_internal_transfer() -> Result<(), TransportError> {
             4,
             LockupKind::Constant,
             None,
-            8,
-            false,
+            LockupPeriod::Flex,
         )
         .await
         .unwrap();

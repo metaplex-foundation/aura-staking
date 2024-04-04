@@ -2,7 +2,7 @@ use anchor_spl::token::TokenAccount;
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
-use voter_stake_registry::state::LockupKind;
+use voter_stake_registry::state::{LockupKind, LockupPeriod};
 
 mod program_test;
 
@@ -82,8 +82,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             0,
             LockupKind::Constant,
             None,
-            12,
-            false,
+            LockupPeriod::Flex,
         )
         .await
         .unwrap();

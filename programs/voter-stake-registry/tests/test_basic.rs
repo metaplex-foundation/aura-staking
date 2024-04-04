@@ -3,7 +3,7 @@ use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 use program_test::*;
-use voter_stake_registry::state::Voter;
+use voter_stake_registry::state::{LockupKind, LockupPeriod, Voter};
 
 mod program_test;
 
@@ -95,10 +95,9 @@ async fn test_basic() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
-            voter_stake_registry::state::LockupKind::Constant,
+            LockupKind::Constant,
             None,
-            0,
-            false,
+            LockupPeriod::TwoWeeks,
         )
         .await?;
     context

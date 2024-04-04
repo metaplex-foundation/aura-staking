@@ -1,4 +1,5 @@
 use crate::error::*;
+use crate::state::lockup;
 use crate::vote_weight_record;
 use anchor_lang::prelude::*;
 use std::convert::TryFrom;
@@ -69,10 +70,16 @@ impl Lockup {
             VsrError::DepositStartTooFarInFuture
         );
 
+        let mut lockup_ts =
+            i64::try_from(period.to_secs()).map_err(|_| VsrError::InvalidTimestampArguments)?;
+        if let LockupPeriod::Flex = period {
+            lockup_ts = lockup_ts
+                .checked_sub(start_ts)
+                .ok_or(VsrError::InvalidTimestampArguments)?;
+        };
+
         let end_ts = start_ts
-            .checked_add(
-                i64::try_from(period.to_secs()).map_err(|_| VsrError::InvalidTimestampArguments)?,
-            )
+            .checked_add(lockup_ts)
             .ok_or(VsrError::InvalidTimestampArguments)?;
 
         Ok(Self {

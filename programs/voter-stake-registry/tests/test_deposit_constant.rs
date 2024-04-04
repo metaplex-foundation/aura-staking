@@ -2,6 +2,7 @@ use anchor_spl::token::TokenAccount;
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
+use voter_stake_registry::state::{LockupKind, LockupPeriod};
 
 mod program_test;
 
@@ -133,10 +134,9 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             &voter_authority,
             &mngo_voting_mint,
             0,
-            voter_stake_registry::state::LockupKind::Constant,
+            LockupKind::Constant,
             None,
-            2, // days
-            false,
+            LockupPeriod::TwoWeeks,
         )
         .await
         .unwrap();
@@ -177,7 +177,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             &voter_authority,
             0,
             voter_stake_registry::state::LockupKind::Constant,
-            1,
+            voter_stake_registry::state::LockupPeriod::Flex,
         )
         .await
         .expect_err("can't reduce period");
@@ -188,7 +188,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             &voter_authority,
             0,
             voter_stake_registry::state::LockupKind::Constant,
-            2,
+            voter_stake_registry::state::LockupPeriod::Flex,
         )
         .await
         .unwrap();
