@@ -2,7 +2,6 @@ use crate::error::*;
 use crate::vote_weight_record;
 use anchor_lang::prelude::*;
 use std::convert::TryFrom;
-use std::convert::TryInto;
 
 // Generate a VoteWeightRecord Anchor wrapper, owned by the current program.
 // VoteWeightRecords are unique in that they are defined by the SPL governance
@@ -16,18 +15,18 @@ pub const SECS_PER_DAY: u64 = 86_400;
 pub const SECS_PER_MONTH: u64 = 365 * SECS_PER_DAY / 12;
 
 /// Maximum acceptable number of lockup periods.
-///
-/// In the linear vesting voting power computation, a factor like
-/// `periods^2 * period_secs` is used. With the current setting
-/// that would be 36500^2 * SECS_PER_MONTH << 2^64.
-///
+
 /// This setting limits the maximum lockup duration for lockup methods
 /// with daily periods to 200 years.
 pub const MAX_LOCKUP_PERIODS: u32 = 365 * 200;
 
 pub const MAX_LOCKUP_IN_FUTURE_SECS: i64 = 100 * 365 * 24 * 60 * 60;
 
+/// Seconds in cooldown (5 days)
+pub const COOLDOWN_SECS: u64 = SECS_PER_DAY * 5;
+
 #[zero_copy]
+#[derive(Default)]
 pub struct Lockup {
     /// Start of the lockup.
     ///
@@ -41,57 +40,48 @@ pub struct Lockup {
     /// End of the lockup.
     pub(crate) end_ts: i64,
 
+    /// Cooldown period
+    pub unlock_requested: bool,
+
     /// Type of lockup.
     pub kind: LockupKind,
 
-    // Empty bytes for future upgrades.
-    pub reserved: [u8; 15],
-}
-const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 1 + 15);
-const_assert!(std::mem::size_of::<Lockup>() % 8 == 0);
+    /// Type of lockup
+    pub period: LockupPeriod,
 
-impl Default for Lockup {
-    fn default() -> Self {
-        Self {
-            kind: LockupKind::None,
-            start_ts: 0,
-            end_ts: 0,
-            reserved: [0; 15],
-        }
-    }
+    /// padding + reserved
+    pub reserved: [u8; 5],
 }
+const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 1 + 1 + 1 + 5);
+const_assert!(std::mem::size_of::<Lockup>() % 8 == 0);
 
 impl Lockup {
     /// Create lockup for a given period
-    pub fn new_from_periods(
+    pub fn new(
         kind: LockupKind,
         curr_ts: i64,
         start_ts: i64,
-        periods: u32,
+        period: LockupPeriod,
     ) -> Result<Self> {
         require_gt!(
             curr_ts + MAX_LOCKUP_IN_FUTURE_SECS,
             start_ts,
             VsrError::DepositStartTooFarInFuture
         );
-        require_gte!(MAX_LOCKUP_PERIODS, periods, VsrError::InvalidLockupPeriod);
 
         let end_ts = start_ts
-            .checked_add({
-                let periods =
-                    u64::try_from(periods).map_err(|_| VsrError::InvalidTimestampArguments)?;
-                let total_ts = periods
-                    .checked_mul(kind.period_secs())
-                    .ok_or(VsrError::InvalidTimestampArguments)?;
-                i64::try_from(total_ts).map_err(|_| VsrError::InvalidTimestampArguments)?
-            })
-            .unwrap();
+            .checked_add(
+                i64::try_from(period.to_secs()).map_err(|_| VsrError::InvalidTimestampArguments)?,
+            )
+            .ok_or(VsrError::InvalidTimestampArguments)?;
 
         Ok(Self {
             kind,
             start_ts,
             end_ts,
-            reserved: [0; 15],
+            period,
+            unlock_requested: false,
+            reserved: [0; 5],
         })
     }
 
@@ -170,17 +160,53 @@ impl Lockup {
     }
 }
 
-#[repr(u8)]
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
+pub enum LockupPeriod {
+    TwoWeeks,
+    TwoMonths,
+    TwoYears,
+    Flex,
+}
+
+impl Default for LockupPeriod {
+    fn default() -> Self {
+        Self::Flex
+    }
+}
+
+impl LockupPeriod {
+    pub fn to_secs(&self) -> u64 {
+        match self {
+            LockupPeriod::TwoWeeks => SECS_PER_DAY * 14,
+            LockupPeriod::TwoMonths => SECS_PER_MONTH * 2,
+            LockupPeriod::TwoYears => SECS_PER_MONTH * 12,
+            LockupPeriod::Flex => u64::MAX,
+        }
+    }
+
+    pub fn get_coef(&self) -> f64 {
+        match self {
+            LockupPeriod::TwoWeeks => 1.05,
+            LockupPeriod::TwoMonths => 1.1,
+            LockupPeriod::TwoYears => 1.3,
+            LockupPeriod::Flex => 1.01,
+        }
+    }
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupKind {
     /// No lockup, tokens can be withdrawn as long as not engaged in a proposal.
     None,
-    Daily,
-    Montly,
-    Cliff,
     /// Lock up permanently. The number of days specified becomes the minimum
     /// unlock period when the deposit (or a part of it) is changed to None.
     Constant,
+}
+
+impl Default for LockupKind {
+    fn default() -> Self {
+        Self::Constant
+    }
 }
 
 impl LockupKind {
@@ -192,7 +218,6 @@ impl LockupKind {
         match self {
             LockupKind::None => 0,
             LockupKind::Constant => SECS_PER_DAY, // arbitrary choice
-            _ => panic!("WRONG LOCKUP KIND PROVIDED"),
         }
     }
 
@@ -201,15 +226,6 @@ impl LockupKind {
         match self {
             LockupKind::None => 0,
             LockupKind::Constant => 3,
-            _ => panic!("WRONG LOCKUP KIND PROVIDED"),
-        }
-    }
-
-    pub fn is_vesting(&self) -> bool {
-        match self {
-            LockupKind::None => false,
-            LockupKind::Constant => false,
-            _ => panic!("WRONG LOCKUP KIND PROVIDED"),
         }
     }
 }
@@ -223,7 +239,8 @@ mod tests {
 
     #[test]
     pub fn period_computations() -> Result<()> {
-        let lockup = Lockup::new_from_periods(LockupKind::Constant, 1000, 1000, 3)?;
+        let period = LockupPeriod::TwoWeeks;
+        let lockup = Lockup::new(LockupKind::Constant, 1000, 1000, period)?;
         let day = SECS_PER_DAY as i64;
         assert_eq!(lockup.periods_total()?, 3);
         assert_eq!(lockup.period_current(0)?, 0);
@@ -391,7 +408,9 @@ mod tests {
             kind: LockupKind::Constant,
             start_ts,
             end_ts,
-            reserved: [0u8; 15],
+            period: LockupPeriod::TwoWeeks,
+            unlock_requested: false,
+            reserved: [0u8; 5],
         };
         let days_left = l.periods_left(curr_ts)?;
         assert_eq!(days_left, 0);
@@ -407,7 +426,9 @@ mod tests {
             kind: LockupKind::Constant,
             start_ts,
             end_ts,
-            reserved: [0u8; 15],
+            period: LockupPeriod::TwoWeeks,
+            unlock_requested: false,
+            reserved: [0u8; 5],
         };
         let months_left = l.periods_left(curr_ts)?;
         assert_eq!(months_left, t.expected_months_left);

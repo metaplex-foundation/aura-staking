@@ -6,6 +6,7 @@ use solana_sdk::{
     instruction::Instruction,
     signature::{Keypair, Signer},
 };
+use voter_stake_registry::state::LockupPeriod;
 
 use crate::*;
 
@@ -232,8 +233,7 @@ impl AddinCookie {
         deposit_entry_index: u8,
         lockup_kind: voter_stake_registry::state::LockupKind,
         start_ts: Option<u64>,
-        periods: u32,
-        allow_clawback: bool,
+        period: LockupPeriod,
     ) -> std::result::Result<(), TransportError> {
         let vault = voter.vault_address(&voting_mint);
 
@@ -242,8 +242,7 @@ impl AddinCookie {
                 deposit_entry_index,
                 kind: lockup_kind,
                 start_ts,
-                periods,
-                allow_clawback,
+                period,
             },
         );
 

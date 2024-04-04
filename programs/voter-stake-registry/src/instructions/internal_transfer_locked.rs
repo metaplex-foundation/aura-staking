@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 use crate::error::*;
 use crate::state::*;
 use anchor_lang::prelude::*;
@@ -28,9 +30,8 @@ pub struct InternalTransferLocked<'info> {
 ///
 /// The primary usecases are:
 /// - consolidating multiple small deposit entries into a single big one for cleanup
-/// - transfering a small part of a big "constant" lockup deposit entry into a "cliff"
-///   locked deposit entry to start the unlocking process (reset_lockup could only
-///   change the whole deposit entry to "cliff")
+/// - unlocking tokens, transfering "constant" lockup into a "none" lockup type
+/// to start the unlocking process (reset_lockup could only restart the lockup)
 pub fn internal_transfer_locked(
     ctx: Context<InternalTransferLocked>,
     source_deposit_entry_index: u8,
@@ -45,19 +46,23 @@ pub fn internal_transfer_locked(
     let source_seconds_left = source.lockup.seconds_left(curr_ts);
     let source_mint_idx = source.voting_mint_config_idx;
 
-    // Allowing transfers from clawback-enabled deposits could be used to avoid
-    // clawback by making proposal instructions target the wrong entry index.
-    require!(
-        !source.allow_clawback,
-        VsrError::InvalidChangeToClawbackDepositEntry
-    );
-
     // Reduce source amounts
     require_gte!(
         source.amount_initially_locked_native,
         amount,
         VsrError::InsufficientLockedTokens
     );
+
+    let cooldown = i64::try_from(COOLDOWN_SECS).map_err(|_| VsrError::InvalidTimestampArguments)?;
+    if !source.lockup.unlock_requested {
+        if (source.lockup.end_ts + cooldown) >= curr_ts {
+            source.lockup.unlock_requested = true;
+            return Ok(());
+        } else {
+            return Err(VsrError::InvalidTimestampArguments.into());
+        }
+    }
+
     source.amount_deposited_native = source.amount_deposited_native.checked_sub(amount).unwrap();
     source.amount_initially_locked_native =
         source.amount_initially_locked_native.saturating_sub(amount);

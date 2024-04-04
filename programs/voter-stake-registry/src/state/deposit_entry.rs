@@ -1,6 +1,5 @@
-use crate::error::*;
-use crate::state::lockup::{Lockup, LockupKind};
-use crate::state::voting_mint_config::VotingMintConfig;
+use crate::state::lockup::Lockup;
+
 use anchor_lang::prelude::*;
 
 /// Bookkeeping for a single deposit for a given mint and lockup schedule.
@@ -30,59 +29,21 @@ pub struct DepositEntry {
     // True if the deposit entry is being used.
     pub is_used: bool,
 
-    /// If the clawback authority is allowed to extract locked tokens.
-    pub allow_clawback: bool,
-
     // Points to the VotingMintConfig this deposit uses.
     pub voting_mint_config_idx: u8,
 
-    pub reserved: [u8; 29],
+    pub reserved: [u8; 6],
 }
-const_assert!(std::mem::size_of::<DepositEntry>() == 32 + 2 * 8 + 3 + 29);
+const_assert!(std::mem::size_of::<DepositEntry>() == 24 + 8 + 8 + 1 + 1 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {
     /// # Voting Power Caclulation
     /// ### Constant Lockup
-    /// Voting Power will be always equals to 1*(locked + staked)
+    /// Voting Power will always be equal to 1*deposited
     /// since we don't provide any other methods besides constant locking
-    pub fn voting_power(
-        &self,
-        _voting_mint_config: &VotingMintConfig,
-        _curr_ts: i64,
-    ) -> Result<u64> {
+    pub fn voting_power(&self) -> Result<u64> {
         Ok(self.amount_deposited_native)
-    }
-
-    /// Vote power contribution from locked funds only.
-    pub fn voting_power_locked(
-        &self,
-        curr_ts: i64,
-        _max_locked_vote_weight: u64,
-        _lockup_saturation_secs: u64,
-    ) -> Result<u64> {
-        if self.lockup.expired(curr_ts) {
-            return Ok(0);
-        }
-        match self.lockup.kind {
-            LockupKind::None => Ok(0),
-            LockupKind::Constant => Ok(self.amount_initially_locked_native),
-            _ => panic!("WRONG LOCKUP KIND PROVIDED"),
-        }
-    }
-
-    /// Vote power contribution from locked funds only at `at_ts`, assuming the user does everything
-    /// they can to unlock as quickly as possible at `curr_ts`.
-    ///
-    /// Currently that means that Constant will be unlocked immidiatelly.
-    pub fn voting_power_locked_guaranteed(
-        &self,
-        _curr_ts: i64,
-        _at_ts: i64,
-        _max_locked_vote_weight: u64,
-        _lockup_saturation_secs: u64,
-    ) -> Result<u64> {
-        Ok(0)
     }
 
     /// Returns native tokens still locked.
@@ -111,7 +72,7 @@ impl DepositEntry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::LockupKind::Constant;
+    use crate::{LockupKind::Constant, LockupPeriod, VotingMintConfig, COOLDOWN_SECS};
 
     #[test]
     pub fn far_future_lockup_start_test() -> Result<()> {
@@ -120,19 +81,21 @@ mod tests {
         let day: i64 = 86_400;
         let saturation: i64 = 5 * day;
         let lockup_start = 10_000_000_000; // arbitrary point
+        let period = LockupPeriod::Flex;
         let deposit = DepositEntry {
             amount_deposited_native: 10_000,
             amount_initially_locked_native: 10_000,
             lockup: Lockup {
                 start_ts: lockup_start,
-                end_ts: lockup_start + 2 * day,
                 kind: Constant,
-                reserved: [0; 15],
+                period,
+                unlock_requested: false,
+                end_ts: lockup_start + COOLDOWN_SECS as i64 + 0i64, // start + cooldown + period
+                reserved: [0; 5],
             },
             is_used: true,
-            allow_clawback: false,
             voting_mint_config_idx: 0,
-            reserved: [0; 29],
+            reserved: [0; 6],
         };
         let voting_mint_config = VotingMintConfig {
             mint: Pubkey::default(),
@@ -155,82 +118,23 @@ mod tests {
         // The timestamp 100_000 is very far before the lockup_start timestamp
         let withdrawable = deposit.amount_unlocked(100_000);
         assert_eq!(withdrawable, 0);
-        let voting_power = deposit.voting_power(&voting_mint_config, 100_000).unwrap();
+        let voting_power = deposit.voting_power().unwrap();
         assert_eq!(voting_power, 20_000);
 
-        let voting_power = deposit
-            .voting_power(&voting_mint_config, lockup_start - saturation)
-            .unwrap();
+        let voting_power = deposit.voting_power().unwrap();
         assert_eq!(voting_power, 20_000);
 
-        let voting_power = deposit
-            .voting_power(&voting_mint_config, lockup_start - saturation + day)
-            .unwrap();
+        let voting_power = deposit.voting_power().unwrap();
         assert_eq!(voting_power, 20_000);
 
-        let voting_power = deposit
-            .voting_power(&voting_mint_config, lockup_start - saturation + day + 1)
-            .unwrap();
+        let voting_power = deposit.voting_power().unwrap();
         assert_eq!(voting_power, 20_000);
 
-        let voting_power = deposit
-            .voting_power(&voting_mint_config, lockup_start - saturation + 2 * day)
-            .unwrap();
+        let voting_power = deposit.voting_power().unwrap();
         assert_eq!(voting_power, 20_000); // the second cliff has only 4/5th of lockup period left
 
-        let voting_power = deposit
-            .voting_power(&voting_mint_config, lockup_start - saturation + 2 * day + 1)
-            .unwrap();
+        let voting_power = deposit.voting_power().unwrap();
         assert_eq!(voting_power, 20_000);
-
-        Ok(())
-    }
-
-    #[test]
-    pub fn guaranteed_lockup_test() -> Result<()> {
-        // Check that constant lockups are handled correctly.
-        let day: i64 = 86_400;
-        let saturation = (10 * day) as u64;
-        let start = 10_000_000_000; // arbitrary point
-        let deposit = DepositEntry {
-            amount_deposited_native: 10_000,
-            amount_initially_locked_native: 10_000,
-            lockup: Lockup {
-                start_ts: start,
-                end_ts: start + 5 * day,
-                kind: Constant,
-                reserved: [0; 15],
-            },
-            is_used: true,
-            allow_clawback: false,
-            voting_mint_config_idx: 0,
-            reserved: [0; 29],
-        };
-
-        let v = |curr_offset, at_offset| {
-            deposit
-                .voting_power_locked_guaranteed(
-                    start + curr_offset,
-                    start + at_offset,
-                    100,
-                    saturation,
-                )
-                .unwrap()
-        };
-
-        assert_eq!(v(0, 0), 0);
-        assert_eq!(v(-day, 0), 0);
-        assert_eq!(v(-100 * day, 0), 0);
-        assert_eq!(v(-100 * day, -98 * day), 0);
-        assert_eq!(v(0, day), 0);
-        assert_eq!(v(0, 5 * day), 0);
-        assert_eq!(v(0, 50 * day), 0);
-        assert_eq!(v(day, day), 0);
-        assert_eq!(v(day, 2 * day,), 0);
-        assert_eq!(v(day, 20 * day), 0);
-        assert_eq!(v(50 * day, 50 * day), 0);
-        assert_eq!(v(50 * day, 51 * day), 0);
-        assert_eq!(v(50 * day, 80 * day), 0);
 
         Ok(())
     }

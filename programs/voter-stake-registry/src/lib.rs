@@ -99,17 +99,9 @@ pub mod voter_stake_registry {
         deposit_entry_index: u8,
         kind: LockupKind,
         start_ts: Option<u64>,
-        periods: u32,
-        allow_clawback: bool,
+        period: LockupPeriod,
     ) -> Result<()> {
-        instructions::create_deposit_entry(
-            ctx,
-            deposit_entry_index,
-            kind,
-            start_ts,
-            periods,
-            allow_clawback,
-        )
+        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, start_ts, period)
     }
 
     pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
@@ -118,32 +110,6 @@ pub mod voter_stake_registry {
 
     pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
         instructions::withdraw(ctx, deposit_entry_index, amount)
-    }
-
-    pub fn grant(
-        ctx: Context<Grant>,
-        voter_bump: u8,
-        voter_weight_record_bump: u8,
-        kind: LockupKind,
-        start_ts: Option<u64>,
-        periods: u32,
-        allow_clawback: bool,
-        amount: u64,
-    ) -> Result<()> {
-        instructions::grant(
-            ctx,
-            voter_bump,
-            voter_weight_record_bump,
-            kind,
-            start_ts,
-            periods,
-            allow_clawback,
-            amount,
-        )
-    }
-
-    pub fn clawback(ctx: Context<Clawback>, deposit_entry_index: u8) -> Result<()> {
-        instructions::clawback(ctx, deposit_entry_index)
     }
 
     pub fn close_deposit_entry(
@@ -157,9 +123,9 @@ pub mod voter_stake_registry {
         ctx: Context<ResetLockup>,
         deposit_entry_index: u8,
         kind: LockupKind,
-        periods: u32,
+        period: LockupPeriod,
     ) -> Result<()> {
-        instructions::reset_lockup(ctx, deposit_entry_index, kind, periods)
+        instructions::reset_lockup(ctx, deposit_entry_index, kind, period)
     }
 
     pub fn internal_transfer_locked(

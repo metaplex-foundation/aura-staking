@@ -33,10 +33,9 @@ pub struct UpdateVoterWeightRecord<'info> {
 /// This "revise" instruction must be called immediately before voting, in
 /// the same transaction.
 pub fn update_voter_weight_record(ctx: Context<UpdateVoterWeightRecord>) -> Result<()> {
-    let registrar = &ctx.accounts.registrar.load()?;
-    let voter = ctx.accounts.voter.load()?;
+    let voter = ctx.accounts.voter.load_mut()?;
     let record = &mut ctx.accounts.voter_weight_record;
-    record.voter_weight = voter.weight(registrar)?;
+    record.voter_weight = voter.weight()?;
     record.voter_weight_expiry = Some(Clock::get()?.slot);
 
     Ok(())
