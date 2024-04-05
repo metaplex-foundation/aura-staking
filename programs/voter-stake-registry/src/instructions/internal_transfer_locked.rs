@@ -53,14 +53,20 @@ pub fn internal_transfer_locked(
         VsrError::InsufficientLockedTokens
     );
 
-    let cooldown = i64::try_from(COOLDOWN_SECS).map_err(|_| VsrError::InvalidTimestampArguments)?;
+    // Check whether unlock request is allowed
     if !source.lockup.unlock_requested {
-        if (source.lockup.end_ts + cooldown) >= curr_ts {
+        if curr_ts >= source.lockup.end_ts {
             source.lockup.unlock_requested = true;
             return Ok(());
         } else {
             return Err(VsrError::InvalidTimestampArguments.into());
         }
+    }
+
+    // Check whether withdraw request is allowed
+    let cooldown = i64::try_from(COOLDOWN_SECS).map_err(|_| VsrError::InvalidTimestampArguments)?;
+    if source.lockup.unlock_requested && curr_ts <= source.lockup.end_ts.checked_add(cooldown).ok_or(VsrError::InvalidTimestampArguments)? {
+        return Err(VsrError::InvalidTimestampArguments.into());
     }
 
     source.amount_deposited_native = source.amount_deposited_native.checked_sub(amount).unwrap();

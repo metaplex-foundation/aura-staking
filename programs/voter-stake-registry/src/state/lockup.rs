@@ -1,5 +1,4 @@
 use crate::error::*;
-use crate::state::lockup;
 use crate::vote_weight_record;
 use anchor_lang::prelude::*;
 use std::convert::TryFrom;
@@ -41,7 +40,7 @@ pub struct Lockup {
     /// End of the lockup.
     pub(crate) end_ts: i64,
 
-    /// Cooldown period
+    /// Mark that unlock was requested successfully
     pub unlock_requested: bool,
 
     /// Type of lockup.
@@ -70,16 +69,10 @@ impl Lockup {
             VsrError::DepositStartTooFarInFuture
         );
 
-        let mut lockup_ts =
+        let lockup_period_ts =
             i64::try_from(period.to_secs()).map_err(|_| VsrError::InvalidTimestampArguments)?;
-        if let LockupPeriod::Flex = period {
-            lockup_ts = lockup_ts
-                .checked_sub(start_ts)
-                .ok_or(VsrError::InvalidTimestampArguments)?;
-        };
-
         let end_ts = start_ts
-            .checked_add(lockup_ts)
+            .checked_add(lockup_period_ts)
             .ok_or(VsrError::InvalidTimestampArguments)?;
 
         Ok(Self {
@@ -169,9 +162,9 @@ impl Lockup {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupPeriod {
-    TwoWeeks,
-    TwoMonths,
-    TwoYears,
+    ThreeMonths,
+    SixMonths,
+    OneYear,
     Flex,
 }
 
@@ -184,18 +177,18 @@ impl Default for LockupPeriod {
 impl LockupPeriod {
     pub fn to_secs(&self) -> u64 {
         match self {
-            LockupPeriod::TwoWeeks => SECS_PER_DAY * 14,
-            LockupPeriod::TwoMonths => SECS_PER_MONTH * 2,
-            LockupPeriod::TwoYears => SECS_PER_MONTH * 12,
-            LockupPeriod::Flex => u64::MAX,
+            LockupPeriod::ThreeMonths => SECS_PER_MONTH * 3,
+            LockupPeriod::SixMonths => SECS_PER_MONTH * 6,
+            LockupPeriod::OneYear => SECS_PER_MONTH * 12,
+            LockupPeriod::Flex => SECS_PER_DAY * 5,
         }
     }
 
     pub fn get_coef(&self) -> f64 {
         match self {
-            LockupPeriod::TwoWeeks => 1.05,
-            LockupPeriod::TwoMonths => 1.1,
-            LockupPeriod::TwoYears => 1.3,
+            LockupPeriod::ThreeMonths => 1.05,
+            LockupPeriod::SixMonths => 1.1,
+            LockupPeriod::OneYear => 1.3,
             LockupPeriod::Flex => 1.01,
         }
     }
@@ -246,7 +239,7 @@ mod tests {
 
     #[test]
     pub fn period_computations() -> Result<()> {
-        let period = LockupPeriod::TwoWeeks;
+        let period = LockupPeriod::ThreeMonths;
         let lockup = Lockup::new(LockupKind::Constant, 1000, 1000, period)?;
         let day = SECS_PER_DAY as i64;
         assert_eq!(lockup.periods_total()?, 3);
@@ -415,7 +408,7 @@ mod tests {
             kind: LockupKind::Constant,
             start_ts,
             end_ts,
-            period: LockupPeriod::TwoWeeks,
+            period: LockupPeriod::Flex,
             unlock_requested: false,
             reserved: [0u8; 5],
         };
@@ -433,7 +426,7 @@ mod tests {
             kind: LockupKind::Constant,
             start_ts,
             end_ts,
-            period: LockupPeriod::TwoWeeks,
+            period: LockupPeriod::Flex,
             unlock_requested: false,
             reserved: [0u8; 5],
         };
