@@ -136,7 +136,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             0,
             LockupKind::Constant,
             None,
-            LockupPeriod::TwoWeeks,
+            LockupPeriod::ThreeMonths,
         )
         .await
         .unwrap();

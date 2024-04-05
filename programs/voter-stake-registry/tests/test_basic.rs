@@ -97,7 +97,7 @@ async fn test_basic() -> Result<(), TransportError> {
             0,
             LockupKind::Constant,
             None,
-            LockupPeriod::TwoWeeks,
+            LockupPeriod::ThreeMonths,
         )
         .await?;
     context
