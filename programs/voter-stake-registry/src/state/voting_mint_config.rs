@@ -86,11 +86,8 @@ impl VotingMintConfig {
 
     /// The maximum extra vote weight a number of locked up native tokens can have.
     /// Will be multiplied with a factor between 0 and 1 for the lockup duration.
-    pub fn max_extra_lockup_vote_weight(&self, amount_native: u64) -> Result<u64> {
-        Self::apply_factor(
-            self.digit_shift_native(amount_native)?,
-            self.max_extra_lockup_vote_weight_scaled_factor,
-        )
+    pub fn max_extra_lockup_vote_weight(&self, _amount_native: u64) -> Result<u64> {
+        Ok(0)
     }
 
     /// Whether this voting mint is configured.

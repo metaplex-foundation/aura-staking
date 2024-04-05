@@ -83,7 +83,7 @@ mod tests {
         let lockup_start = 10_000_000_000; // arbitrary point
         let period = LockupPeriod::Flex;
         let deposit = DepositEntry {
-            amount_deposited_native: 10_000,
+            amount_deposited_native: 20_000,
             amount_initially_locked_native: 10_000,
             lockup: Lockup {
                 start_ts: lockup_start,
@@ -110,28 +110,11 @@ mod tests {
 
         let baseline_vote_weight =
             voting_mint_config.baseline_vote_weight(deposit.amount_deposited_native)?;
-        assert_eq!(baseline_vote_weight, 10_000);
-        let max_locked_vote_weight = voting_mint_config
-            .max_extra_lockup_vote_weight(deposit.amount_initially_locked_native)?;
-        assert_eq!(max_locked_vote_weight, 10_000);
+        assert_eq!(baseline_vote_weight, 20_000);
 
         // The timestamp 100_000 is very far before the lockup_start timestamp
         let withdrawable = deposit.amount_unlocked(100_000);
-        assert_eq!(withdrawable, 0);
-        let voting_power = deposit.voting_power().unwrap();
-        assert_eq!(voting_power, 20_000);
-
-        let voting_power = deposit.voting_power().unwrap();
-        assert_eq!(voting_power, 20_000);
-
-        let voting_power = deposit.voting_power().unwrap();
-        assert_eq!(voting_power, 20_000);
-
-        let voting_power = deposit.voting_power().unwrap();
-        assert_eq!(voting_power, 20_000);
-
-        let voting_power = deposit.voting_power().unwrap();
-        assert_eq!(voting_power, 20_000); // the second cliff has only 4/5th of lockup period left
+        assert_eq!(withdrawable, 10_000);
 
         let voting_power = deposit.voting_power().unwrap();
         assert_eq!(voting_power, 20_000);
