@@ -104,6 +104,23 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
     // Get the deposit being withdrawn from.
     let curr_ts = registrar.clock_unix_timestamp();
     let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
+
+    // check whether funds are cooled down
+    if deposit_entry.lockup.kind == LockupKind::Constant {
+        require!(
+            deposit_entry.lockup.cooldown_ends_ts.is_some(),
+            VsrError::UnlockMustBeCalledFirst
+        );
+        let cooldown_end_ts = deposit_entry
+            .lockup
+            .cooldown_ends_ts
+            .ok_or(VsrError::UnlockMustBeCalledFirst)?;
+        require!(
+            curr_ts >= cooldown_end_ts,
+            VsrError::InvalidTimestampArguments
+        );
+    }
+
     require_gte!(
         deposit_entry.amount_unlocked(curr_ts),
         amount,
@@ -121,6 +138,7 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
         amount,
         VsrError::InternalProgramError
     );
+
     deposit_entry.amount_deposited_native = deposit_entry
         .amount_deposited_native
         .checked_sub(amount)

@@ -34,7 +34,7 @@ pub struct DepositEntry {
 
     pub reserved: [u8; 6],
 }
-const_assert!(std::mem::size_of::<DepositEntry>() == 24 + 8 + 8 + 1 + 1 + 6);
+const_assert!(std::mem::size_of::<DepositEntry>() == 40 + 8 + 8 + 1 + 1 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {
@@ -72,7 +72,7 @@ impl DepositEntry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{LockupKind::Constant, LockupPeriod, VotingMintConfig, COOLDOWN_SECS};
+    use crate::{LockupKind::Constant, LockupPeriod, VotingMintConfig};
 
     #[test]
     pub fn far_future_lockup_start_test() -> Result<()> {
@@ -87,10 +87,10 @@ mod tests {
             amount_initially_locked_native: 10_000,
             lockup: Lockup {
                 start_ts: lockup_start,
+                end_ts: lockup_start + LockupPeriod::Flex.to_secs() as i64, // start + cooldown + period
                 kind: Constant,
                 period,
-                unlock_requested: false,
-                end_ts: lockup_start + COOLDOWN_SECS as i64 + 0i64, // start + cooldown + period
+                cooldown_ends_ts: None,
                 reserved: [0; 5],
             },
             is_used: true,
