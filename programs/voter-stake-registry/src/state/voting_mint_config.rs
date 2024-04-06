@@ -51,9 +51,9 @@ impl VotingMintConfig {
     fn digit_shift_native(&self, amount_native: u64) -> Result<u64> {
         let compute = || -> Option<u64> {
             let val = if self.digit_shift < 0 {
-                (amount_native as u128).checked_div(10u128.pow((-self.digit_shift) as u32))?
+                (amount_native as u128).checked_div(10_u128.pow((-self.digit_shift) as u32))?
             } else {
-                (amount_native as u128).checked_mul(10u128.pow(self.digit_shift as u32))?
+                (amount_native as u128).checked_mul(10_u128.pow(self.digit_shift as u32))?
             };
             u64::try_from(val).ok()
         };
