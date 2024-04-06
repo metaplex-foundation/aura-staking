@@ -322,6 +322,42 @@ impl AddinCookie {
     }
 
     #[allow(dead_code)]
+    pub async fn unlock_tokens(
+        &self,
+        registrar: &RegistrarCookie,
+        voter: &VoterCookie,
+        authority: &Keypair,
+        deposit_entry_index: u8,
+    ) -> std::result::Result<(), TransportError> {
+        let data =
+            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::UnlockTokens {
+                deposit_entry_index,
+            });
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &voter_stake_registry::accounts::UnlockTokens {
+                registrar: registrar.address,
+                voter: voter.address,
+                voter_authority: authority.pubkey(),
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        // clone the secrets
+        let signer = Keypair::from_base58_string(&authority.to_base58_string());
+
+        self.solana
+            .process_transaction(&instructions, Some(&[&signer]))
+            .await
+    }
+
+    #[allow(dead_code)]
     pub async fn withdraw(
         &self,
         registrar: &RegistrarCookie,
@@ -466,128 +502,6 @@ impl AddinCookie {
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &voter_stake_registry::accounts::CloseDepositEntry {
-                voter: voter.address,
-                voter_authority: authority.pubkey(),
-            },
-            None,
-        );
-
-        let instructions = vec![Instruction {
-            program_id: self.program_id,
-            accounts,
-            data,
-        }];
-
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
-        self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
-            .await
-    }
-
-    #[allow(dead_code)]
-    pub async fn reset_lockup(
-        &self,
-        registrar: &RegistrarCookie,
-        voter: &VoterCookie,
-        authority: &Keypair,
-        deposit_entry_index: u8,
-        kind: voter_stake_registry::state::LockupKind,
-        period: voter_stake_registry::state::LockupPeriod,
-    ) -> Result<(), TransportError> {
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::ResetLockup {
-                deposit_entry_index,
-                kind,
-                period,
-            });
-
-        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::ResetLockup {
-                registrar: registrar.address,
-                voter: voter.address,
-                voter_authority: authority.pubkey(),
-            },
-            None,
-        );
-
-        let instructions = vec![Instruction {
-            program_id: self.program_id,
-            accounts,
-            data,
-        }];
-
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
-        self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
-            .await
-    }
-
-    #[allow(dead_code)]
-    pub async fn internal_transfer_locked(
-        &self,
-        registrar: &RegistrarCookie,
-        voter: &VoterCookie,
-        authority: &Keypair,
-        source_deposit_entry_index: u8,
-        target_deposit_entry_index: u8,
-        amount: u64,
-    ) -> Result<(), TransportError> {
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::InternalTransferLocked {
-                source_deposit_entry_index,
-                target_deposit_entry_index,
-                amount,
-            },
-        );
-
-        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::InternalTransferLocked {
-                registrar: registrar.address,
-                voter: voter.address,
-                voter_authority: authority.pubkey(),
-            },
-            None,
-        );
-
-        let instructions = vec![Instruction {
-            program_id: self.program_id,
-            accounts,
-            data,
-        }];
-
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
-        self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
-            .await
-    }
-
-    #[allow(dead_code)]
-    pub async fn internal_transfer_unlocked(
-        &self,
-        registrar: &RegistrarCookie,
-        voter: &VoterCookie,
-        authority: &Keypair,
-        source_deposit_entry_index: u8,
-        target_deposit_entry_index: u8,
-        amount: u64,
-    ) -> Result<(), TransportError> {
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::InternalTransferUnlocked {
-                source_deposit_entry_index,
-                target_deposit_entry_index,
-                amount,
-            },
-        );
-
-        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::InternalTransferUnlocked {
-                registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: authority.pubkey(),
             },

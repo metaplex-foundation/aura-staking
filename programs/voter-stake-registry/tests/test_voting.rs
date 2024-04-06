@@ -95,7 +95,7 @@ async fn test_voting() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             None,
-            LockupPeriod::Flex,
+            LockupPeriod::None,
         )
         .await
         .unwrap();
@@ -112,7 +112,7 @@ async fn test_voting() -> Result<(), TransportError> {
         .await
         .unwrap();
 
-    // need vote weight of 1000, but only have 499 * 2
+    // need vote weight of 1000, but only have 499
     realm
         .create_proposal(
             mint_governance.address,
@@ -132,7 +132,7 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_authority,
             voter_mngo,
             0,
-            1,
+            501,
         )
         .await
         .unwrap();
@@ -173,7 +173,7 @@ async fn test_voting() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             None,
-            LockupPeriod::Flex,
+            LockupPeriod::None,
         )
         .await
         .unwrap();
@@ -199,7 +199,7 @@ async fn test_voting() -> Result<(), TransportError> {
             1,
             LockupKind::None,
             None,
-            LockupPeriod::Flex,
+            LockupPeriod::None,
         )
         .await
         .unwrap();
@@ -232,7 +232,7 @@ async fn test_voting() -> Result<(), TransportError> {
     let mut data_slice: &[u8] = &proposal_data;
     let proposal_state: spl_governance::state::proposal::ProposalV2 =
         anchor_lang::AnchorDeserialize::deserialize(&mut data_slice).unwrap();
-    assert_eq!(proposal_state.options[0].vote_weight, 2 * 750);
+    assert_eq!(proposal_state.options[0].vote_weight, 1750);
     assert_eq!(proposal_state.deny_vote_weight.unwrap(), 0);
 
     // having voted, the funds are now locked, withdrawing is impossible

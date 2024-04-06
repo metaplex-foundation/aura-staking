@@ -144,7 +144,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             None,
-            LockupPeriod::Flex,
+            LockupPeriod::None,
         )
         .await
         .unwrap();
@@ -175,7 +175,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             1,
             LockupKind::None,
             None,
-            LockupPeriod::Flex,
+            LockupPeriod::None,
         )
         .await
         .unwrap();
@@ -247,7 +247,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             5,
             LockupKind::None,
             None,
-            LockupPeriod::Flex,
+            LockupPeriod::None,
         )
         .await
         .unwrap();
@@ -287,7 +287,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             None,
-            LockupPeriod::Flex,
+            LockupPeriod::None,
         )
         .await
         .unwrap();

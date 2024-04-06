@@ -60,9 +60,9 @@ async fn test_all_deposits() -> Result<(), TransportError> {
                 voter_authority,
                 &mngo_voting_mint,
                 i,
-                LockupKind::Constant,
+                LockupKind::None,
                 None,
-                LockupPeriod::ThreeMonths,
+                LockupPeriod::None,
             )
             .await
             .unwrap();
