@@ -119,49 +119,12 @@ pub mod voter_stake_registry {
         instructions::close_deposit_entry(ctx, deposit_entry_index)
     }
 
-    pub fn reset_lockup(
-        ctx: Context<ResetLockup>,
-        deposit_entry_index: u8,
-        kind: LockupKind,
-        period: LockupPeriod,
-    ) -> Result<()> {
-        instructions::reset_lockup(ctx, deposit_entry_index, kind, period)
-    }
-
-    pub fn internal_transfer_locked(
-        ctx: Context<InternalTransferLocked>,
-        source_deposit_entry_index: u8,
-        target_deposit_entry_index: u8,
-        amount: u64,
-    ) -> Result<()> {
-        instructions::internal_transfer_locked(
-            ctx,
-            source_deposit_entry_index,
-            target_deposit_entry_index,
-            amount,
-        )
-    }
-
-    pub fn internal_transfer_unlocked(
-        ctx: Context<InternalTransferUnlocked>,
-        source_deposit_entry_index: u8,
-        target_deposit_entry_index: u8,
-        amount: u64,
-    ) -> Result<()> {
-        instructions::internal_transfer_unlocked(
-            ctx,
-            source_deposit_entry_index,
-            target_deposit_entry_index,
-            amount,
-        )
-    }
-
     pub fn update_voter_weight_record(ctx: Context<UpdateVoterWeightRecord>) -> Result<()> {
         instructions::update_voter_weight_record(ctx)
     }
 
-    pub fn update_max_vote_weight(ctx: Context<UpdateMaxVoteWeight>) -> Result<()> {
-        instructions::update_max_vote_weight(ctx)
+    pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
+        instructions::unlock_tokens(ctx, deposit_entry_index)
     }
 
     pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
