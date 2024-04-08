@@ -67,8 +67,7 @@ impl<'info> Withdraw<'info> {
     }
 }
 
-/// Withdraws tokens from a deposit entry, if they are unlocked according
-/// to the deposit's vesting schedule.
+/// Withdraws tokens from a deposit entry, if they are unlocked
 ///
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
