@@ -48,9 +48,6 @@ pub struct Lockup {
 
     /// Type of lockup
     pub period: LockupPeriod,
-
-    /// padding + reserved
-    pub reserved: [u8; 5],
 }
 const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 16 + 1 + 1 + 1 + 5);
 const_assert!(std::mem::size_of::<Lockup>() % 8 == 0);
@@ -85,7 +82,6 @@ impl Lockup {
             end_ts,
             period,
             cooldown_ends_ts: None,
-            reserved: [0; 5],
         })
     }
 

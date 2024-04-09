@@ -31,8 +31,6 @@ pub struct DepositEntry {
 
     // Points to the VotingMintConfig this deposit uses.
     pub voting_mint_config_idx: u8,
-
-    pub reserved: [u8; 6],
 }
 const_assert!(std::mem::size_of::<DepositEntry>() == 40 + 8 + 8 + 1 + 1 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
@@ -91,11 +89,9 @@ mod tests {
                 kind: Constant,
                 period,
                 cooldown_ends_ts: None,
-                reserved: [0; 5],
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            reserved: [0; 6],
         };
         let voting_mint_config = VotingMintConfig {
             mint: Pubkey::default(),
@@ -104,8 +100,6 @@ mod tests {
             max_extra_lockup_vote_weight_scaled_factor: 1_000_000_000, // 1x
             lockup_saturation_secs: saturation as u64,
             digit_shift: 0,
-            reserved1: [0; 7],
-            reserved2: [0; 7],
         };
 
         let baseline_vote_weight =
