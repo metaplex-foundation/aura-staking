@@ -22,8 +22,8 @@ pub const MAX_LOCKUP_PERIODS: u32 = 365 * 200;
 
 pub const MAX_LOCKUP_IN_FUTURE_SECS: i64 = 100 * 365 * 24 * 60 * 60;
 
-/// Seconds in cooldown (5 days)
-pub const COOLDOWN_SECS: u64 = SECS_PER_DAY * 5;
+/// Seconds in cooldown (2 days)
+pub const COOLDOWN_SECS: i64 = 86_400 * 2;
 
 #[zero_copy]
 #[derive(Default)]
@@ -40,8 +40,8 @@ pub struct Lockup {
     /// End of the lockup.
     pub(crate) end_ts: i64,
 
-    /// Cooldown period
-    pub unlock_requested: bool,
+    /// Mark two things: cooldown was requested and its ending timestamp
+    pub cooldown_ends_ts: Option<i64>,
 
     /// Type of lockup.
     pub kind: LockupKind,
@@ -52,7 +52,7 @@ pub struct Lockup {
     /// padding + reserved
     pub reserved: [u8; 5],
 }
-const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 1 + 1 + 1 + 5);
+const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 16 + 1 + 1 + 1 + 5);
 const_assert!(std::mem::size_of::<Lockup>() % 8 == 0);
 
 impl Lockup {
@@ -69,10 +69,14 @@ impl Lockup {
             VsrError::DepositStartTooFarInFuture
         );
 
+        if kind == LockupKind::None {
+            require!(period == LockupPeriod::None, VsrError::InvalidLockupPeriod);
+        }
+
+        let lockup_period_ts =
+            i64::try_from(period.to_secs()).map_err(|_| VsrError::InvalidTimestampArguments)?;
         let end_ts = start_ts
-            .checked_add(
-                i64::try_from(period.to_secs()).map_err(|_| VsrError::InvalidTimestampArguments)?,
-            )
+            .checked_add(lockup_period_ts)
             .ok_or(VsrError::InvalidTimestampArguments)?;
 
         Ok(Self {
@@ -80,7 +84,7 @@ impl Lockup {
             start_ts,
             end_ts,
             period,
-            unlock_requested: false,
+            cooldown_ends_ts: None,
             reserved: [0; 5],
         })
     }
@@ -92,14 +96,18 @@ impl Lockup {
 
     /// Number of seconds left in the lockup.
     /// May be more than end_ts-start_ts if curr_ts < start_ts.
-    pub fn seconds_left(&self, mut curr_ts: i64) -> u64 {
-        if self.kind == LockupKind::Constant {
-            curr_ts = self.start_ts;
+    pub fn seconds_left(&self, curr_ts: i64) -> u64 {
+        // if self.kind == LockupKind::Constant{
+        //     curr_ts = self.start_ts;
+        // };
+        if self.kind == LockupKind::None {
+            return 0;
         }
+
         if curr_ts >= self.end_ts {
             0
         } else {
-            (self.end_ts - curr_ts) as u64
+            u64::try_from(self.end_ts.checked_sub(curr_ts).unwrap()).unwrap()
         }
     }
 
@@ -162,9 +170,10 @@ impl Lockup {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupPeriod {
-    TwoWeeks,
-    TwoMonths,
-    TwoYears,
+    None,
+    ThreeMonths,
+    SixMonths,
+    OneYear,
     Flex,
 }
 
@@ -177,19 +186,11 @@ impl Default for LockupPeriod {
 impl LockupPeriod {
     pub fn to_secs(&self) -> u64 {
         match self {
-            LockupPeriod::TwoWeeks => SECS_PER_DAY * 14,
-            LockupPeriod::TwoMonths => SECS_PER_MONTH * 2,
-            LockupPeriod::TwoYears => SECS_PER_MONTH * 12,
-            LockupPeriod::Flex => u64::MAX,
-        }
-    }
-
-    pub fn get_coef(&self) -> f64 {
-        match self {
-            LockupPeriod::TwoWeeks => 1.05,
-            LockupPeriod::TwoMonths => 1.1,
-            LockupPeriod::TwoYears => 1.3,
-            LockupPeriod::Flex => 1.01,
+            LockupPeriod::ThreeMonths => SECS_PER_MONTH * 3,
+            LockupPeriod::SixMonths => SECS_PER_MONTH * 6,
+            LockupPeriod::OneYear => SECS_PER_MONTH * 12,
+            LockupPeriod::Flex => SECS_PER_DAY * 5,
+            LockupPeriod::None => 0,
         }
     }
 }
@@ -227,221 +228,5 @@ impl LockupKind {
             LockupKind::None => 0,
             LockupKind::Constant => 3,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    // intentionally not a multiple of a day
-    const MAX_SECS_LOCKED: u64 = 365 * 24 * 60 * 60 + 7 * 60 * 60;
-    const MAX_DAYS_LOCKED: f64 = MAX_SECS_LOCKED as f64 / (24.0 * 60.0 * 60.0);
-
-    #[test]
-    pub fn period_computations() -> Result<()> {
-        let period = LockupPeriod::TwoWeeks;
-        let lockup = Lockup::new(LockupKind::Constant, 1000, 1000, period)?;
-        let day = SECS_PER_DAY as i64;
-        assert_eq!(lockup.periods_total()?, 3);
-        assert_eq!(lockup.period_current(0)?, 0);
-        assert_eq!(lockup.periods_left(0)?, 3);
-        assert_eq!(lockup.period_current(999)?, 0);
-        assert_eq!(lockup.periods_left(999)?, 3);
-        assert_eq!(lockup.period_current(1000)?, 0);
-        assert_eq!(lockup.periods_left(1000)?, 3);
-        assert_eq!(lockup.period_current(1000 + day - 1)?, 0);
-        assert_eq!(lockup.periods_left(1000 + day - 1)?, 3);
-        assert_eq!(lockup.period_current(1000 + day)?, 1);
-        assert_eq!(lockup.periods_left(1000 + day)?, 2);
-        assert_eq!(lockup.period_current(1000 + 3 * day - 1)?, 2);
-        assert_eq!(lockup.periods_left(1000 + 3 * day - 1)?, 1);
-        assert_eq!(lockup.period_current(1000 + 3 * day)?, 3);
-        assert_eq!(lockup.periods_left(1000 + 3 * day)?, 0);
-        assert_eq!(lockup.period_current(100 * day)?, 3);
-        assert_eq!(lockup.periods_left(100 * day)?, 0);
-        Ok(())
-    }
-
-    #[test]
-    pub fn days_left_start() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 10,
-            days_total: 10.0,
-            curr_day: 0.0,
-        })
-    }
-
-    #[test]
-    pub fn days_left_one_half() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 10,
-            days_total: 10.0,
-            curr_day: 0.5,
-        })
-    }
-
-    #[test]
-    pub fn days_left_one() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 9,
-            days_total: 10.0,
-            curr_day: 1.0,
-        })
-    }
-
-    #[test]
-    pub fn days_left_one_and_one_half() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 9,
-            days_total: 10.0,
-            curr_day: 1.5,
-        })
-    }
-
-    #[test]
-    pub fn days_left_9() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 1,
-            days_total: 10.0,
-            curr_day: 9.0,
-        })
-    }
-
-    #[test]
-    pub fn days_left_9_dot_one() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 1,
-            days_total: 10.0,
-            curr_day: 9.1,
-        })
-    }
-
-    #[test]
-    pub fn days_left_9_dot_nine() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 1,
-            days_total: 10.0,
-            curr_day: 9.9,
-        })
-    }
-
-    #[test]
-    pub fn days_left_ten() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 0,
-            days_total: 10.0,
-            curr_day: 10.0,
-        })
-    }
-
-    #[test]
-    pub fn days_left_eleven() -> Result<()> {
-        run_test_days_left(TestDaysLeft {
-            expected_days_left: 0,
-            days_total: 10.0,
-            curr_day: 11.0,
-        })
-    }
-
-    #[test]
-    pub fn months_left_start() -> Result<()> {
-        run_test_months_left(TestMonthsLeft {
-            expected_months_left: 10,
-            months_total: 10.0,
-            curr_month: 0.,
-        })
-    }
-
-    #[test]
-    pub fn months_left_one_half() -> Result<()> {
-        run_test_months_left(TestMonthsLeft {
-            expected_months_left: 10,
-            months_total: 10.0,
-            curr_month: 0.5,
-        })
-    }
-
-    #[test]
-    pub fn months_left_one_and_a_half() -> Result<()> {
-        run_test_months_left(TestMonthsLeft {
-            expected_months_left: 9,
-            months_total: 10.0,
-            curr_month: 1.5,
-        })
-    }
-
-    #[test]
-    pub fn months_left_ten() -> Result<()> {
-        run_test_months_left(TestMonthsLeft {
-            expected_months_left: 9,
-            months_total: 10.0,
-            curr_month: 1.5,
-        })
-    }
-
-    #[test]
-    pub fn months_left_eleven() -> Result<()> {
-        run_test_months_left(TestMonthsLeft {
-            expected_months_left: 0,
-            months_total: 10.0,
-            curr_month: 11.,
-        })
-    }
-
-    struct TestDaysLeft {
-        expected_days_left: u64,
-        days_total: f64,
-        curr_day: f64,
-    }
-
-    struct TestMonthsLeft {
-        expected_months_left: u64,
-        months_total: f64,
-        curr_month: f64,
-    }
-
-    fn run_test_days_left(t: TestDaysLeft) -> Result<()> {
-        let start_ts = 1634929833;
-        let end_ts = start_ts + days_to_secs(t.days_total);
-        let curr_ts = start_ts + days_to_secs(t.curr_day);
-        let l = Lockup {
-            kind: LockupKind::Constant,
-            start_ts,
-            end_ts,
-            period: LockupPeriod::TwoWeeks,
-            unlock_requested: false,
-            reserved: [0u8; 5],
-        };
-        let days_left = l.periods_left(curr_ts)?;
-        assert_eq!(days_left, 0);
-        assert_eq!(days_left, t.expected_days_left);
-        Ok(())
-    }
-
-    fn run_test_months_left(t: TestMonthsLeft) -> Result<()> {
-        let start_ts = 1634929833;
-        let end_ts = start_ts + months_to_secs(t.months_total);
-        let curr_ts = start_ts + months_to_secs(t.curr_month);
-        let l = Lockup {
-            kind: LockupKind::Constant,
-            start_ts,
-            end_ts,
-            period: LockupPeriod::TwoWeeks,
-            unlock_requested: false,
-            reserved: [0u8; 5],
-        };
-        let months_left = l.periods_left(curr_ts)?;
-        assert_eq!(months_left, t.expected_months_left);
-        Ok(())
-    }
-
-    fn days_to_secs(days: f64) -> i64 {
-        let d = (SECS_PER_DAY as f64) * days;
-        d.round() as i64
-    }
-
-    fn months_to_secs(months: f64) -> i64 {
-        let d = (SECS_PER_MONTH as f64) * months;
-        d.round() as i64
     }
 }

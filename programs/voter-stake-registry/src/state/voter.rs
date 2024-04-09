@@ -14,7 +14,7 @@ pub struct Voter {
     pub voter_weight_record_bump: u8,
     pub reserved: [u8; 6],
 }
-const_assert!(std::mem::size_of::<Voter>() == 2 * 32 + 32 * 48 + 2 + 6);
+const_assert!(std::mem::size_of::<Voter>() == 2 * 32 + 32 * 64 + 2 + 6);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
 impl Voter {
@@ -23,7 +23,7 @@ impl Voter {
         self.deposits
             .iter()
             .filter(|d| d.is_used)
-            .try_fold(0u64, |sum, d| {
+            .try_fold(0_u64, |sum, d| {
                 d.voting_power().map(|vp| sum.checked_add(vp).unwrap())
             })
     }
@@ -33,7 +33,7 @@ impl Voter {
         self.deposits
             .iter()
             .filter(|d| d.is_used)
-            .try_fold(0u64, |sum, d| {
+            .try_fold(0_u64, |sum, d| {
                 registrar.voting_mints[d.voting_mint_config_idx as usize]
                     .baseline_vote_weight(d.amount_deposited_native)
                     .map(|vp| sum.checked_add(vp).unwrap())
@@ -47,7 +47,7 @@ impl Voter {
         self.deposits
             .iter()
             .filter(|d| d.is_used)
-            .try_fold(0u64, |sum, _d| Ok(sum))
+            .try_fold(0_u64, |sum, _d| Ok(sum))
     }
 
     pub fn active_deposit_mut(&mut self, index: u8) -> Result<&mut DepositEntry> {

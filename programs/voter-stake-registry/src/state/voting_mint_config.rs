@@ -51,9 +51,9 @@ impl VotingMintConfig {
     fn digit_shift_native(&self, amount_native: u64) -> Result<u64> {
         let compute = || -> Option<u64> {
             let val = if self.digit_shift < 0 {
-                (amount_native as u128).checked_div(10u128.pow((-self.digit_shift) as u32))?
+                (amount_native as u128).checked_div(10_u128.pow((-self.digit_shift) as u32))?
             } else {
-                (amount_native as u128).checked_mul(10u128.pow(self.digit_shift as u32))?
+                (amount_native as u128).checked_mul(10_u128.pow(self.digit_shift as u32))?
             };
             u64::try_from(val).ok()
         };
@@ -86,11 +86,8 @@ impl VotingMintConfig {
 
     /// The maximum extra vote weight a number of locked up native tokens can have.
     /// Will be multiplied with a factor between 0 and 1 for the lockup duration.
-    pub fn max_extra_lockup_vote_weight(&self, amount_native: u64) -> Result<u64> {
-        Self::apply_factor(
-            self.digit_shift_native(amount_native)?,
-            self.max_extra_lockup_vote_weight_scaled_factor,
-        )
+    pub fn max_extra_lockup_vote_weight(&self, _amount_native: u64) -> Result<u64> {
+        Ok(0)
     }
 
     /// Whether this voting mint is configured.

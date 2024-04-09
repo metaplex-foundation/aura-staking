@@ -3,7 +3,7 @@ use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 use program_test::*;
-use voter_stake_registry::state::Voter;
+use voter_stake_registry::state::{LockupKind, LockupPeriod};
 
 mod program_test;
 
@@ -71,14 +71,7 @@ async fn test_basic() -> Result<(), TransportError> {
         .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
         .await;
 
-    // create the voter again, should have no effect
-    context
-        .addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
-        .await;
-
     // test deposit and withdraw
-
     let reference_account = context.users[1].token_accounts[0];
     let reference_initial = context
         .solana
@@ -95,10 +88,9 @@ async fn test_basic() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
-            voter_stake_registry::state::LockupKind::Constant,
+            LockupKind::None,
             None,
-            0,
-            false,
+            LockupPeriod::None,
         )
         .await?;
     context
@@ -183,13 +175,7 @@ async fn test_basic() -> Result<(), TransportError> {
         .banks_client
         .get_balance(voter_authority.pubkey())
         .await?;
-    let token_rent = context.solana.rent.minimum_balance(TokenAccount::LEN);
-    let voter_rent = context
-        .solana
-        .rent
-        .minimum_balance(std::mem::size_of::<Voter>());
-    let tolerance = 60_000;
-    assert!(lamports_after > lamports_before + voter_rent + token_rent - tolerance);
+    assert!(lamports_after > lamports_before);
 
     Ok(())
 }

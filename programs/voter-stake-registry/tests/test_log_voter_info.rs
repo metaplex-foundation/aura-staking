@@ -2,7 +2,7 @@ use anchor_spl::token::TokenAccount;
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
-use voter_stake_registry::state::LockupKind;
+use voter_stake_registry::state::{LockupKind, LockupPeriod};
 
 mod program_test;
 
@@ -82,8 +82,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             0,
             LockupKind::Constant,
             None,
-            12,
-            false,
+            LockupPeriod::OneYear,
         )
         .await
         .unwrap();
@@ -100,7 +99,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         .await
         .unwrap();
 
-    // advance time, to have some vested funds
+    // advance time to one month ahead
     addin
         .set_time_offset(&registrar, &realm_authority, 365 * 24 * 60 * 60 / 12)
         .await;
@@ -113,16 +112,13 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
     let voter_event =
         deserialize_event::<voter_stake_registry::events::VoterInfo>(&data_log[0]).unwrap();
     assert_eq!(voter_event.voting_power_baseline, 12000);
-    assert_eq!(
-        voter_event.voting_power,
-        12000 + (1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11) * 1000 / 12
-    );
+    assert_eq!(voter_event.voting_power, 12000);
 
     let deposit_event =
         deserialize_event::<voter_stake_registry::events::DepositEntryInfo>(&data_log[1]).unwrap();
     assert_eq!(deposit_event.deposit_entry_index, 0);
     assert_eq!(deposit_event.voting_mint_config_index, 0);
-    assert_eq!(deposit_event.unlocked, 1000);
+    assert_eq!(deposit_event.unlocked, 0);
     assert_eq!(deposit_event.voting_power, voter_event.voting_power);
     assert_eq!(
         deposit_event.voting_power_baseline,
@@ -130,14 +126,8 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
     );
     assert!(deposit_event.locking.is_some());
     let locking = deposit_event.locking.unwrap();
-    assert!(locking.vesting.is_some());
-    let vesting = locking.vesting.unwrap();
-    assert_eq!(locking.amount, 11000);
-    assert_eq!(vesting.rate, 1000);
-    assert_eq!(
-        locking.end_timestamp.unwrap(),
-        vesting.next_timestamp + 10 * (365 * 24 * 60 * 60 / 12)
-    );
+    assert!(locking.vesting.is_none());
+    assert_eq!(locking.amount, 12000);
 
     Ok(())
 }
