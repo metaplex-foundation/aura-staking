@@ -22,8 +22,8 @@ pub const MAX_LOCKUP_PERIODS: u32 = 365 * 200;
 
 pub const MAX_LOCKUP_IN_FUTURE_SECS: i64 = 100 * 365 * 24 * 60 * 60;
 
-/// Seconds in cooldown (2 days)
-pub const COOLDOWN_SECS: i64 = 86_400 * 2;
+/// Seconds in cooldown (5 days)
+pub const COOLDOWN_SECS: i64 = 86_400 * 5;
 
 #[zero_copy]
 #[derive(Default)]
@@ -66,9 +66,11 @@ impl Lockup {
             VsrError::DepositStartTooFarInFuture
         );
 
-        if kind == LockupKind::None {
-            require!(period == LockupPeriod::None, VsrError::InvalidLockupPeriod);
-        }
+        require!(
+            (kind == LockupKind::None && period == LockupPeriod::None)
+                || (kind == LockupKind::Constant && period != LockupPeriod::None),
+            VsrError::InvalidLockupKind
+        );
 
         let lockup_period_ts =
             i64::try_from(period.to_secs()).map_err(|_| VsrError::InvalidTimestampArguments)?;
@@ -103,7 +105,7 @@ impl Lockup {
         if curr_ts >= self.end_ts {
             0
         } else {
-            u64::try_from(self.end_ts.checked_sub(curr_ts).unwrap()).unwrap()
+            (self.end_ts - curr_ts) as u64
         }
     }
 

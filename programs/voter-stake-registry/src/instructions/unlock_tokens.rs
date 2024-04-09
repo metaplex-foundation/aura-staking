@@ -26,17 +26,18 @@ pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Res
     let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
 
     // Check whether unlock request is allowed
-    if deposit_entry.lockup.cooldown_ends_ts.is_none() {
-        if curr_ts >= deposit_entry.lockup.end_ts {
-            let cooldown_ends_ts = curr_ts
-                .checked_add(COOLDOWN_SECS)
-                .ok_or(VsrError::InvalidTimestampArguments)?;
-            deposit_entry.lockup.cooldown_ends_ts = Some(cooldown_ends_ts);
-            Ok(())
-        } else {
-            Err(VsrError::DepositStillLocked.into())
-        }
-    } else {
-        Err(VsrError::UnlockAlreadyRequested.into())
-    }
+    require!(
+        deposit_entry.lockup.cooldown_ends_ts.is_some(),
+        VsrError::UnlockAlreadyRequested
+    );
+    require!(
+        curr_ts >= deposit_entry.lockup.end_ts,
+        VsrError::DepositStillLocked
+    );
+
+    let cooldown_ends_ts = curr_ts
+        .checked_add(COOLDOWN_SECS)
+        .ok_or(VsrError::InvalidTimestampArguments)?;
+    deposit_entry.lockup.cooldown_ends_ts = Some(cooldown_ends_ts);
+    Ok(())
 }
