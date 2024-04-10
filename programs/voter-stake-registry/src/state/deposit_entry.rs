@@ -16,23 +16,13 @@ pub struct DepositEntry {
     /// never withdraw more than this amount.
     pub amount_deposited_native: u64,
 
-    /// Amount in locked when the lockup began, in native currency.
-    ///
-    /// Note that this is not adjusted for withdraws. It is possible for this
-    /// value to be bigger than amount_deposited_native after some vesting
-    /// and withdrawals.
-    ///
-    /// This value is needed to compute the amount that vests each peroid,
-    /// which should not change due to withdraws.
-    pub amount_initially_locked_native: u64,
-
     // True if the deposit entry is being used.
     pub is_used: bool,
 
     // Points to the VotingMintConfig this deposit uses.
     pub voting_mint_config_idx: u8,
 }
-const_assert!(std::mem::size_of::<DepositEntry>() == 40 + 8 + 8 + 1 + 1 + 6);
+const_assert!(std::mem::size_of::<DepositEntry>() == 40 + 8 + 1 + 1 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {
@@ -48,11 +38,11 @@ impl DepositEntry {
     #[inline(always)]
     pub fn amount_locked(&self, curr_ts: i64) -> u64 {
         let unlocked_tokens = if self.lockup.expired(curr_ts) {
-            self.amount_initially_locked_native
+            self.amount_deposited_native
         } else {
             0
         };
-        self.amount_initially_locked_native
+        self.amount_deposited_native
             .checked_sub(unlocked_tokens)
             .unwrap()
     }
@@ -82,7 +72,6 @@ mod tests {
         let period = LockupPeriod::Flex;
         let deposit = DepositEntry {
             amount_deposited_native: 20_000,
-            amount_initially_locked_native: 10_000,
             lockup: Lockup {
                 start_ts: lockup_start,
                 end_ts: lockup_start + LockupPeriod::Flex.to_secs() as i64, // start + cooldown + period
@@ -108,7 +97,7 @@ mod tests {
 
         // The timestamp 100_000 is very far before the lockup_start timestamp
         let withdrawable = deposit.amount_unlocked(100_000);
-        assert_eq!(withdrawable, 10_000);
+        assert_eq!(withdrawable, 0);
 
         let voting_power = deposit.voting_power().unwrap();
         assert_eq!(voting_power, 20_000);

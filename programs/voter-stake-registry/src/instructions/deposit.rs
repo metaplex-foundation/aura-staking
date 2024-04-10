@@ -83,10 +83,6 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     let curr_ts = registrar.clock_unix_timestamp();
     token::transfer(ctx.accounts.transfer_ctx(), amount)?;
     d_entry.amount_deposited_native = d_entry.amount_deposited_native.checked_add(amount).unwrap();
-    d_entry.amount_initially_locked_native = d_entry
-        .amount_initially_locked_native
-        .checked_add(amount)
-        .unwrap();
 
     msg!(
         "Deposited amount {} at deposit index {} with lockup kind {:?} and {} seconds left",
