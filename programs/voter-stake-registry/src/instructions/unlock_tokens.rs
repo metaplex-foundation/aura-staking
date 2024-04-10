@@ -27,7 +27,7 @@ pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Res
 
     // Check whether unlock request is allowed
     require!(
-        deposit_entry.lockup.cooldown_ends_ts.is_some(),
+        deposit_entry.lockup.cooldown_ends_ts.is_none(),
         VsrError::UnlockAlreadyRequested
     );
     require!(
