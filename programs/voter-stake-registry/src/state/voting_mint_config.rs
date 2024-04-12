@@ -36,6 +36,8 @@ pub struct VotingMintConfig {
 
     /// Number of digits to shift native amounts, applying a 10^digit_shift factor.
     pub digit_shift: i8,
+
+    pub padding: [u8; 7],
 }
 const_assert!(std::mem::size_of::<VotingMintConfig>() == 2 * 32 + 3 * 8 + 1 + 7);
 const_assert!(std::mem::size_of::<VotingMintConfig>() % 8 == 0);
