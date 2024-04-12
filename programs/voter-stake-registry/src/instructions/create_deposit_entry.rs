@@ -88,7 +88,6 @@ pub fn create_deposit_entry(
     d_entry.is_used = true;
     d_entry.voting_mint_config_idx = mint_idx as u8;
     d_entry.amount_deposited_native = 0;
-    d_entry.amount_initially_locked_native = 0;
     d_entry.lockup = Lockup::new(kind, curr_ts, start_ts, period)?;
 
     Ok(())
