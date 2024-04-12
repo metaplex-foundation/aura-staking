@@ -149,11 +149,11 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
     assert_eq!(after_deposit.deposit, 10_000);
     withdraw(1).await.expect_err("all locked up");
 
-    // advance to day 92. Just to be sure withdraw isn't possible without unlocking first
-    // even at lockup period + cooldown period (90 + 2 respectively in that case)
+    // advance to day 95. Just to be sure withdraw isn't possible without unlocking first
+    // even at lockup period + cooldown period (90 + 5 respectively in that case)
     let secs_per_day = 24 * 60 * 60;
     addin
-        .set_time_offset(&registrar, &realm_authority, secs_per_day * 92)
+        .set_time_offset(&registrar, &realm_authority, secs_per_day * 95)
         .await;
 
     // request unlock
@@ -166,9 +166,9 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
         .expect_err("Cooldown still not passed");
 
     context.solana.advance_clock_by_slots(2).await; // avoid caching of transactions
-                                                    // warp to day 94. (92 days of lockup + fake cooldown) + 2 days of true cooldown
+                                                    // warp to day 100. (90 days of lockup + fake cooldown (5 days)) + 5 days of true cooldown
     addin
-        .set_time_offset(&registrar, &realm_authority, secs_per_day * 94)
+        .set_time_offset(&registrar, &realm_authority, secs_per_day * 100)
         .await;
 
     // request claim && withdraw

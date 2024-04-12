@@ -349,10 +349,10 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         .await
         .unwrap();
 
-    // advance to day 367 (+cooldown_days from 365)
+    // advance to day 370 (one year + cooldown (5 days))
     context
         .addin
-        .set_time_offset(&registrar, &realm_authority, 367 * secs_per_day)
+        .set_time_offset(&registrar, &realm_authority, 370 * secs_per_day)
         .await;
 
     // withdraw must be successful

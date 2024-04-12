@@ -13,7 +13,7 @@ pub struct Voter {
     pub voter_bump: u8,
     pub voter_weight_record_bump: u8,
 }
-const_assert!(std::mem::size_of::<Voter>() == 2 * 32 + 32 * 64 + 2 + 6);
+const_assert!(std::mem::size_of::<Voter>() == 2 * 32 + 32 * 56 + 2 + 6);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
 impl Voter {

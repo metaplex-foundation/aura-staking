@@ -69,6 +69,7 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
                 VsrError::InvalidAuthority
             );
             require_keys_eq!(token.mint, *mint);
+            require_eq!(token.amount, 0, VsrError::VaultTokenNonZero);
 
             // transfer to target_account
             let cpi_transfer_accounts = Transfer {
