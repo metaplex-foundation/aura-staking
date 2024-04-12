@@ -38,7 +38,7 @@ impl DepositEntry {
 
     /// Returns native tokens still locked.
     #[inline(always)]
-    pub fn amount_locked(&self, curr_ts: i64) -> u64 {
+    pub fn amount_locked(&self, curr_ts: u64) -> u64 {
         let unlocked_tokens = if self.lockup.expired(curr_ts) {
             self.amount_deposited_native
         } else {
@@ -52,7 +52,7 @@ impl DepositEntry {
     /// Returns native tokens that are unlocked given current vesting
     /// and previous withdraws.
     #[inline(always)]
-    pub fn amount_unlocked(&self, curr_ts: i64) -> u64 {
+    pub fn amount_unlocked(&self, curr_ts: u64) -> u64 {
         self.amount_deposited_native
             .checked_sub(self.amount_locked(curr_ts))
             .unwrap()
@@ -76,7 +76,7 @@ mod tests {
             amount_deposited_native: 20_000,
             lockup: Lockup {
                 start_ts: lockup_start,
-                end_ts: lockup_start + LockupPeriod::Flex.to_secs() as i64, // start + cooldown + period
+                end_ts: lockup_start + LockupPeriod::Flex.to_secs(), // start + cooldown + period
                 kind: Constant,
                 period,
                 cooldown_ends_ts: None,

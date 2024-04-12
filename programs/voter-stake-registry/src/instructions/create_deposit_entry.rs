@@ -78,17 +78,13 @@ pub fn create_deposit_entry(
     require!(!d_entry.is_used, VsrError::UnusedDepositEntryIndex);
 
     let curr_ts = registrar.clock_unix_timestamp();
-    let start_ts = if let Some(v) = start_ts {
-        i64::try_from(v).map_err(|_| VsrError::InvalidTimestampArguments)?
-    } else {
-        curr_ts
-    };
+    let start_ts = start_ts.unwrap_or(curr_ts);
 
     *d_entry = DepositEntry::default();
     d_entry.is_used = true;
     d_entry.voting_mint_config_idx = mint_idx as u8;
     d_entry.amount_deposited_native = 0;
-    d_entry.lockup = Lockup::new(kind, curr_ts, start_ts, period)?;
+    d_entry.lockup = Lockup::new(kind, start_ts, period)?;
 
     Ok(())
 }
