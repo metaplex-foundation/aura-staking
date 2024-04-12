@@ -1,7 +1,6 @@
 use crate::error::*;
 use crate::vote_weight_record;
 use anchor_lang::prelude::*;
-use std::convert::TryFrom;
 
 // Generate a VoteWeightRecord Anchor wrapper, owned by the current program.
 // VoteWeightRecords are unique in that they are defined by the SPL governance
@@ -87,7 +86,7 @@ impl Lockup {
         if curr_ts >= self.end_ts {
             0
         } else {
-            (self.end_ts - curr_ts)
+            self.end_ts - curr_ts
         }
     }
 

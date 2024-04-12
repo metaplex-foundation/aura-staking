@@ -3,7 +3,6 @@ use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use std::convert::TryFrom;
 
 #[derive(Accounts)]
 pub struct CreateDepositEntry<'info> {
