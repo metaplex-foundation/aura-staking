@@ -7,13 +7,14 @@ use spl_governance::state::token_owner_record;
 /// User account for minting voting rights.
 #[account(zero_copy)]
 pub struct Voter {
+    pub deposits: [DepositEntry; 32],
     pub voter_authority: Pubkey,
     pub registrar: Pubkey,
-    pub deposits: [DepositEntry; 32],
     pub voter_bump: u8,
     pub voter_weight_record_bump: u8,
+    pub _reserved1: [u8; 14],
 }
-const_assert!(std::mem::size_of::<Voter>() == 2 * 32 + 32 * 56 + 2 + 6);
+const_assert!(std::mem::size_of::<Voter>() == 48 * 32 + 32 + 32 + 1 + 1 + 14);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
 impl Voter {

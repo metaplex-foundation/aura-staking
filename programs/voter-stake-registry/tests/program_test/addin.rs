@@ -1,7 +1,7 @@
+use std::cell::RefCell;
 use std::sync::Arc;
 
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::transport::TransportError;
 use solana_sdk::{
     instruction::Instruction,
     signature::{Keypair, Signer},
@@ -14,6 +14,7 @@ use crate::*;
 pub struct AddinCookie {
     pub solana: Arc<solana::SolanaCookie>,
     pub program_id: Pubkey,
+    pub time_offset: RefCell<i64>,
 }
 
 pub struct RegistrarCookie {
@@ -234,7 +235,7 @@ impl AddinCookie {
         lockup_kind: voter_stake_registry::state::LockupKind,
         start_ts: Option<u64>,
         period: LockupPeriod,
-    ) -> std::result::Result<(), TransportError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(&voting_mint);
 
         let data = anchor_lang::InstructionData::data(
@@ -286,7 +287,7 @@ impl AddinCookie {
         token_address: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
-    ) -> std::result::Result<(), TransportError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(&voting_mint);
 
         let data =
@@ -299,7 +300,7 @@ impl AddinCookie {
             &voter_stake_registry::accounts::Deposit {
                 registrar: registrar.address,
                 voter: voter.address,
-                vault: vault,
+                vault,
                 deposit_token: token_address,
                 deposit_authority: authority.pubkey(),
                 token_program: spl_token::id(),
@@ -328,7 +329,7 @@ impl AddinCookie {
         voter: &VoterCookie,
         authority: &Keypair,
         deposit_entry_index: u8,
-    ) -> std::result::Result<(), TransportError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::UnlockTokens {
                 deposit_entry_index,
@@ -367,7 +368,7 @@ impl AddinCookie {
         token_address: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
-    ) -> std::result::Result<(), TransportError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(&voting_mint);
 
         let data =
@@ -411,7 +412,7 @@ impl AddinCookie {
         voter: &VoterCookie,
         voting_mint: &VotingMintConfigCookie,
         voter_authority: &Keypair,
-    ) -> std::result::Result<(), TransportError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(&voting_mint);
 
         let data =
@@ -474,7 +475,7 @@ impl AddinCookie {
         &self,
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-    ) -> std::result::Result<voter_stake_registry::state::VoterWeightRecord, TransportError> {
+    ) -> std::result::Result<voter_stake_registry::state::VoterWeightRecord, BanksClientError> {
         let instructions = vec![self.update_voter_weight_record_instruction(registrar, voter)];
 
         self.solana.process_transaction(&instructions, None).await?;
@@ -493,7 +494,7 @@ impl AddinCookie {
         voter: &VoterCookie,
         authority: &Keypair,
         deposit_entry_index: u8,
-    ) -> Result<(), TransportError> {
+    ) -> Result<(), BanksClientError> {
         let data = anchor_lang::InstructionData::data(
             &voter_stake_registry::instruction::CloseDepositEntry {
                 deposit_entry_index,
@@ -558,36 +559,25 @@ impl AddinCookie {
     #[allow(dead_code)]
     pub async fn set_time_offset(
         &self,
-        registrar: &RegistrarCookie,
-        authority: &Keypair,
+        _registrar: &RegistrarCookie,
+        _authority: &Keypair,
         time_offset: i64,
     ) {
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::SetTimeOffset {
-                time_offset,
-            });
+        let old_offset = *self.time_offset.borrow();
+        *self.time_offset.borrow_mut() = time_offset;
 
-        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::SetTimeOffset {
-                registrar: registrar.address,
-                realm_authority: authority.pubkey(),
-            },
-            None,
-        );
-
-        let instructions = vec![Instruction {
-            program_id: self.program_id,
-            accounts,
-            data,
-        }];
-
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
-        self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+        let old_clock = self
+            .solana
+            .context
+            .borrow_mut()
+            .banks_client
+            .get_sysvar::<solana_program::clock::Clock>()
             .await
             .unwrap();
+
+        let mut new_clock = old_clock.clone();
+        new_clock.unix_timestamp += time_offset - old_offset;
+        self.solana.context.borrow_mut().set_sysvar(&new_clock);
     }
 }
 

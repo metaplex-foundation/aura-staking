@@ -1,7 +1,6 @@
 use crate::error::*;
 use crate::vote_weight_record;
 use anchor_lang::prelude::*;
-use std::convert::TryFrom;
 
 // Generate a VoteWeightRecord Anchor wrapper, owned by the current program.
 // VoteWeightRecords are unique in that they are defined by the SPL governance
@@ -14,68 +13,48 @@ pub const SECS_PER_DAY: u64 = 86_400;
 /// Seconds in one month.
 pub const SECS_PER_MONTH: u64 = 365 * SECS_PER_DAY / 12;
 
-/// Maximum acceptable number of lockup periods.
-
-/// This setting limits the maximum lockup duration for lockup methods
-/// with daily periods to 200 years.
-pub const MAX_LOCKUP_PERIODS: u32 = 365 * 200;
-
-pub const MAX_LOCKUP_IN_FUTURE_SECS: i64 = 100 * 365 * 24 * 60 * 60;
-
 /// Seconds in cooldown (5 days)
-pub const COOLDOWN_SECS: i64 = 86_400 * 5;
+pub const COOLDOWN_SECS: u64 = 86_400 * 5;
 
 #[zero_copy]
 #[derive(Default)]
 pub struct Lockup {
-    /// Start of the lockup.
-    ///
     /// Note, that if start_ts is in the future, the funds are nevertheless
     /// locked up!
-    ///
-    /// Similarly vote power computations don't care about start_ts and always
-    /// assume the full interval from now to end_ts.
-    pub(crate) start_ts: i64,
+
+    /// Start of the lockup.
+    pub(crate) start_ts: u64,
 
     /// End of the lockup.
-    pub(crate) end_ts: i64,
+    pub(crate) end_ts: u64,
 
-    /// Mark two things: cooldown was requested and its ending timestamp
-    pub cooldown_ends_ts: Option<i64>,
+    /// End of the cooldown.
+    pub(crate) cooldown_ends_at: u64,
 
+    pub(crate) cooldown_requested: bool,
     /// Type of lockup.
     pub kind: LockupKind,
 
     /// Type of lockup
     pub period: LockupPeriod,
+
+    /// Padding after period to align the struct size to 8 bytes
+    pub _reserved1: [u8; 5],
 }
-const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 16 + 1 + 1 + 1 + 5);
+const_assert!(std::mem::size_of::<Lockup>() == 3 * 8 + 1 + 1 + 1 + 5);
 const_assert!(std::mem::size_of::<Lockup>() % 8 == 0);
 
 impl Lockup {
     /// Create lockup for a given period
-    pub fn new(
-        kind: LockupKind,
-        curr_ts: i64,
-        start_ts: i64,
-        period: LockupPeriod,
-    ) -> Result<Self> {
-        require_gt!(
-            curr_ts + MAX_LOCKUP_IN_FUTURE_SECS,
-            start_ts,
-            VsrError::DepositStartTooFarInFuture
-        );
-
+    pub fn new(kind: LockupKind, start_ts: u64, period: LockupPeriod) -> Result<Self> {
         require!(
             (kind == LockupKind::None && period == LockupPeriod::None)
                 || (kind == LockupKind::Constant && period != LockupPeriod::None),
             VsrError::InvalidLockupKind
         );
 
-        let lockup_period_ts =
-            i64::try_from(period.to_secs()).map_err(|_| VsrError::InvalidTimestampArguments)?;
         let end_ts = start_ts
-            .checked_add(lockup_period_ts)
+            .checked_add(period.to_secs())
             .ok_or(VsrError::InvalidTimestampArguments)?;
 
         Ok(Self {
@@ -83,18 +62,21 @@ impl Lockup {
             start_ts,
             end_ts,
             period,
-            cooldown_ends_ts: None,
+            // 0 means cooldown hasn't been requested
+            cooldown_ends_at: 0,
+            cooldown_requested: false,
+            _reserved1: [0; 5],
         })
     }
 
     /// True when the lockup is finished.
-    pub fn expired(&self, curr_ts: i64) -> bool {
+    pub fn expired(&self, curr_ts: u64) -> bool {
         self.seconds_left(curr_ts) == 0
     }
 
     /// Number of seconds left in the lockup.
     /// May be more than end_ts-start_ts if curr_ts < start_ts.
-    pub fn seconds_left(&self, curr_ts: i64) -> u64 {
+    pub fn seconds_left(&self, curr_ts: u64) -> u64 {
         // if self.kind == LockupKind::Constant{
         //     curr_ts = self.start_ts;
         // };
@@ -105,13 +87,13 @@ impl Lockup {
         if curr_ts >= self.end_ts {
             0
         } else {
-            (self.end_ts - curr_ts) as u64
+            self.end_ts - curr_ts
         }
     }
 
     /// Returns the number of periods left on the lockup.
     /// Returns 0 after lockup has expired and periods_total before start_ts.
-    pub fn periods_left(&self, curr_ts: i64) -> Result<u64> {
+    pub fn periods_left(&self, curr_ts: u64) -> Result<u64> {
         let period_secs = self.kind.period_secs();
         if period_secs == 0 {
             return Ok(0);
@@ -129,7 +111,7 @@ impl Lockup {
 
     /// Returns the current period in the vesting schedule.
     /// Will report periods_total() after lockup has expired and 0 before start_ts.
-    pub fn period_current(&self, curr_ts: i64) -> Result<u64> {
+    pub fn period_current(&self, curr_ts: u64) -> Result<u64> {
         Ok(self
             .periods_total()?
             .saturating_sub(self.periods_left(curr_ts)?))
@@ -149,12 +131,16 @@ impl Lockup {
     }
 
     /// Remove the vesting periods that are now in the past.
-    pub fn remove_past_periods(&mut self, curr_ts: i64) -> Result<()> {
+    pub fn remove_past_periods(&mut self, curr_ts: u64) -> Result<()> {
         let periods = self.period_current(curr_ts)?;
         let period_secs = self.kind.period_secs();
         self.start_ts = self
             .start_ts
-            .checked_add(i64::try_from(periods.checked_mul(period_secs).unwrap()).unwrap())
+            .checked_add(
+                periods
+                    .checked_mul(period_secs)
+                    .ok_or(VsrError::InvalidTimestampArguments)?,
+            )
             .unwrap();
         require_gte!(self.end_ts, self.start_ts, VsrError::InternalProgramError);
         require_eq!(
@@ -166,6 +152,7 @@ impl Lockup {
     }
 }
 
+#[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupPeriod {
     None,
@@ -193,6 +180,7 @@ impl LockupPeriod {
     }
 }
 
+#[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupKind {
     /// No lockup, tokens can be withdrawn as long as not engaged in a proposal.

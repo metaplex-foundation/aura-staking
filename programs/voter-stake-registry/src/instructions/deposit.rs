@@ -85,11 +85,13 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     d_entry.amount_deposited_native = d_entry.amount_deposited_native.checked_add(amount).unwrap();
 
     msg!(
-        "Deposited amount {} at deposit index {} with lockup kind {:?} and {} seconds left",
+        "Deposited amount {} at deposit index {} with lockup kind {:?} with lockup period {:?} and {} seconds left. It's used now: {:?}",
         amount,
         deposit_entry_index,
         d_entry.lockup.kind,
+        d_entry.lockup.period,
         d_entry.lockup.seconds_left(curr_ts),
+        d_entry.is_used,
     );
 
     Ok(())

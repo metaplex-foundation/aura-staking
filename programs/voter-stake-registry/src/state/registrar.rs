@@ -2,6 +2,7 @@ use crate::error::*;
 use crate::state::voting_mint_config::VotingMintConfig;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
+use std::convert::TryInto;
 
 /// Instance of a voting rights distributor.
 #[account(zero_copy)]
@@ -24,11 +25,13 @@ const_assert!(std::mem::size_of::<Registrar>() == 7 + 4 * 32 + 4 * 96 + 8 + 1);
 const_assert!(std::mem::size_of::<Registrar>() % 8 == 0);
 
 impl Registrar {
-    pub fn clock_unix_timestamp(&self) -> i64 {
+    pub fn clock_unix_timestamp(&self) -> u64 {
         Clock::get()
             .unwrap()
             .unix_timestamp
             .checked_add(self.time_offset)
+            .unwrap()
+            .try_into()
             .unwrap()
     }
 
