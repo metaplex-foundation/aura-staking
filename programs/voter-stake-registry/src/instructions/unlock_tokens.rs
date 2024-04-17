@@ -27,7 +27,7 @@ pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Res
 
     // Check whether unlock request is allowed
     require!(
-        deposit_entry.lockup.cooldown_ends_ts.is_none(),
+        !deposit_entry.lockup.cooldown_requested,
         VsrError::UnlockAlreadyRequested
     );
     require!(
@@ -35,9 +35,9 @@ pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Res
         VsrError::DepositStillLocked
     );
 
-    let cooldown_ends_ts = curr_ts
+    deposit_entry.lockup.cooldown_requested = true;
+    deposit_entry.lockup.cooldown_ends_at = curr_ts
         .checked_add(COOLDOWN_SECS)
         .ok_or(VsrError::InvalidTimestampArguments)?;
-    deposit_entry.lockup.cooldown_ends_ts = Some(cooldown_ends_ts);
     Ok(())
 }

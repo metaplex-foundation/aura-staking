@@ -1,4 +1,4 @@
-use crate::state::lockup::Lockup;
+use crate::{state::lockup::Lockup, LockupKind};
 
 use anchor_lang::prelude::*;
 
@@ -15,16 +15,13 @@ pub struct DepositEntry {
     /// This directly tracks the total amount added by the user. They may
     /// never withdraw more than this amount.
     pub amount_deposited_native: u64,
-
-    // True if the deposit entry is being used.
-    pub is_used: bool,
-
     // Points to the VotingMintConfig this deposit uses.
     pub voting_mint_config_idx: u8,
-
-    pub padding: [u8; 6],
+    // True if the deposit entry is being used.
+    pub is_used: bool,
+    pub _reserved1: [u8; 6],
 }
-const_assert!(std::mem::size_of::<DepositEntry>() == 40 + 8 + 1 + 1 + 6);
+const_assert!(std::mem::size_of::<DepositEntry>() == 32 + 8 + 1 + 1 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {
@@ -53,6 +50,10 @@ impl DepositEntry {
     /// and previous withdraws.
     #[inline(always)]
     pub fn amount_unlocked(&self, curr_ts: u64) -> u64 {
+        if let LockupKind::None = self.lockup.kind {
+            return self.amount_deposited_native;
+        }
+
         self.amount_deposited_native
             .checked_sub(self.amount_locked(curr_ts))
             .unwrap()
@@ -79,12 +80,13 @@ mod tests {
                 end_ts: lockup_start + LockupPeriod::Flex.to_secs(), // start + cooldown + period
                 kind: Constant,
                 period,
-                cooldown_ends_ts: None,
-                padding: [0; 5],
+                cooldown_requested: false,
+                cooldown_ends_at: 0,
+                _reserved1: [0; 5],
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            padding: [0; 6],
+            _reserved1: [0; 6],
         };
         let voting_mint_config = VotingMintConfig {
             mint: Pubkey::default(),

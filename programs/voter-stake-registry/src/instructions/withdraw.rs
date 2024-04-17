@@ -23,7 +23,7 @@ pub struct Withdraw<'info> {
     /// to be able to forbid withdraws while the voter is engaged with
     /// a vote or has an open proposal.
     ///
-    /// token_owner_record is validated in the instruction:
+    /// CHECK: token_owner_record is validated in the instruction:
     /// - owned by registrar.governance_program_id
     /// - for the registrar.realm
     /// - for the registrar.realm_governing_token_mint
@@ -107,15 +107,11 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
     // check whether funds are cooled down
     if deposit_entry.lockup.kind == LockupKind::Constant {
         require!(
-            deposit_entry.lockup.cooldown_ends_ts.is_some(),
+            deposit_entry.lockup.cooldown_requested,
             VsrError::UnlockMustBeCalledFirst
         );
-        let cooldown_end_ts = deposit_entry
-            .lockup
-            .cooldown_ends_ts
-            .ok_or(VsrError::UnlockMustBeCalledFirst)?;
         require!(
-            curr_ts >= cooldown_end_ts,
+            curr_ts >= deposit_entry.lockup.cooldown_ends_at,
             VsrError::InvalidTimestampArguments
         );
     }

@@ -325,7 +325,7 @@ impl GovernanceRealmCookie {
         authority: &Keypair,
         payer: &Keypair,
         vwr_instruction: Instruction,
-    ) -> std::result::Result<(), TransportError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let instructions = vec![
             vwr_instruction,
             spl_governance::instruction::cast_vote(
@@ -364,7 +364,7 @@ impl GovernanceRealmCookie {
         token_owner_record: Pubkey,
         authority: &Keypair,
         beneficiary: Pubkey,
-    ) -> std::result::Result<(), TransportError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let instructions = vec![spl_governance::instruction::relinquish_vote(
             &self.governance.program_id,
             &governance,

@@ -1,5 +1,5 @@
-anchor_version = "0.20.1"
-solana_version = "1.9.5"
+anchor_version = "0.26.0"
+solana_version = "1.14.10"
 
 [programs.localnet]
 voter_stake_registry = "3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s"

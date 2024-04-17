@@ -19,30 +19,29 @@ pub const COOLDOWN_SECS: u64 = 86_400 * 5;
 #[zero_copy]
 #[derive(Default)]
 pub struct Lockup {
-    /// Start of the lockup.
-    ///
     /// Note, that if start_ts is in the future, the funds are nevertheless
     /// locked up!
-    ///
-    /// Similarly vote power computations don't care about start_ts and always
-    /// assume the full interval from now to end_ts.
+
+    /// Start of the lockup.
     pub(crate) start_ts: u64,
 
     /// End of the lockup.
     pub(crate) end_ts: u64,
 
-    /// Mark two things: cooldown was requested and its ending timestamp
-    pub cooldown_ends_ts: Option<u64>,
+    /// End of the cooldown.
+    pub(crate) cooldown_ends_at: u64,
 
+    pub(crate) cooldown_requested: bool,
     /// Type of lockup.
     pub kind: LockupKind,
 
     /// Type of lockup
     pub period: LockupPeriod,
 
-    pub padding: [u8; 5],
+    /// Padding after period to align the struct size to 8 bytes
+    pub _reserved1: [u8; 5],
 }
-const_assert!(std::mem::size_of::<Lockup>() == 2 * 8 + 16 + 1 + 1 + 1 + 5);
+const_assert!(std::mem::size_of::<Lockup>() == 3 * 8 + 1 + 1 + 1 + 5);
 const_assert!(std::mem::size_of::<Lockup>() % 8 == 0);
 
 impl Lockup {
@@ -63,8 +62,10 @@ impl Lockup {
             start_ts,
             end_ts,
             period,
-            cooldown_ends_ts: None,
-            padding: [0; 5],
+            // 0 means cooldown hasn't been requested
+            cooldown_ends_at: 0,
+            cooldown_requested: false,
+            _reserved1: [0; 5],
         })
     }
 
@@ -151,6 +152,7 @@ impl Lockup {
     }
 }
 
+#[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupPeriod {
     None,
@@ -178,6 +180,7 @@ impl LockupPeriod {
     }
 }
 
+#[repr(u8)]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupKind {
     /// No lockup, tokens can be withdrawn as long as not engaged in a proposal.

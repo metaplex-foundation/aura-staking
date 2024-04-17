@@ -1,6 +1,52 @@
 export type VoterStakeRegistry = {
   "version": "0.2.4",
   "name": "voter_stake_registry",
+  "docs": [
+    "# Introduction",
+    "",
+    "The governance registry is an \"addin\" to the SPL governance program that",
+    "allows one to both vote with many different ypes of tokens for voting and to",
+    "scale voting power as a linear function of time locked--subject to some",
+    "maximum upper bound.",
+    "",
+    "The flow for voting with this program is as follows:",
+    "",
+    "- Create a SPL governance realm.",
+    "- Create a governance registry account.",
+    "- Add exchange rates for any tokens one wants to deposit. For example,",
+    "if one wants to vote with tokens A and B, where token B has twice the",
+    "voting power of token A, then the exchange rate of B would be 2 and the",
+    "exchange rate of A would be 1.",
+    "- Create a voter account.",
+    "- Deposit tokens into this program, with an optional lockup period.",
+    "- Vote.",
+    "",
+    "Upon voting with SPL governance, a client is expected to call",
+    "`decay_voting_power` to get an up to date measurement of a given `Voter`'s",
+    "voting power for the given slot. If this is not done, then the transaction",
+    "will fail (since the SPL governance program will require the measurement",
+    "to be active for the current slot).",
+    "",
+    "# Interacting with SPL Governance",
+    "",
+    "This program does not directly interact with SPL governance via CPI.",
+    "Instead, it simply writes a `VoterWeightRecord` account with a well defined",
+    "format, which is then used by SPL governance as the voting power measurement",
+    "for a given user.",
+    "",
+    "# Max Vote Weight",
+    "",
+    "Given that one can use multiple tokens to vote, the max vote weight needs",
+    "to be a function of the total supply of all tokens, converted into a common",
+    "currency. For example, if you have Token A and Token B, where 1 Token B =",
+    "10 Token A, then the `max_vote_weight` should be `supply(A) + supply(B)*10`",
+    "where both are converted into common decimals. Then, when calculating the",
+    "weight of an individual voter, one can convert B into A via the given",
+    "exchange rate, which must be fixed.",
+    "",
+    "Note that the above also implies that the `max_vote_weight` must fit into",
+    "a u64."
+  ],
   "instructions": [
     {
       "name": "createRegistrar",
@@ -8,22 +54,39 @@ export type VoterStakeRegistry = {
         {
           "name": "registrar",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "The voting registrar. There can only be a single registrar",
+            "per governance realm and governing mint."
+          ]
         },
         {
           "name": "realm",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "An spl-governance realm",
+            "",
+            "- realm is owned by the governance_program_id",
+            "- realm_governing_token_mint must be the community or council mint",
+            "- realm_authority is realm.authority"
+          ]
         },
         {
           "name": "governanceProgramId",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "The program id of the spl-governance program the realm belongs to."
+          ]
         },
         {
           "name": "realmGoverningTokenMint",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Either the realm community mint or the council mint."
+          ]
         },
         {
           "name": "realmAuthority",
@@ -69,7 +132,10 @@ export type VoterStakeRegistry = {
         {
           "name": "mint",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Tokens of this mint will produce vote weight"
+          ]
         }
       ],
       "args": [
@@ -117,12 +183,21 @@ export type VoterStakeRegistry = {
         {
           "name": "voterAuthority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "docs": [
+            "The authority controling the voter. Must be the same as the",
+            "`governing_token_owner` in the token owner record used with",
+            "spl-governance."
+          ]
         },
         {
           "name": "voterWeightRecord",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "The voter weight record is the account that will be shown to spl-governance",
+            "to prove how much vote weight the voter has. See update_voter_weight_record."
+          ]
         },
         {
           "name": "payer",
@@ -142,7 +217,10 @@ export type VoterStakeRegistry = {
         {
           "name": "instructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "NOTE: this account is currently unused"
+          ]
         }
       ],
       "args": [
@@ -301,12 +379,26 @@ export type VoterStakeRegistry = {
         {
           "name": "tokenOwnerRecord",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "The token_owner_record for the voter_authority. This is needed",
+            "to be able to forbid withdraws while the voter is engaged with",
+            "a vote or has an open proposal.",
+            "",
+            "- owned by registrar.governance_program_id",
+            "- for the registrar.realm",
+            "- for the registrar.realm_governing_token_mint",
+            "- governing_token_owner is voter_authority"
+          ]
         },
         {
           "name": "voterWeightRecord",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Withdraws must update the voter weight record, to prevent a stale",
+            "record being used to vote after the withdraw."
+          ]
         },
         {
           "name": "vault",
@@ -465,23 +557,36 @@ export type VoterStakeRegistry = {
       ]
     },
     {
-      "name": "setTimeOffset",
+      "name": "internalTransferUnlocked",
       "accounts": [
         {
           "name": "registrar",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "voter",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "realmAuthority",
+          "name": "voterAuthority",
           "isMut": false,
           "isSigner": true
         }
       ],
       "args": [
         {
-          "name": "timeOffset",
-          "type": "i64"
+          "name": "sourceDepositEntryIndex",
+          "type": "u8"
+        },
+        {
+          "name": "targetDepositEntryIndex",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
         }
       ]
     }
@@ -489,6 +594,9 @@ export type VoterStakeRegistry = {
   "accounts": [
     {
       "name": "registrar",
+      "docs": [
+        "Instance of a voting rights distributor."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -510,6 +618,10 @@ export type VoterStakeRegistry = {
           },
           {
             "name": "votingMints",
+            "docs": [
+              "Storage for voting mints and their configuration.",
+              "The length should be adjusted for one's use case."
+            ],
             "type": {
               "array": [
                 {
@@ -521,6 +633,9 @@ export type VoterStakeRegistry = {
           },
           {
             "name": "timeOffset",
+            "docs": [
+              "Debug only: time offset, to allow tests to move forward in time."
+            ],
             "type": "i64"
           },
           {
@@ -532,17 +647,12 @@ export type VoterStakeRegistry = {
     },
     {
       "name": "voter",
+      "docs": [
+        "User account for minting voting rights."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "voterAuthority",
-            "type": "publicKey"
-          },
-          {
-            "name": "registrar",
-            "type": "publicKey"
-          },
           {
             "name": "deposits",
             "type": {
@@ -555,12 +665,29 @@ export type VoterStakeRegistry = {
             }
           },
           {
+            "name": "voterAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "registrar",
+            "type": "publicKey"
+          },
+          {
             "name": "voterBump",
             "type": "u8"
           },
           {
             "name": "voterWeightRecordBump",
             "type": "u8"
+          },
+          {
+            "name": "reserved1",
+            "type": {
+              "array": [
+                "u8",
+                14
+              ]
+            }
           }
         ]
       }
@@ -568,42 +695,22 @@ export type VoterStakeRegistry = {
   ],
   "types": [
     {
-      "name": "DepositEntry",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "lockup",
-            "type": {
-              "defined": "Lockup"
-            }
-          },
-          {
-            "name": "amountDepositedNative",
-            "type": "u64"
-          },
-          {
-            "name": "isUsed",
-            "type": "bool"
-          },
-          {
-            "name": "votingMintConfigIdx",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
       "name": "VestingInfo",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "rate",
+            "docs": [
+              "Amount of tokens vested each period"
+            ],
             "type": "u64"
           },
           {
             "name": "nextTimestamp",
+            "docs": [
+              "Time of the next upcoming vesting"
+            ],
             "type": "u64"
           }
         ]
@@ -616,20 +723,74 @@ export type VoterStakeRegistry = {
         "fields": [
           {
             "name": "amount",
+            "docs": [
+              "Amount of locked tokens"
+            ],
             "type": "u64"
           },
           {
             "name": "endTimestamp",
+            "docs": [
+              "Time at which the lockup fully ends (None for Constant lockup)"
+            ],
             "type": {
               "option": "u64"
             }
           },
           {
             "name": "vesting",
+            "docs": [
+              "Information about vesting, if any"
+            ],
             "type": {
               "option": {
                 "defined": "VestingInfo"
               }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DepositEntry",
+      "docs": [
+        "Bookkeeping for a single deposit for a given mint and lockup schedule."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lockup",
+            "type": {
+              "defined": "Lockup"
+            }
+          },
+          {
+            "name": "amountDepositedNative",
+            "docs": [
+              "Amount in deposited, in native currency. Withdraws of vested tokens",
+              "directly reduce this amount.",
+              "",
+              "This directly tracks the total amount added by the user. They may",
+              "never withdraw more than this amount."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "votingMintConfigIdx",
+            "type": "u8"
+          },
+          {
+            "name": "isUsed",
+            "type": "bool"
+          },
+          {
+            "name": "reserved1",
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
             }
           }
         ]
@@ -642,28 +803,59 @@ export type VoterStakeRegistry = {
         "fields": [
           {
             "name": "startTs",
-            "type": "i64"
+            "docs": [
+              "Note, that if start_ts is in the future, the funds are nevertheless",
+              "locked up!",
+              "Start of the lockup."
+            ],
+            "type": "u64"
           },
           {
             "name": "endTs",
-            "type": "i64"
+            "docs": [
+              "End of the lockup."
+            ],
+            "type": "u64"
           },
           {
-            "name": "cooldownEndsTs",
-            "type": {
-              "option": "i64"
-            }
+            "name": "cooldownEndsAt",
+            "docs": [
+              "End of the cooldown."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "cooldownRequested",
+            "type": "bool"
           },
           {
             "name": "kind",
+            "docs": [
+              "Type of lockup."
+            ],
             "type": {
               "defined": "LockupKind"
             }
           },
           {
             "name": "period",
+            "docs": [
+              "Type of lockup"
+            ],
             "type": {
               "defined": "LockupPeriod"
+            }
+          },
+          {
+            "name": "reserved1",
+            "docs": [
+              "Padding after period to align the struct size to 8 bytes"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                5
+              ]
             }
           }
         ]
@@ -671,160 +863,73 @@ export type VoterStakeRegistry = {
     },
     {
       "name": "VotingMintConfig",
+      "docs": [
+        "Exchange rate for an asset that can be used to mint voting rights.",
+        "",
+        "See documentation of configure_voting_mint for details on how",
+        "native token amounts convert to vote weight."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "mint",
+            "docs": [
+              "Mint for this entry."
+            ],
             "type": "publicKey"
           },
           {
             "name": "grantAuthority",
+            "docs": [
+              "The authority that is allowed to push grants into voters"
+            ],
             "type": "publicKey"
           },
           {
             "name": "baselineVoteWeightScaledFactor",
+            "docs": [
+              "Vote weight factor for all funds in the account, no matter if locked or not.",
+              "",
+              "In 1/SCALED_FACTOR_BASE units."
+            ],
             "type": "u64"
           },
           {
             "name": "maxExtraLockupVoteWeightScaledFactor",
+            "docs": [
+              "Maximum extra vote weight factor for lockups.",
+              "",
+              "This is the extra votes gained for lockups lasting lockup_saturation_secs or",
+              "longer. Shorter lockups receive only a fraction of the maximum extra vote weight,",
+              "based on lockup_time divided by lockup_saturation_secs.",
+              "",
+              "In 1/SCALED_FACTOR_BASE units."
+            ],
             "type": "u64"
           },
           {
             "name": "lockupSaturationSecs",
+            "docs": [
+              "Number of seconds of lockup needed to reach the maximum lockup bonus."
+            ],
             "type": "u64"
           },
           {
             "name": "digitShift",
+            "docs": [
+              "Number of digits to shift native amounts, applying a 10^digit_shift factor."
+            ],
             "type": "i8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "VsrError",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "InvalidRate"
           },
           {
-            "name": "RatesFull"
-          },
-          {
-            "name": "VotingMintNotFound"
-          },
-          {
-            "name": "DepositEntryNotFound"
-          },
-          {
-            "name": "DepositEntryFull"
-          },
-          {
-            "name": "VotingTokenNonZero"
-          },
-          {
-            "name": "OutOfBoundsDepositEntryIndex"
-          },
-          {
-            "name": "UnusedDepositEntryIndex"
-          },
-          {
-            "name": "InsufficientUnlockedTokens"
-          },
-          {
-            "name": "UnableToConvert"
-          },
-          {
-            "name": "InvalidLockupPeriod"
-          },
-          {
-            "name": "InvalidEndTs"
-          },
-          {
-            "name": "InvalidDays"
-          },
-          {
-            "name": "VotingMintConfigIndexAlreadyInUse"
-          },
-          {
-            "name": "OutOfBoundsVotingMintConfigIndex"
-          },
-          {
-            "name": "InvalidDecimals"
-          },
-          {
-            "name": "InvalidToDepositAndWithdrawInOneSlot"
-          },
-          {
-            "name": "ShouldBeTheFirstIxInATx"
-          },
-          {
-            "name": "ForbiddenCpi"
-          },
-          {
-            "name": "InvalidMint"
-          },
-          {
-            "name": "DebugInstruction"
-          },
-          {
-            "name": "ClawbackNotAllowedOnDeposit"
-          },
-          {
-            "name": "DepositStillLocked"
-          },
-          {
-            "name": "InvalidAuthority"
-          },
-          {
-            "name": "InvalidTokenOwnerRecord"
-          },
-          {
-            "name": "InvalidRealmAuthority"
-          },
-          {
-            "name": "VoterWeightOverflow"
-          },
-          {
-            "name": "LockupSaturationMustBePositive"
-          },
-          {
-            "name": "VotingMintConfiguredWithDifferentIndex"
-          },
-          {
-            "name": "InternalProgramError"
-          },
-          {
-            "name": "InsufficientLockedTokens"
-          },
-          {
-            "name": "MustKeepTokensLocked"
-          },
-          {
-            "name": "InvalidLockupKind"
-          },
-          {
-            "name": "InvalidChangeToClawbackDepositEntry"
-          },
-          {
-            "name": "InternalErrorBadLockupVoteWeight"
-          },
-          {
-            "name": "DepositStartTooFarInFuture"
-          },
-          {
-            "name": "VaultTokenNonZero"
-          },
-          {
-            "name": "InvalidTimestampArguments"
-          },
-          {
-            "name": "UnlockMustBeCalledFirst"
-          },
-          {
-            "name": "UnlockAlreadyRequested"
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                7
+              ]
+            }
           }
         ]
       }
@@ -921,6 +1026,208 @@ export type VoterStakeRegistry = {
           "index": false
         }
       ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidRate",
+      "msg": "Exchange rate must be greater than zero"
+    },
+    {
+      "code": 6001,
+      "name": "RatesFull",
+      "msg": ""
+    },
+    {
+      "code": 6002,
+      "name": "VotingMintNotFound",
+      "msg": ""
+    },
+    {
+      "code": 6003,
+      "name": "DepositEntryNotFound",
+      "msg": ""
+    },
+    {
+      "code": 6004,
+      "name": "DepositEntryFull",
+      "msg": ""
+    },
+    {
+      "code": 6005,
+      "name": "VotingTokenNonZero",
+      "msg": ""
+    },
+    {
+      "code": 6006,
+      "name": "OutOfBoundsDepositEntryIndex",
+      "msg": ""
+    },
+    {
+      "code": 6007,
+      "name": "UnusedDepositEntryIndex",
+      "msg": ""
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientUnlockedTokens",
+      "msg": ""
+    },
+    {
+      "code": 6009,
+      "name": "UnableToConvert",
+      "msg": ""
+    },
+    {
+      "code": 6010,
+      "name": "InvalidLockupPeriod",
+      "msg": ""
+    },
+    {
+      "code": 6011,
+      "name": "InvalidEndTs",
+      "msg": ""
+    },
+    {
+      "code": 6012,
+      "name": "InvalidDays",
+      "msg": ""
+    },
+    {
+      "code": 6013,
+      "name": "VotingMintConfigIndexAlreadyInUse",
+      "msg": ""
+    },
+    {
+      "code": 6014,
+      "name": "OutOfBoundsVotingMintConfigIndex",
+      "msg": ""
+    },
+    {
+      "code": 6015,
+      "name": "InvalidDecimals",
+      "msg": "Exchange rate decimals cannot be larger than registrar decimals"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidToDepositAndWithdrawInOneSlot",
+      "msg": ""
+    },
+    {
+      "code": 6017,
+      "name": "ShouldBeTheFirstIxInATx",
+      "msg": ""
+    },
+    {
+      "code": 6018,
+      "name": "ForbiddenCpi",
+      "msg": ""
+    },
+    {
+      "code": 6019,
+      "name": "InvalidMint",
+      "msg": ""
+    },
+    {
+      "code": 6020,
+      "name": "DebugInstruction",
+      "msg": ""
+    },
+    {
+      "code": 6021,
+      "name": "ClawbackNotAllowedOnDeposit",
+      "msg": ""
+    },
+    {
+      "code": 6022,
+      "name": "DepositStillLocked",
+      "msg": ""
+    },
+    {
+      "code": 6023,
+      "name": "InvalidAuthority",
+      "msg": ""
+    },
+    {
+      "code": 6024,
+      "name": "InvalidTokenOwnerRecord",
+      "msg": ""
+    },
+    {
+      "code": 6025,
+      "name": "InvalidRealmAuthority",
+      "msg": ""
+    },
+    {
+      "code": 6026,
+      "name": "VoterWeightOverflow",
+      "msg": ""
+    },
+    {
+      "code": 6027,
+      "name": "LockupSaturationMustBePositive",
+      "msg": ""
+    },
+    {
+      "code": 6028,
+      "name": "VotingMintConfiguredWithDifferentIndex",
+      "msg": ""
+    },
+    {
+      "code": 6029,
+      "name": "InternalProgramError",
+      "msg": ""
+    },
+    {
+      "code": 6030,
+      "name": "InsufficientLockedTokens",
+      "msg": ""
+    },
+    {
+      "code": 6031,
+      "name": "MustKeepTokensLocked",
+      "msg": ""
+    },
+    {
+      "code": 6032,
+      "name": "InvalidLockupKind",
+      "msg": ""
+    },
+    {
+      "code": 6033,
+      "name": "InvalidChangeToClawbackDepositEntry",
+      "msg": ""
+    },
+    {
+      "code": 6034,
+      "name": "InternalErrorBadLockupVoteWeight",
+      "msg": ""
+    },
+    {
+      "code": 6035,
+      "name": "DepositStartTooFarInFuture",
+      "msg": ""
+    },
+    {
+      "code": 6036,
+      "name": "VaultTokenNonZero",
+      "msg": ""
+    },
+    {
+      "code": 6037,
+      "name": "InvalidTimestampArguments",
+      "msg": ""
+    },
+    {
+      "code": 6038,
+      "name": "UnlockMustBeCalledFirst",
+      "msg": ""
+    },
+    {
+      "code": 6039,
+      "name": "UnlockAlreadyRequested",
+      "msg": ""
     }
   ]
 };
@@ -928,6 +1235,52 @@ export type VoterStakeRegistry = {
 export const IDL: VoterStakeRegistry = {
   "version": "0.2.4",
   "name": "voter_stake_registry",
+  "docs": [
+    "# Introduction",
+    "",
+    "The governance registry is an \"addin\" to the SPL governance program that",
+    "allows one to both vote with many different ypes of tokens for voting and to",
+    "scale voting power as a linear function of time locked--subject to some",
+    "maximum upper bound.",
+    "",
+    "The flow for voting with this program is as follows:",
+    "",
+    "- Create a SPL governance realm.",
+    "- Create a governance registry account.",
+    "- Add exchange rates for any tokens one wants to deposit. For example,",
+    "if one wants to vote with tokens A and B, where token B has twice the",
+    "voting power of token A, then the exchange rate of B would be 2 and the",
+    "exchange rate of A would be 1.",
+    "- Create a voter account.",
+    "- Deposit tokens into this program, with an optional lockup period.",
+    "- Vote.",
+    "",
+    "Upon voting with SPL governance, a client is expected to call",
+    "`decay_voting_power` to get an up to date measurement of a given `Voter`'s",
+    "voting power for the given slot. If this is not done, then the transaction",
+    "will fail (since the SPL governance program will require the measurement",
+    "to be active for the current slot).",
+    "",
+    "# Interacting with SPL Governance",
+    "",
+    "This program does not directly interact with SPL governance via CPI.",
+    "Instead, it simply writes a `VoterWeightRecord` account with a well defined",
+    "format, which is then used by SPL governance as the voting power measurement",
+    "for a given user.",
+    "",
+    "# Max Vote Weight",
+    "",
+    "Given that one can use multiple tokens to vote, the max vote weight needs",
+    "to be a function of the total supply of all tokens, converted into a common",
+    "currency. For example, if you have Token A and Token B, where 1 Token B =",
+    "10 Token A, then the `max_vote_weight` should be `supply(A) + supply(B)*10`",
+    "where both are converted into common decimals. Then, when calculating the",
+    "weight of an individual voter, one can convert B into A via the given",
+    "exchange rate, which must be fixed.",
+    "",
+    "Note that the above also implies that the `max_vote_weight` must fit into",
+    "a u64."
+  ],
   "instructions": [
     {
       "name": "createRegistrar",
@@ -935,22 +1288,39 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "registrar",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "The voting registrar. There can only be a single registrar",
+            "per governance realm and governing mint."
+          ]
         },
         {
           "name": "realm",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "An spl-governance realm",
+            "",
+            "- realm is owned by the governance_program_id",
+            "- realm_governing_token_mint must be the community or council mint",
+            "- realm_authority is realm.authority"
+          ]
         },
         {
           "name": "governanceProgramId",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "The program id of the spl-governance program the realm belongs to."
+          ]
         },
         {
           "name": "realmGoverningTokenMint",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Either the realm community mint or the council mint."
+          ]
         },
         {
           "name": "realmAuthority",
@@ -996,7 +1366,10 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "mint",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Tokens of this mint will produce vote weight"
+          ]
         }
       ],
       "args": [
@@ -1044,12 +1417,21 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "voterAuthority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "docs": [
+            "The authority controling the voter. Must be the same as the",
+            "`governing_token_owner` in the token owner record used with",
+            "spl-governance."
+          ]
         },
         {
           "name": "voterWeightRecord",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "The voter weight record is the account that will be shown to spl-governance",
+            "to prove how much vote weight the voter has. See update_voter_weight_record."
+          ]
         },
         {
           "name": "payer",
@@ -1069,7 +1451,10 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "instructions",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "NOTE: this account is currently unused"
+          ]
         }
       ],
       "args": [
@@ -1228,12 +1613,26 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "tokenOwnerRecord",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "The token_owner_record for the voter_authority. This is needed",
+            "to be able to forbid withdraws while the voter is engaged with",
+            "a vote or has an open proposal.",
+            "",
+            "- owned by registrar.governance_program_id",
+            "- for the registrar.realm",
+            "- for the registrar.realm_governing_token_mint",
+            "- governing_token_owner is voter_authority"
+          ]
         },
         {
           "name": "voterWeightRecord",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Withdraws must update the voter weight record, to prevent a stale",
+            "record being used to vote after the withdraw."
+          ]
         },
         {
           "name": "vault",
@@ -1392,23 +1791,36 @@ export const IDL: VoterStakeRegistry = {
       ]
     },
     {
-      "name": "setTimeOffset",
+      "name": "internalTransferUnlocked",
       "accounts": [
         {
           "name": "registrar",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "voter",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "realmAuthority",
+          "name": "voterAuthority",
           "isMut": false,
           "isSigner": true
         }
       ],
       "args": [
         {
-          "name": "timeOffset",
-          "type": "i64"
+          "name": "sourceDepositEntryIndex",
+          "type": "u8"
+        },
+        {
+          "name": "targetDepositEntryIndex",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
         }
       ]
     }
@@ -1416,6 +1828,9 @@ export const IDL: VoterStakeRegistry = {
   "accounts": [
     {
       "name": "registrar",
+      "docs": [
+        "Instance of a voting rights distributor."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -1437,6 +1852,10 @@ export const IDL: VoterStakeRegistry = {
           },
           {
             "name": "votingMints",
+            "docs": [
+              "Storage for voting mints and their configuration.",
+              "The length should be adjusted for one's use case."
+            ],
             "type": {
               "array": [
                 {
@@ -1448,6 +1867,9 @@ export const IDL: VoterStakeRegistry = {
           },
           {
             "name": "timeOffset",
+            "docs": [
+              "Debug only: time offset, to allow tests to move forward in time."
+            ],
             "type": "i64"
           },
           {
@@ -1459,17 +1881,12 @@ export const IDL: VoterStakeRegistry = {
     },
     {
       "name": "voter",
+      "docs": [
+        "User account for minting voting rights."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "voterAuthority",
-            "type": "publicKey"
-          },
-          {
-            "name": "registrar",
-            "type": "publicKey"
-          },
           {
             "name": "deposits",
             "type": {
@@ -1482,12 +1899,29 @@ export const IDL: VoterStakeRegistry = {
             }
           },
           {
+            "name": "voterAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "registrar",
+            "type": "publicKey"
+          },
+          {
             "name": "voterBump",
             "type": "u8"
           },
           {
             "name": "voterWeightRecordBump",
             "type": "u8"
+          },
+          {
+            "name": "reserved1",
+            "type": {
+              "array": [
+                "u8",
+                14
+              ]
+            }
           }
         ]
       }
@@ -1495,42 +1929,22 @@ export const IDL: VoterStakeRegistry = {
   ],
   "types": [
     {
-      "name": "DepositEntry",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "lockup",
-            "type": {
-              "defined": "Lockup"
-            }
-          },
-          {
-            "name": "amountDepositedNative",
-            "type": "u64"
-          },
-          {
-            "name": "isUsed",
-            "type": "bool"
-          },
-          {
-            "name": "votingMintConfigIdx",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
       "name": "VestingInfo",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "rate",
+            "docs": [
+              "Amount of tokens vested each period"
+            ],
             "type": "u64"
           },
           {
             "name": "nextTimestamp",
+            "docs": [
+              "Time of the next upcoming vesting"
+            ],
             "type": "u64"
           }
         ]
@@ -1543,20 +1957,74 @@ export const IDL: VoterStakeRegistry = {
         "fields": [
           {
             "name": "amount",
+            "docs": [
+              "Amount of locked tokens"
+            ],
             "type": "u64"
           },
           {
             "name": "endTimestamp",
+            "docs": [
+              "Time at which the lockup fully ends (None for Constant lockup)"
+            ],
             "type": {
               "option": "u64"
             }
           },
           {
             "name": "vesting",
+            "docs": [
+              "Information about vesting, if any"
+            ],
             "type": {
               "option": {
                 "defined": "VestingInfo"
               }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DepositEntry",
+      "docs": [
+        "Bookkeeping for a single deposit for a given mint and lockup schedule."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lockup",
+            "type": {
+              "defined": "Lockup"
+            }
+          },
+          {
+            "name": "amountDepositedNative",
+            "docs": [
+              "Amount in deposited, in native currency. Withdraws of vested tokens",
+              "directly reduce this amount.",
+              "",
+              "This directly tracks the total amount added by the user. They may",
+              "never withdraw more than this amount."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "votingMintConfigIdx",
+            "type": "u8"
+          },
+          {
+            "name": "isUsed",
+            "type": "bool"
+          },
+          {
+            "name": "reserved1",
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
             }
           }
         ]
@@ -1569,28 +2037,59 @@ export const IDL: VoterStakeRegistry = {
         "fields": [
           {
             "name": "startTs",
-            "type": "i64"
+            "docs": [
+              "Note, that if start_ts is in the future, the funds are nevertheless",
+              "locked up!",
+              "Start of the lockup."
+            ],
+            "type": "u64"
           },
           {
             "name": "endTs",
-            "type": "i64"
+            "docs": [
+              "End of the lockup."
+            ],
+            "type": "u64"
           },
           {
-            "name": "cooldownEndsTs",
-            "type": {
-              "option": "i64"
-            }
+            "name": "cooldownEndsAt",
+            "docs": [
+              "End of the cooldown."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "cooldownRequested",
+            "type": "bool"
           },
           {
             "name": "kind",
+            "docs": [
+              "Type of lockup."
+            ],
             "type": {
               "defined": "LockupKind"
             }
           },
           {
             "name": "period",
+            "docs": [
+              "Type of lockup"
+            ],
             "type": {
               "defined": "LockupPeriod"
+            }
+          },
+          {
+            "name": "reserved1",
+            "docs": [
+              "Padding after period to align the struct size to 8 bytes"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                5
+              ]
             }
           }
         ]
@@ -1598,160 +2097,73 @@ export const IDL: VoterStakeRegistry = {
     },
     {
       "name": "VotingMintConfig",
+      "docs": [
+        "Exchange rate for an asset that can be used to mint voting rights.",
+        "",
+        "See documentation of configure_voting_mint for details on how",
+        "native token amounts convert to vote weight."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "mint",
+            "docs": [
+              "Mint for this entry."
+            ],
             "type": "publicKey"
           },
           {
             "name": "grantAuthority",
+            "docs": [
+              "The authority that is allowed to push grants into voters"
+            ],
             "type": "publicKey"
           },
           {
             "name": "baselineVoteWeightScaledFactor",
+            "docs": [
+              "Vote weight factor for all funds in the account, no matter if locked or not.",
+              "",
+              "In 1/SCALED_FACTOR_BASE units."
+            ],
             "type": "u64"
           },
           {
             "name": "maxExtraLockupVoteWeightScaledFactor",
+            "docs": [
+              "Maximum extra vote weight factor for lockups.",
+              "",
+              "This is the extra votes gained for lockups lasting lockup_saturation_secs or",
+              "longer. Shorter lockups receive only a fraction of the maximum extra vote weight,",
+              "based on lockup_time divided by lockup_saturation_secs.",
+              "",
+              "In 1/SCALED_FACTOR_BASE units."
+            ],
             "type": "u64"
           },
           {
             "name": "lockupSaturationSecs",
+            "docs": [
+              "Number of seconds of lockup needed to reach the maximum lockup bonus."
+            ],
             "type": "u64"
           },
           {
             "name": "digitShift",
+            "docs": [
+              "Number of digits to shift native amounts, applying a 10^digit_shift factor."
+            ],
             "type": "i8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "VsrError",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "InvalidRate"
           },
           {
-            "name": "RatesFull"
-          },
-          {
-            "name": "VotingMintNotFound"
-          },
-          {
-            "name": "DepositEntryNotFound"
-          },
-          {
-            "name": "DepositEntryFull"
-          },
-          {
-            "name": "VotingTokenNonZero"
-          },
-          {
-            "name": "OutOfBoundsDepositEntryIndex"
-          },
-          {
-            "name": "UnusedDepositEntryIndex"
-          },
-          {
-            "name": "InsufficientUnlockedTokens"
-          },
-          {
-            "name": "UnableToConvert"
-          },
-          {
-            "name": "InvalidLockupPeriod"
-          },
-          {
-            "name": "InvalidEndTs"
-          },
-          {
-            "name": "InvalidDays"
-          },
-          {
-            "name": "VotingMintConfigIndexAlreadyInUse"
-          },
-          {
-            "name": "OutOfBoundsVotingMintConfigIndex"
-          },
-          {
-            "name": "InvalidDecimals"
-          },
-          {
-            "name": "InvalidToDepositAndWithdrawInOneSlot"
-          },
-          {
-            "name": "ShouldBeTheFirstIxInATx"
-          },
-          {
-            "name": "ForbiddenCpi"
-          },
-          {
-            "name": "InvalidMint"
-          },
-          {
-            "name": "DebugInstruction"
-          },
-          {
-            "name": "ClawbackNotAllowedOnDeposit"
-          },
-          {
-            "name": "DepositStillLocked"
-          },
-          {
-            "name": "InvalidAuthority"
-          },
-          {
-            "name": "InvalidTokenOwnerRecord"
-          },
-          {
-            "name": "InvalidRealmAuthority"
-          },
-          {
-            "name": "VoterWeightOverflow"
-          },
-          {
-            "name": "LockupSaturationMustBePositive"
-          },
-          {
-            "name": "VotingMintConfiguredWithDifferentIndex"
-          },
-          {
-            "name": "InternalProgramError"
-          },
-          {
-            "name": "InsufficientLockedTokens"
-          },
-          {
-            "name": "MustKeepTokensLocked"
-          },
-          {
-            "name": "InvalidLockupKind"
-          },
-          {
-            "name": "InvalidChangeToClawbackDepositEntry"
-          },
-          {
-            "name": "InternalErrorBadLockupVoteWeight"
-          },
-          {
-            "name": "DepositStartTooFarInFuture"
-          },
-          {
-            "name": "VaultTokenNonZero"
-          },
-          {
-            "name": "InvalidTimestampArguments"
-          },
-          {
-            "name": "UnlockMustBeCalledFirst"
-          },
-          {
-            "name": "UnlockAlreadyRequested"
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                7
+              ]
+            }
           }
         ]
       }
@@ -1848,6 +2260,208 @@ export const IDL: VoterStakeRegistry = {
           "index": false
         }
       ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidRate",
+      "msg": "Exchange rate must be greater than zero"
+    },
+    {
+      "code": 6001,
+      "name": "RatesFull",
+      "msg": ""
+    },
+    {
+      "code": 6002,
+      "name": "VotingMintNotFound",
+      "msg": ""
+    },
+    {
+      "code": 6003,
+      "name": "DepositEntryNotFound",
+      "msg": ""
+    },
+    {
+      "code": 6004,
+      "name": "DepositEntryFull",
+      "msg": ""
+    },
+    {
+      "code": 6005,
+      "name": "VotingTokenNonZero",
+      "msg": ""
+    },
+    {
+      "code": 6006,
+      "name": "OutOfBoundsDepositEntryIndex",
+      "msg": ""
+    },
+    {
+      "code": 6007,
+      "name": "UnusedDepositEntryIndex",
+      "msg": ""
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientUnlockedTokens",
+      "msg": ""
+    },
+    {
+      "code": 6009,
+      "name": "UnableToConvert",
+      "msg": ""
+    },
+    {
+      "code": 6010,
+      "name": "InvalidLockupPeriod",
+      "msg": ""
+    },
+    {
+      "code": 6011,
+      "name": "InvalidEndTs",
+      "msg": ""
+    },
+    {
+      "code": 6012,
+      "name": "InvalidDays",
+      "msg": ""
+    },
+    {
+      "code": 6013,
+      "name": "VotingMintConfigIndexAlreadyInUse",
+      "msg": ""
+    },
+    {
+      "code": 6014,
+      "name": "OutOfBoundsVotingMintConfigIndex",
+      "msg": ""
+    },
+    {
+      "code": 6015,
+      "name": "InvalidDecimals",
+      "msg": "Exchange rate decimals cannot be larger than registrar decimals"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidToDepositAndWithdrawInOneSlot",
+      "msg": ""
+    },
+    {
+      "code": 6017,
+      "name": "ShouldBeTheFirstIxInATx",
+      "msg": ""
+    },
+    {
+      "code": 6018,
+      "name": "ForbiddenCpi",
+      "msg": ""
+    },
+    {
+      "code": 6019,
+      "name": "InvalidMint",
+      "msg": ""
+    },
+    {
+      "code": 6020,
+      "name": "DebugInstruction",
+      "msg": ""
+    },
+    {
+      "code": 6021,
+      "name": "ClawbackNotAllowedOnDeposit",
+      "msg": ""
+    },
+    {
+      "code": 6022,
+      "name": "DepositStillLocked",
+      "msg": ""
+    },
+    {
+      "code": 6023,
+      "name": "InvalidAuthority",
+      "msg": ""
+    },
+    {
+      "code": 6024,
+      "name": "InvalidTokenOwnerRecord",
+      "msg": ""
+    },
+    {
+      "code": 6025,
+      "name": "InvalidRealmAuthority",
+      "msg": ""
+    },
+    {
+      "code": 6026,
+      "name": "VoterWeightOverflow",
+      "msg": ""
+    },
+    {
+      "code": 6027,
+      "name": "LockupSaturationMustBePositive",
+      "msg": ""
+    },
+    {
+      "code": 6028,
+      "name": "VotingMintConfiguredWithDifferentIndex",
+      "msg": ""
+    },
+    {
+      "code": 6029,
+      "name": "InternalProgramError",
+      "msg": ""
+    },
+    {
+      "code": 6030,
+      "name": "InsufficientLockedTokens",
+      "msg": ""
+    },
+    {
+      "code": 6031,
+      "name": "MustKeepTokensLocked",
+      "msg": ""
+    },
+    {
+      "code": 6032,
+      "name": "InvalidLockupKind",
+      "msg": ""
+    },
+    {
+      "code": 6033,
+      "name": "InvalidChangeToClawbackDepositEntry",
+      "msg": ""
+    },
+    {
+      "code": 6034,
+      "name": "InternalErrorBadLockupVoteWeight",
+      "msg": ""
+    },
+    {
+      "code": 6035,
+      "name": "DepositStartTooFarInFuture",
+      "msg": ""
+    },
+    {
+      "code": 6036,
+      "name": "VaultTokenNonZero",
+      "msg": ""
+    },
+    {
+      "code": 6037,
+      "name": "InvalidTimestampArguments",
+      "msg": ""
+    },
+    {
+      "code": 6038,
+      "name": "UnlockMustBeCalledFirst",
+      "msg": ""
+    },
+    {
+      "code": 6039,
+      "name": "UnlockAlreadyRequested",
+      "msg": ""
     }
   ]
 };

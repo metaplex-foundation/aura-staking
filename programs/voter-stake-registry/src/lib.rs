@@ -140,4 +140,18 @@ pub mod voter_stake_registry {
     ) -> Result<()> {
         instructions::log_voter_info(ctx, deposit_entry_begin, deposit_entry_count)
     }
+
+    pub fn internal_transfer_unlocked(
+        ctx: Context<InternalTransferUnlocked>,
+        source_deposit_entry_index: u8,
+        target_deposit_entry_index: u8,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::internal_transfer_unlocked(
+            ctx,
+            source_deposit_entry_index,
+            target_deposit_entry_index,
+            amount,
+        )
+    }
 }
