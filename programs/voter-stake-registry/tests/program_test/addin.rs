@@ -93,6 +93,47 @@ impl AddinCookie {
         }
     }
 
+    #[allow(dead_code)]
+    pub async fn internal_transfer_unlocked(
+        &self,
+        registrar: &RegistrarCookie,
+        voter: &VoterCookie,
+        authority: &Keypair,
+        source_deposit_entry_index: u8,
+        target_deposit_entry_index: u8,
+        amount: u64,
+    ) -> Result<(), BanksClientError> {
+        let data = anchor_lang::InstructionData::data(
+            &voter_stake_registry::instruction::InternalTransferUnlocked {
+                source_deposit_entry_index,
+                target_deposit_entry_index,
+                amount,
+            },
+        );
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &voter_stake_registry::accounts::InternalTransferUnlocked {
+                registrar: registrar.address,
+                voter: voter.address,
+                voter_authority: authority.pubkey(),
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        // clone the secrets
+        let signer = Keypair::from_base58_string(&authority.to_base58_string());
+
+        self.solana
+            .process_transaction(&instructions, Some(&[&signer]))
+            .await
+    }
+
     pub async fn configure_voting_mint(
         &self,
         registrar: &RegistrarCookie,
