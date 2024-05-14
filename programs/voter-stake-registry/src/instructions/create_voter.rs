@@ -1,8 +1,10 @@
-use crate::error::*;
-use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
+use mplx_staking_states::error::*;
+use mplx_staking_states::state::*;
 use std::mem::size_of;
+
+use crate::voter::VoterWeightRecord;
 
 #[derive(Accounts)]
 pub struct CreateVoter<'info> {

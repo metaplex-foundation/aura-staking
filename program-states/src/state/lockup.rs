@@ -1,11 +1,5 @@
 use crate::error::*;
-use crate::vote_weight_record;
 use anchor_lang::prelude::*;
-
-// Generate a VoteWeightRecord Anchor wrapper, owned by the current program.
-// VoteWeightRecords are unique in that they are defined by the SPL governance
-// program, but they are actually owned by this program.
-vote_weight_record!(crate::ID);
 
 /// Seconds in one day.
 pub const SECS_PER_DAY: u64 = 86_400;
@@ -23,15 +17,15 @@ pub struct Lockup {
     /// locked up!
 
     /// Start of the lockup.
-    pub(crate) start_ts: u64,
+    pub start_ts: u64,
 
     /// End of the lockup.
-    pub(crate) end_ts: u64,
+    pub end_ts: u64,
 
     /// End of the cooldown.
-    pub(crate) cooldown_ends_at: u64,
+    pub cooldown_ends_at: u64,
 
-    pub(crate) cooldown_requested: bool,
+    pub cooldown_requested: bool,
     /// Type of lockup.
     pub kind: LockupKind,
 

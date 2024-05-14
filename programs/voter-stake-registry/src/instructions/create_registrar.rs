@@ -1,7 +1,7 @@
-use crate::error::*;
-use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
+use mplx_staking_states::error::*;
+use mplx_staking_states::state::*;
 use spl_governance::state::realm;
 use std::mem::size_of;
 

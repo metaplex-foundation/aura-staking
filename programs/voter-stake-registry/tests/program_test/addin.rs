@@ -1,12 +1,12 @@
 use std::cell::RefCell;
 use std::sync::Arc;
 
+use mplx_staking_states::state::LockupPeriod;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
     instruction::Instruction,
     signature::{Keypair, Signer},
 };
-use voter_stake_registry::state::LockupPeriod;
 
 use crate::*;
 
@@ -273,7 +273,7 @@ impl AddinCookie {
         voter_authority: &Keypair,
         voting_mint: &VotingMintConfigCookie,
         deposit_entry_index: u8,
-        lockup_kind: voter_stake_registry::state::LockupKind,
+        lockup_kind: mplx_staking_states::state::LockupKind,
         start_ts: Option<u64>,
         period: LockupPeriod,
     ) -> std::result::Result<(), BanksClientError> {
@@ -516,14 +516,14 @@ impl AddinCookie {
         &self,
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-    ) -> std::result::Result<voter_stake_registry::state::VoterWeightRecord, BanksClientError> {
+    ) -> std::result::Result<voter_stake_registry::voter::VoterWeightRecord, BanksClientError> {
         let instructions = vec![self.update_voter_weight_record_instruction(registrar, voter)];
 
         self.solana.process_transaction(&instructions, None).await?;
 
         Ok(self
             .solana
-            .get_account::<voter_stake_registry::state::VoterWeightRecord>(
+            .get_account::<voter_stake_registry::voter::VoterWeightRecord>(
                 voter.voter_weight_record,
             )
             .await)
@@ -634,7 +634,7 @@ impl VoterCookie {
     #[allow(dead_code)]
     pub async fn deposit_amount(&self, solana: &SolanaCookie, deposit_id: u8) -> u64 {
         solana
-            .get_account::<voter_stake_registry::state::Voter>(self.address)
+            .get_account::<mplx_staking_states::state::Voter>(self.address)
             .await
             .deposits[deposit_id as usize]
             .amount_deposited_native

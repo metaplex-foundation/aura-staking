@@ -24,6 +24,8 @@ pub struct Registrar {
 const_assert!(std::mem::size_of::<Registrar>() == 7 + 4 * 32 + 4 * 96 + 8 + 1);
 const_assert!(std::mem::size_of::<Registrar>() % 8 == 0);
 
+pub const REGISTRAR_DISCRIMINATOR: [u8; 8] = [193, 202, 205, 51, 78, 168, 150, 128];
+
 impl Registrar {
     pub fn clock_unix_timestamp(&self) -> u64 {
         Clock::get()

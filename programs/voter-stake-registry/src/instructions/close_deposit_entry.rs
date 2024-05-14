@@ -1,6 +1,6 @@
-use crate::error::*;
-use crate::state::*;
 use anchor_lang::prelude::*;
+use mplx_staking_states::error::*;
+use mplx_staking_states::state::*;
 
 #[derive(Accounts)]
 pub struct CloseDepositEntry<'info> {

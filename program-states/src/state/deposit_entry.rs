@@ -1,4 +1,4 @@
-use crate::{state::lockup::Lockup, LockupKind};
+use crate::state::lockup::{Lockup, LockupKind};
 
 use anchor_lang::prelude::*;
 
@@ -63,7 +63,7 @@ impl DepositEntry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{LockupKind::Constant, LockupPeriod, VotingMintConfig};
+    use crate::state::{LockupKind::Constant, LockupPeriod, VotingMintConfig};
 
     #[test]
     pub fn far_future_lockup_start_test() -> Result<()> {

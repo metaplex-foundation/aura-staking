@@ -2,7 +2,6 @@ use crate::error::*;
 use crate::state::deposit_entry::DepositEntry;
 use crate::state::registrar::Registrar;
 use anchor_lang::prelude::*;
-use spl_governance::state::token_owner_record;
 
 /// User account for minting voting rights.
 #[account(zero_copy)]
@@ -16,6 +15,8 @@ pub struct Voter {
 }
 const_assert!(std::mem::size_of::<Voter>() == 48 * 32 + 32 + 32 + 1 + 1 + 14);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
+
+pub const VOTER_DISCRIMINATOR: [u8; 8] = [241, 93, 35, 191, 254, 147, 17, 202];
 
 impl Voter {
     /// The full vote weight available to the voter
@@ -60,25 +61,6 @@ impl Voter {
         let d = &mut self.deposits[index];
         require!(d.is_used, VsrError::UnusedDepositEntryIndex);
         Ok(d)
-    }
-
-    pub fn load_token_owner_record(
-        &self,
-        account_info: &AccountInfo,
-        registrar: &Registrar,
-    ) -> Result<token_owner_record::TokenOwnerRecordV2> {
-        let record = token_owner_record::get_token_owner_record_data_for_realm_and_governing_mint(
-            &registrar.governance_program_id,
-            account_info,
-            &registrar.realm,
-            &registrar.realm_governing_token_mint,
-        )?;
-        require_keys_eq!(
-            record.governing_token_owner,
-            self.voter_authority,
-            VsrError::InvalidTokenOwnerRecord
-        );
-        Ok(record)
     }
 }
 

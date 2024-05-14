@@ -1,7 +1,10 @@
-use crate::error::*;
-use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
+use mplx_staking_states::error::*;
+use mplx_staking_states::state::*;
+
+use crate::voter::load_token_owner_record;
+use crate::voter::VoterWeightRecord;
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -93,7 +96,8 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
     // Governance may forbid withdraws, for example when engaged in a vote.
     // Not applicable for tokens that don't contribute to voting power.
     if registrar.voting_mints[mint_idx].grants_vote_weight() {
-        let token_owner_record = voter.load_token_owner_record(
+        let token_owner_record = load_token_owner_record(
+            &voter.voter_authority,
             &ctx.accounts.token_owner_record.to_account_info(),
             registrar,
         )?;

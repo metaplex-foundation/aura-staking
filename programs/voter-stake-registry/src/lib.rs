@@ -1,15 +1,11 @@
 use anchor_lang::prelude::*;
 use instructions::*;
-use state::*;
+use mplx_staking_states::state::*;
 
-mod error;
 pub mod events;
 mod governance;
 mod instructions;
-pub mod state;
-
-#[macro_use]
-extern crate static_assertions;
+pub mod voter;
 
 // The program address.
 declare_id!("3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s");
@@ -60,6 +56,8 @@ declare_id!("3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s");
 /// a u64.
 #[program]
 pub mod voter_stake_registry {
+    use mplx_staking_states::state::lockup::{LockupKind, LockupPeriod};
+
     use super::*;
 
     pub fn create_registrar(ctx: Context<CreateRegistrar>, registrar_bump: u8) -> Result<()> {
