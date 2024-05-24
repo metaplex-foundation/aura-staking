@@ -3,6 +3,13 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use mplx_staking_states::error::*;
 use mplx_staking_states::state::*;
+use solana_program::{
+    instruction::Instruction,
+    program::{invoke, invoke_signed},
+    system_program, sysvar,
+};
+
+use crate::cpi_instructions::RewardsInstruction;
 
 #[derive(Accounts)]
 pub struct CreateDepositEntry<'info> {
@@ -84,6 +91,76 @@ pub fn create_deposit_entry(
     d_entry.voting_mint_config_idx = mint_idx as u8;
     d_entry.amount_deposited_native = 0;
     d_entry.lockup = Lockup::new(kind, start_ts, period)?;
+
+    Ok(())
+}
+
+/// Rewards initialize mining
+#[allow(clippy::too_many_arguments)]
+pub fn initialize_mining<'a>(
+    program_id: &Pubkey,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    user: AccountInfo<'a>,
+    payer: AccountInfo<'a>,
+    system_program: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+) -> Result<()> {
+    let accounts = vec![
+        AccountMeta::new(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+        AccountMeta::new_readonly(user.key(), false),
+        AccountMeta::new(payer.key(), true),
+        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    let ix =
+        Instruction::new_with_borsh(*program_id, &RewardsInstruction::InitializeMining, accounts);
+
+    invoke(
+        &ix,
+        &[reward_pool, mining, user, payer, system_program, rent],
+    )?;
+
+    Ok(())
+}
+
+/// Rewards deposit mining
+#[allow(clippy::too_many_arguments)]
+pub fn deposit_mining<'a>(
+    program_id: &Pubkey,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    user: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    amount: u64,
+    lockup_period: LockupPeriod,
+    signers_seeds: &[&[&[u8]]],
+    reward_mint: &Pubkey,
+) -> Result<()> {
+    let accounts = vec![
+        AccountMeta::new(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+        AccountMeta::new_readonly(reward_mint.key(), false),
+        AccountMeta::new_readonly(user.key(), false),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        *program_id,
+        &RewardsInstruction::DepositMining {
+            amount,
+            lockup_period,
+        },
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[reward_pool, mining, user, deposit_authority],
+        signers_seeds,
+    )?;
 
     Ok(())
 }

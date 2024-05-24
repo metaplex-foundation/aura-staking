@@ -122,4 +122,7 @@ pub enum VsrError {
     // 6039 / 0x1797
     #[msg("")]
     UnlockAlreadyRequested,
+    // 6040 / 0x1798
+    #[msg("")]
+    RestakeDepositIsNotAllowed,
 }
