@@ -1,7 +1,9 @@
+use crate::cpi_instructions::RewardsInstruction;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
 use mplx_staking_states::error::*;
 use mplx_staking_states::state::*;
+use solana_program::{instruction::Instruction, program::invoke_signed};
 
 use crate::voter::load_token_owner_record;
 use crate::voter::VoterWeightRecord;
@@ -155,6 +157,39 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
     let record = &mut ctx.accounts.voter_weight_record;
     record.voter_weight = voter.weight()?;
     record.voter_weight_expiry = Some(Clock::get()?.slot);
+
+    Ok(())
+}
+
+/// Rewards withdraw mining
+#[allow(clippy::too_many_arguments)]
+pub fn withdraw_mining<'a>(
+    program_id: &Pubkey,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    user: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    amount: u64,
+    signers_seeds: &[&[&[u8]]],
+) -> Result<()> {
+    let accounts = vec![
+        AccountMeta::new(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+        AccountMeta::new_readonly(user.key(), false),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        *program_id,
+        &RewardsInstruction::WithdrawMining { amount },
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[reward_pool, mining, user, deposit_authority],
+        signers_seeds,
+    )?;
 
     Ok(())
 }

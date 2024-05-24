@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use mplx_staking_states::state::*;
 
+mod cpi_instructions;
 pub mod events;
 mod governance;
 mod instructions;
@@ -151,5 +152,13 @@ pub mod voter_stake_registry {
             target_deposit_entry_index,
             amount,
         )
+    }
+
+    pub fn restake_deposit(
+        ctx: Context<RestakeDeposit>,
+        deposit_entry_index: u8,
+        lockup_period: LockupPeriod,
+    ) -> Result<()> {
+        instructions::restake_deposit(ctx, deposit_entry_index, lockup_period)
     }
 }
