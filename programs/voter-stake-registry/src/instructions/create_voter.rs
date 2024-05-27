@@ -4,6 +4,8 @@ use mplx_staking_states::error::*;
 use mplx_staking_states::state::*;
 use std::mem::size_of;
 
+use crate::cpi_instructions;
+use crate::cpi_instructions::REWARD_CONTRACT_ID;
 use crate::voter::VoterWeightRecord;
 
 #[derive(Accounts)]
@@ -45,6 +47,12 @@ pub struct CreateVoter<'info> {
     /// CHECK: Address constraint is set
     #[account(address = tx_instructions::ID)]
     pub instructions: UncheckedAccount<'info>,
+
+    /// CHECK: mining PDA will be checked in the rewards contract
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    pub reward_pool: UncheckedAccount<'info>,
 }
 
 /// Creates a new voter account. There can only be a single voter per
@@ -76,6 +84,21 @@ pub fn create_voter(
         voter_weight_record_bump,
         *ctx.bumps.get("voter_weight_record").unwrap()
     );
+
+    let mining = &ctx.accounts.deposit_mining;
+    let user = &ctx.accounts.payer;
+    let voter = &ctx.accounts.voter;
+    let system_program = &ctx.accounts.system_program;
+    let reward_pool = &ctx.accounts.reward_pool;
+
+    cpi_instructions::initialize_mining(
+        &REWARD_CONTRACT_ID,
+        reward_pool.to_account_info(),
+        mining.to_account_info(),
+        voter.to_account_info(),
+        user.to_account_info(),
+        system_program.to_account_info(),
+    )?;
 
     // Load accounts.
     let registrar = &ctx.accounts.registrar.load()?;

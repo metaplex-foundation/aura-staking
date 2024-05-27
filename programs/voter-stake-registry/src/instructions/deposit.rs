@@ -3,6 +3,9 @@ use anchor_spl::token::{self, Token, TokenAccount};
 use mplx_staking_states::error::*;
 use mplx_staking_states::state::*;
 
+use crate::cpi_instructions;
+use crate::cpi_instructions::REWARD_CONTRACT_ID;
+
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
@@ -31,6 +34,12 @@ pub struct Deposit<'info> {
     pub deposit_authority: Signer<'info>,
 
     pub token_program: Program<'info, Token>,
+
+    /// CHECK: mining PDA will be checked in the rewards contract
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    pub reward_pool: UncheckedAccount<'info>,
 }
 
 impl<'info> Deposit<'info> {
@@ -75,6 +84,35 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     let curr_ts = registrar.clock_unix_timestamp();
     token::transfer(ctx.accounts.transfer_ctx(), amount)?;
     d_entry.amount_deposited_native = d_entry.amount_deposited_native.checked_add(amount).unwrap();
+
+    let reward_pool = &ctx.accounts.reward_pool;
+    let mining = &ctx.accounts.deposit_mining;
+    let deposit_authority = &ctx.accounts.deposit_authority;
+    let reward_mint = &ctx.accounts.deposit_token.mint;
+    let voter = &ctx.accounts.voter;
+
+    let (_reward_pool_pubkey, pool_bump_seed) = Pubkey::find_program_address(
+        &[&reward_pool.key().to_bytes(), &reward_mint.key().to_bytes()],
+        &REWARD_CONTRACT_ID,
+    );
+
+    let signers_seeds = &[
+        &reward_pool.key().to_bytes()[..32],
+        &reward_mint.key().to_bytes()[..32],
+        &[pool_bump_seed],
+    ];
+
+    cpi_instructions::deposit_mining(
+        &REWARD_CONTRACT_ID,
+        reward_pool.to_account_info(),
+        mining.to_account_info(),
+        voter.to_account_info(),
+        deposit_authority.to_account_info(),
+        amount,
+        d_entry.lockup.period,
+        &[signers_seeds],
+        reward_mint,
+    )?;
 
     msg!(
         "Deposited amount {} at deposit index {} with lockup kind {:?} with lockup period {:?} and {} seconds left. It's used now: {:?}",
