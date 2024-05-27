@@ -1,12 +1,8 @@
-use crate::cpi_instructions::RewardsInstruction;
+use crate::cpi_instructions::{withdraw_mining, REWARD_CONTRACT_ID};
+use crate::voter::{load_token_owner_record, VoterWeightRecord};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
-use mplx_staking_states::error::*;
-use mplx_staking_states::state::*;
-use solana_program::{instruction::Instruction, program::invoke_signed};
-
-use crate::voter::load_token_owner_record;
-use crate::voter::VoterWeightRecord;
+use mplx_staking_states::{error::*, state::*};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -58,6 +54,12 @@ pub struct Withdraw<'info> {
     pub destination: Box<Account<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token>,
+
+    /// CHECK: mining PDA will be checked in the rewards contract
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    pub reward_pool: UncheckedAccount<'info>,
 }
 
 impl<'info> Withdraw<'info> {
@@ -158,37 +160,31 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
     record.voter_weight = voter.weight()?;
     record.voter_weight_expiry = Some(Clock::get()?.slot);
 
-    Ok(())
-}
+    let reward_pool = &ctx.accounts.reward_pool;
+    let mining = &ctx.accounts.deposit_mining;
+    let deposit_authority = &ctx.accounts.voter_authority;
+    let reward_mint = &ctx.accounts.destination.mint;
+    let voter = &ctx.accounts.voter;
 
-/// Rewards withdraw mining
-#[allow(clippy::too_many_arguments)]
-pub fn withdraw_mining<'a>(
-    program_id: &Pubkey,
-    reward_pool: AccountInfo<'a>,
-    mining: AccountInfo<'a>,
-    user: AccountInfo<'a>,
-    deposit_authority: AccountInfo<'a>,
-    amount: u64,
-    signers_seeds: &[&[&[u8]]],
-) -> Result<()> {
-    let accounts = vec![
-        AccountMeta::new(reward_pool.key(), false),
-        AccountMeta::new(mining.key(), false),
-        AccountMeta::new_readonly(user.key(), false),
-        AccountMeta::new_readonly(deposit_authority.key(), true),
-    ];
-
-    let ix = Instruction::new_with_borsh(
-        *program_id,
-        &RewardsInstruction::WithdrawMining { amount },
-        accounts,
+    let (_reward_pool_pubkey, pool_bump_seed) = Pubkey::find_program_address(
+        &[&reward_pool.key().to_bytes(), &reward_mint.key().to_bytes()],
+        &REWARD_CONTRACT_ID,
     );
 
-    invoke_signed(
-        &ix,
-        &[reward_pool, mining, user, deposit_authority],
-        signers_seeds,
+    let signers_seeds = &[
+        &reward_pool.key().to_bytes()[..32],
+        &reward_mint.key().to_bytes()[..32],
+        &[pool_bump_seed],
+    ];
+
+    withdraw_mining(
+        &REWARD_CONTRACT_ID,
+        reward_pool.to_account_info(),
+        mining.to_account_info(),
+        voter.to_account_info(),
+        deposit_authority.to_account_info(),
+        amount,
+        &[signers_seeds],
     )?;
 
     Ok(())
