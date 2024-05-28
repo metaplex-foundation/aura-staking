@@ -113,7 +113,6 @@ impl SolanaCookie {
             .to_vec()
     }
 
-    #[allow(dead_code)]
     pub async fn get_account<T: AccountDeserialize>(&self, address: Pubkey) -> T {
         let data = self.get_account_data(address).await;
         let mut data_slice: &[u8] = &data;
