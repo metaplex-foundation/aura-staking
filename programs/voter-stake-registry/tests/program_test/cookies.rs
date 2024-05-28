@@ -1,4 +1,6 @@
-use crate::utils::*;
+use std::sync::Arc;
+
+use crate::{solana, utils::*};
 use solana_program::pubkey::*;
 use solana_sdk::signature::Keypair;
 
@@ -29,4 +31,9 @@ impl Clone for MintCookie {
 pub struct UserCookie {
     pub key: Keypair,
     pub token_accounts: Vec<Pubkey>,
+}
+
+pub struct RewardsCookie {
+    pub solana: Arc<solana::SolanaCookie>,
+    pub program_id: Pubkey,
 }

@@ -82,6 +82,7 @@ impl Log for LoggerWrapper {
 pub struct TestContext {
     pub solana: Arc<SolanaCookie>,
     pub governance: GovernanceCookie,
+    pub rewards: RewardsCookie,
     pub addin: AddinCookie,
     pub mints: Vec<MintCookie>,
     pub users: Vec<UserCookie>,
@@ -122,6 +123,9 @@ impl TestContext {
             governance_program_id,
             processor!(spl_governance::processor::process_instruction),
         );
+        let rewards_program_id =
+            Pubkey::from_str("J8oa8UUJBydrTKtCdkvwmQQ27ZFDq54zAxWJY5Ey72Ji").unwrap();
+        test.add_program("mplx_rewards", rewards_program_id, None);
 
         // Setup the environment
 
@@ -229,6 +233,10 @@ impl TestContext {
                 solana: solana.clone(),
                 program_id: addin_program_id,
                 time_offset: RefCell::new(0),
+            },
+            rewards: RewardsCookie {
+                solana: solana.clone(),
+                program_id: rewards_program_id,
             },
             mints,
             users,
