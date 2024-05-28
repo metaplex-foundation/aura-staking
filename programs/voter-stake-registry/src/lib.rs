@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 use mplx_staking_states::state::*;
 
-mod cpi_instructions;
+pub mod cpi_instructions;
 pub mod events;
 mod governance;
 mod instructions;
@@ -126,9 +126,7 @@ pub mod voter_stake_registry {
         instructions::unlock_tokens(ctx, deposit_entry_index)
     }
 
-    pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
-        ctx: Context<'key, 'accounts, 'remaining, 'info, CloseVoter<'info>>,
-    ) -> Result<()> {
+    pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
         instructions::close_voter(ctx)
     }
 
