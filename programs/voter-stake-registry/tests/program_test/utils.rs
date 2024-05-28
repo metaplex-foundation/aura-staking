@@ -1,7 +1,13 @@
 use bytemuck::{bytes_of, Contiguous};
 use solana_program::program_error::ProgramError;
+use solana_program_test::{BanksClientError, ProgramTestContext};
+use solana_sdk::account::Account;
+use solana_sdk::program_pack::Pack;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
+use solana_sdk::signer::Signer;
+use solana_sdk::system_instruction;
+use solana_sdk::transaction::Transaction;
 
 #[allow(dead_code)]
 pub fn gen_signer_seeds<'a>(nonce: &'a u64, acc_pk: &'a Pubkey) -> [&'a [u8]; 2] {
@@ -31,4 +37,37 @@ pub fn create_signer_key_and_nonce(program_id: &Pubkey, acc_pk: &Pubkey) -> (Pub
 #[allow(dead_code)]
 pub fn clone_keypair(keypair: &Keypair) -> Keypair {
     Keypair::from_base58_string(&keypair.to_base58_string())
+}
+
+pub async fn create_mint(
+    context: &mut ProgramTestContext,
+    mint: &Keypair,
+    manager: &Pubkey,
+) -> Result<(), BanksClientError> {
+    let rent = context.banks_client.get_rent().await.unwrap();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[
+            system_instruction::create_account(
+                &context.payer.pubkey(),
+                &mint.pubkey(),
+                rent.minimum_balance(spl_token::state::Mint::LEN),
+                spl_token::state::Mint::LEN as u64,
+                &spl_token::id(),
+            ),
+            spl_token::instruction::initialize_mint(
+                &spl_token::id(),
+                &mint.pubkey(),
+                manager,
+                None,
+                0,
+            )
+            .unwrap(),
+        ],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, mint],
+        context.last_blockhash,
+    );
+
+    context.banks_client.process_transaction(tx).await
 }
