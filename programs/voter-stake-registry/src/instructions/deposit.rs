@@ -35,11 +35,16 @@ pub struct Deposit<'info> {
 
     pub token_program: Program<'info, Token>,
 
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    #[account(mut)]
+    pub reward_pool: UncheckedAccount<'info>,
+
     /// CHECK: mining PDA will be checked in the rewards contract
+    #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    pub reward_pool: UncheckedAccount<'info>,
+    /// CHECK: Rewards Program account
+    pub rewards_program: UncheckedAccount<'info>,
 }
 
 impl<'info> Deposit<'info> {
@@ -66,30 +71,33 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     if amount == 0 {
         return Ok(());
     }
-
     let registrar = &ctx.accounts.registrar.load()?;
-    let voter = &mut ctx.accounts.voter.load_mut()?;
-
-    let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
-
-    // Get the exchange rate entry associated with this deposit.
-    let mint_idx = registrar.voting_mint_config_index(ctx.accounts.deposit_token.mint)?;
-    require_eq!(
-        mint_idx,
-        d_entry.voting_mint_config_idx as usize,
-        VsrError::InvalidMint
-    );
-
-    // Deposit tokens into the vault and increase the lockup amount too.
     let curr_ts = registrar.clock_unix_timestamp();
-    token::transfer(ctx.accounts.transfer_ctx(), amount)?;
-    d_entry.amount_deposited_native = d_entry.amount_deposited_native.checked_add(amount).unwrap();
+
+    {
+        let voter = &mut ctx.accounts.voter.load_mut()?;
+        let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
+
+        // Get the exchange rate entry associated with this deposit.
+        let mint_idx = registrar.voting_mint_config_index(ctx.accounts.deposit_token.mint)?;
+        require_eq!(
+            mint_idx,
+            d_entry.voting_mint_config_idx as usize,
+            VsrError::InvalidMint
+        );
+        // Deposit tokens into the vault and increase the lockup amount too.
+
+        token::transfer(ctx.accounts.transfer_ctx(), amount)?;
+        d_entry.amount_deposited_native =
+            d_entry.amount_deposited_native.checked_add(amount).unwrap();
+    }
 
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
     let deposit_authority = &ctx.accounts.deposit_authority;
     let reward_mint = &ctx.accounts.deposit_token.mint;
-    let voter = &ctx.accounts.voter;
+    let voter = &ctx.accounts.voter.load()?;
+    let d_entry = voter.active_deposit(deposit_entry_index)?;
 
     let (_reward_pool_pubkey, pool_bump_seed) = Pubkey::find_program_address(
         &[&reward_pool.key().to_bytes(), &reward_mint.key().to_bytes()],
@@ -103,10 +111,10 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     ];
 
     cpi_instructions::deposit_mining(
-        &REWARD_CONTRACT_ID,
+        ctx.accounts.rewards_program.to_account_info(),
         reward_pool.to_account_info(),
         mining.to_account_info(),
-        voter.to_account_info(),
+        ctx.accounts.voter.to_account_info(),
         deposit_authority.to_account_info(),
         amount,
         d_entry.lockup.period,

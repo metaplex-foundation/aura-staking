@@ -39,7 +39,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
@@ -47,7 +47,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
     let voter_authority = &context.users[1].key;
     let voter_mngo = context.users[1].token_accounts[0];
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
     let registrar = addin
@@ -69,8 +69,23 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         )
         .await;
 
+    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_mining = find_deposit_mining_addr(
+        &voter_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
+
     let voter = addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     addin
@@ -95,6 +110,9 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             voter_mngo,
             0,
             12000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();

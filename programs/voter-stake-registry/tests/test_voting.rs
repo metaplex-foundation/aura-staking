@@ -18,7 +18,7 @@ async fn test_voting() -> Result<(), TransportError> {
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
@@ -28,10 +28,10 @@ async fn test_voting() -> Result<(), TransportError> {
     let voter_mngo = context.users[1].token_accounts[0];
     let voter_usdc = context.users[1].token_accounts[1];
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
     let token_owner_record2 = realm
-        .create_token_owner_record(voter2_authority.pubkey(), &payer)
+        .create_token_owner_record(voter2_authority.pubkey(), payer)
         .await;
 
     let registrar = addin
@@ -68,11 +68,39 @@ async fn test_voting() -> Result<(), TransportError> {
         )
         .await;
 
+    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_mining_voter = find_deposit_mining_addr(
+        &voter_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
     let voter = addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining_voter,
+            &context.rewards.program_id,
+        )
         .await;
+
+    let deposit_mining_voter2 = find_deposit_mining_addr(
+        &voter2_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
     let voter2 = addin
-        .create_voter(&registrar, &token_owner_record2, &voter2_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record2,
+            voter2_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining_voter2,
+            &context.rewards.program_id,
+        )
         .await;
 
     let mint_governance = realm
@@ -80,7 +108,7 @@ async fn test_voting() -> Result<(), TransportError> {
             context.mints[0].pubkey.unwrap(),
             &context.mints[0].authority,
             &voter,
-            &voter_authority,
+            voter_authority,
             payer,
             addin.update_voter_weight_record_instruction(&registrar, &voter),
         )
@@ -108,6 +136,9 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             499,
+            &rewards_pool,
+            &deposit_mining_voter,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -116,7 +147,7 @@ async fn test_voting() -> Result<(), TransportError> {
     realm
         .create_proposal(
             mint_governance.address,
-            &voter_authority,
+            voter_authority,
             &voter,
             payer,
             addin.update_voter_weight_record_instruction(&registrar, &voter),
@@ -133,6 +164,9 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             501,
+            &rewards_pool,
+            &deposit_mining_voter,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -141,7 +175,7 @@ async fn test_voting() -> Result<(), TransportError> {
     let proposal = realm
         .create_proposal(
             mint_governance.address,
-            &voter_authority,
+            voter_authority,
             &voter,
             payer,
             addin.update_voter_weight_record_instruction(&registrar, &voter),
@@ -156,10 +190,13 @@ async fn test_voting() -> Result<(), TransportError> {
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             voter_mngo,
             0,
             1,
+            &rewards_pool,
+            &deposit_mining_voter,
+            &context.rewards.program_id,
         )
         .await
         .expect_err("could not withdraw");
@@ -186,6 +223,9 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             750,
+            &rewards_pool,
+            &deposit_mining_voter2,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -212,6 +252,9 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_usdc,
             1,
             1000,
+            &rewards_pool,
+            &deposit_mining_voter2,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -221,7 +264,7 @@ async fn test_voting() -> Result<(), TransportError> {
             mint_governance.address,
             &proposal,
             &voter2,
-            &voter2_authority,
+            voter2_authority,
             payer,
             addin.update_voter_weight_record_instruction(&registrar, &voter2),
         )
@@ -242,10 +285,13 @@ async fn test_voting() -> Result<(), TransportError> {
             &registrar,
             &voter2,
             &mngo_voting_mint,
-            &voter2_authority,
+            voter2_authority,
             voter_mngo,
             0,
             1,
+            &rewards_pool,
+            &deposit_mining_voter2,
+            &context.rewards.program_id,
         )
         .await
         .expect_err("could not withdraw");
@@ -256,10 +302,13 @@ async fn test_voting() -> Result<(), TransportError> {
             &registrar,
             &voter2,
             &usdc_voting_mint,
-            &voter2_authority,
+            voter2_authority,
             voter_usdc,
             1,
             1,
+            &rewards_pool,
+            &deposit_mining_voter2,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -269,7 +318,7 @@ async fn test_voting() -> Result<(), TransportError> {
             mint_governance.address,
             &proposal,
             voter2.token_owner_record,
-            &voter2_authority,
+            voter2_authority,
             payer.pubkey(),
         )
         .await
@@ -281,10 +330,13 @@ async fn test_voting() -> Result<(), TransportError> {
             &registrar,
             &voter2,
             &mngo_voting_mint,
-            &voter2_authority,
+            voter2_authority,
             voter_mngo,
             0,
             750,
+            &rewards_pool,
+            &deposit_mining_voter2,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();

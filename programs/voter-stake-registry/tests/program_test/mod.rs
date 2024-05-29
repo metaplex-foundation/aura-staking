@@ -16,9 +16,12 @@ pub use governance::*;
 pub use solana::*;
 pub use utils::*;
 
+use self::rewards::RewardsCookie;
+
 pub mod addin;
 pub mod cookies;
 pub mod governance;
+pub mod rewards;
 pub mod solana;
 pub mod utils;
 
@@ -117,7 +120,7 @@ impl TestContext {
         test.set_compute_max_units(120000);
 
         let governance_program_id =
-            Pubkey::from_str(&"GovernanceProgramTest1111111111111111111111").unwrap();
+            Pubkey::from_str("GovernanceProgramTest1111111111111111111111").unwrap();
         test.add_program(
             "spl_governance",
             governance_program_id,
@@ -135,8 +138,8 @@ impl TestContext {
                 index: 0,
                 decimals: 6,
                 unit: 10u64.pow(6) as f64,
-                base_lot: 100 as f64,
-                quote_lot: 10 as f64,
+                base_lot: 100_f64,
+                quote_lot: 10_f64,
                 pubkey: None, //Some(mngo_token::ID),
                 authority: Keypair::new(),
             }, // symbol: "MNGO".to_string()

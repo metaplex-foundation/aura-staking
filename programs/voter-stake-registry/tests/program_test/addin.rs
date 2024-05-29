@@ -93,7 +93,6 @@ impl AddinCookie {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn internal_transfer_unlocked(
         &self,
         registrar: &RegistrarCookie,
@@ -102,7 +101,7 @@ impl AddinCookie {
         source_deposit_entry_index: u8,
         target_deposit_entry_index: u8,
         amount: u64,
-    ) -> Result<(), BanksClientError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let data = anchor_lang::InstructionData::data(
             &voter_stake_registry::instruction::InternalTransferUnlocked {
                 source_deposit_entry_index,
@@ -134,6 +133,7 @@ impl AddinCookie {
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn configure_voting_mint(
         &self,
         registrar: &RegistrarCookie,
@@ -199,12 +199,16 @@ impl AddinCookie {
         VotingMintConfigCookie { mint: mint.clone() }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_voter(
         &self,
         registrar: &RegistrarCookie,
         token_owner_record: &TokenOwnerRecordCookie,
         authority: &Keypair,
         payer: &Keypair,
+        reward_pool: &Pubkey,
+        deposit_mining: &Pubkey,
+        rewards_program: &Pubkey,
     ) -> VoterCookie {
         let (voter, voter_bump) = Pubkey::find_program_address(
             &[
@@ -239,6 +243,9 @@ impl AddinCookie {
                 system_program: solana_sdk::system_program::id(),
                 rent: solana_program::sysvar::rent::id(),
                 instructions: solana_program::sysvar::instructions::id(),
+                reward_pool: *reward_pool,
+                deposit_mining: *deposit_mining,
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -266,6 +273,7 @@ impl AddinCookie {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_deposit_entry(
         &self,
         registrar: &RegistrarCookie,
@@ -277,7 +285,7 @@ impl AddinCookie {
         start_ts: Option<u64>,
         period: LockupPeriod,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(&voting_mint);
+        let vault = voter.vault_address(voting_mint);
 
         let data = anchor_lang::InstructionData::data(
             &voter_stake_registry::instruction::CreateDepositEntry {
@@ -318,7 +326,7 @@ impl AddinCookie {
             .await
     }
 
-    #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
     pub async fn deposit(
         &self,
         registrar: &RegistrarCookie,
@@ -328,8 +336,11 @@ impl AddinCookie {
         token_address: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
+        reward_pool: &Pubkey,
+        deposit_mining: &Pubkey,
+        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(&voting_mint);
+        let vault = voter.vault_address(voting_mint);
 
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Deposit {
@@ -345,6 +356,9 @@ impl AddinCookie {
                 deposit_token: token_address,
                 deposit_authority: authority.pubkey(),
                 token_program: spl_token::id(),
+                reward_pool: *reward_pool,
+                deposit_mining: *deposit_mining,
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -363,7 +377,6 @@ impl AddinCookie {
             .await
     }
 
-    #[allow(dead_code)]
     pub async fn unlock_tokens(
         &self,
         registrar: &RegistrarCookie,
@@ -399,7 +412,7 @@ impl AddinCookie {
             .await
     }
 
-    #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
     pub async fn withdraw(
         &self,
         registrar: &RegistrarCookie,
@@ -409,8 +422,11 @@ impl AddinCookie {
         token_address: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
+        reward_pool: &Pubkey,
+        deposit_mining: &Pubkey,
+        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(&voting_mint);
+        let vault = voter.vault_address(voting_mint);
 
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Withdraw {
@@ -428,6 +444,9 @@ impl AddinCookie {
                 destination: token_address,
                 voter_authority: authority.pubkey(),
                 token_program: spl_token::id(),
+                reward_pool: *reward_pool,
+                deposit_mining: *deposit_mining,
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -446,7 +465,6 @@ impl AddinCookie {
             .await
     }
 
-    #[allow(dead_code)]
     pub async fn close_voter(
         &self,
         registrar: &RegistrarCookie,
@@ -454,7 +472,7 @@ impl AddinCookie {
         voting_mint: &VotingMintConfigCookie,
         voter_authority: &Keypair,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(&voting_mint);
+        let vault = voter.vault_address(voting_mint);
 
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::CloseVoter {});
@@ -511,7 +529,6 @@ impl AddinCookie {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn update_voter_weight_record(
         &self,
         registrar: &RegistrarCookie,
@@ -529,13 +546,12 @@ impl AddinCookie {
             .await)
     }
 
-    #[allow(dead_code)]
     pub async fn close_deposit_entry(
         &self,
         voter: &VoterCookie,
         authority: &Keypair,
         deposit_entry_index: u8,
-    ) -> Result<(), BanksClientError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let data = anchor_lang::InstructionData::data(
             &voter_stake_registry::instruction::CloseDepositEntry {
                 deposit_entry_index,
@@ -564,7 +580,6 @@ impl AddinCookie {
             .await
     }
 
-    #[allow(dead_code)]
     pub async fn log_voter_info(
         &self,
         registrar: &RegistrarCookie,
@@ -597,7 +612,6 @@ impl AddinCookie {
             .unwrap();
     }
 
-    #[allow(dead_code)]
     pub async fn set_time_offset(
         &self,
         _registrar: &RegistrarCookie,
@@ -623,7 +637,6 @@ impl AddinCookie {
 }
 
 impl VotingMintConfigCookie {
-    #[allow(dead_code)]
     pub async fn vault_balance(&self, solana: &SolanaCookie, voter: &VoterCookie) -> u64 {
         let vault = voter.vault_address(&self);
         solana.get_account::<TokenAccount>(vault).await.amount
@@ -631,7 +644,6 @@ impl VotingMintConfigCookie {
 }
 
 impl VoterCookie {
-    #[allow(dead_code)]
     pub async fn deposit_amount(&self, solana: &SolanaCookie, deposit_id: u8) -> u64 {
         solana
             .get_account::<mplx_staking_states::state::Voter>(self.address)

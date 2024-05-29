@@ -82,8 +82,22 @@ async fn test_internal_transfer_kind_of_none() -> Result<(), TransportError> {
         )
         .await;
 
+    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_mining = find_deposit_mining_addr(
+        &voter_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
     let voter = addin
-        .create_voter(&registrar, &token_owner_record, voter_authority, payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     let reference_account = context.users[1].token_accounts[0];
@@ -96,6 +110,9 @@ async fn test_internal_transfer_kind_of_none() -> Result<(), TransportError> {
             reference_account,
             index,
             amount,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
     };
 
@@ -205,8 +222,22 @@ async fn test_internal_transfer_kind_of_constant() -> Result<(), TransportError>
         )
         .await;
 
+    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_mining = find_deposit_mining_addr(
+        &voter_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
     let voter = addin
-        .create_voter(&registrar, &token_owner_record, voter_authority, payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     let reference_account = context.users[1].token_accounts[0];
@@ -219,6 +250,9 @@ async fn test_internal_transfer_kind_of_constant() -> Result<(), TransportError>
             reference_account,
             index,
             amount,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
     };
 
