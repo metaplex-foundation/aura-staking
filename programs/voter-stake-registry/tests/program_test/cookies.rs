@@ -32,8 +32,3 @@ pub struct UserCookie {
     pub key: Keypair,
     pub token_accounts: Vec<Pubkey>,
 }
-
-pub struct RewardsCookie {
-    pub solana: Arc<solana::SolanaCookie>,
-    pub program_id: Pubkey,
-}

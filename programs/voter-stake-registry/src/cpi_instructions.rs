@@ -75,6 +75,8 @@ pub enum RewardsInstruction {
         amount: u64,
         /// Lockup Period
         lockup_period: LockupPeriod,
+        /// Specifies mint addr
+        reward_mint_addr: Pubkey,
     },
 
     /// Withdraws amount of supply to the mining account
@@ -154,7 +156,7 @@ pub fn initialize_mining<'a>(
 /// Rewards deposit mining
 #[allow(clippy::too_many_arguments)]
 pub fn deposit_mining<'a>(
-    program_id: &Pubkey,
+    program_id: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     user: AccountInfo<'a>,
@@ -167,23 +169,23 @@ pub fn deposit_mining<'a>(
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
-        AccountMeta::new_readonly(*reward_mint, false),
         AccountMeta::new_readonly(user.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
     ];
 
     let ix = Instruction::new_with_borsh(
-        *program_id,
+        program_id.key(),
         &RewardsInstruction::DepositMining {
             amount,
             lockup_period,
+            reward_mint_addr: *reward_mint,
         },
         accounts,
     );
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, user, deposit_authority],
+        &[reward_pool, mining, user, deposit_authority, program_id],
         signers_seeds,
     )
 }

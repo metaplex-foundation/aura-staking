@@ -48,11 +48,16 @@ pub struct CreateVoter<'info> {
     #[account(address = tx_instructions::ID)]
     pub instructions: UncheckedAccount<'info>,
 
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    #[account(mut)]
+    pub reward_pool: UncheckedAccount<'info>,
+
     /// CHECK: mining PDA will be checked in the rewards contract
+    #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    pub reward_pool: UncheckedAccount<'info>,
+    /// CHECK: Rewards program ID
+    pub rewards_program: UncheckedAccount<'info>,
 }
 
 /// Creates a new voter account. There can only be a single voter per
@@ -85,37 +90,44 @@ pub fn create_voter(
         *ctx.bumps.get("voter_weight_record").unwrap()
     );
 
-    let mining = &ctx.accounts.deposit_mining;
-    let user = &ctx.accounts.payer;
-    let voter = &ctx.accounts.voter;
-    let system_program = &ctx.accounts.system_program;
-    let reward_pool = &ctx.accounts.reward_pool;
+    {
+        // Load accounts.
+        let registrar = &ctx.accounts.registrar.load()?;
+        let voter_authority = ctx.accounts.voter_authority.key();
 
-    cpi_instructions::initialize_mining(
-        &REWARD_CONTRACT_ID,
-        reward_pool.to_account_info(),
-        mining.to_account_info(),
-        voter.to_account_info(),
-        user.to_account_info(),
-        system_program.to_account_info(),
-    )?;
+        let voter = &mut ctx.accounts.voter.load_init()?;
+        voter.voter_bump = voter_bump;
+        voter.voter_weight_record_bump = voter_weight_record_bump;
+        voter.voter_authority = voter_authority;
+        voter.registrar = ctx.accounts.registrar.key();
 
-    // Load accounts.
-    let registrar = &ctx.accounts.registrar.load()?;
-    let voter_authority = ctx.accounts.voter_authority.key();
+        let voter_weight_record = &mut ctx.accounts.voter_weight_record;
+        voter_weight_record.account_discriminator =
+            spl_governance_addin_api::voter_weight::VoterWeightRecord::ACCOUNT_DISCRIMINATOR;
+        voter_weight_record.realm = registrar.realm;
+        voter_weight_record.governing_token_mint = registrar.realm_governing_token_mint;
+        voter_weight_record.governing_token_owner = voter_authority;
+    }
 
-    let voter = &mut ctx.accounts.voter.load_init()?;
-    voter.voter_bump = voter_bump;
-    voter.voter_weight_record_bump = voter_weight_record_bump;
-    voter.voter_authority = voter_authority;
-    voter.registrar = ctx.accounts.registrar.key();
+    {
+        // initialize Mining account for Voter
+        let mining = ctx.accounts.deposit_mining.to_account_info();
+        let payer = ctx.accounts.payer.to_account_info();
+        // let voter = ctx.accounts.voter.to_account_info();
+        let user = ctx.accounts.voter_authority.to_account_info();
+        let system_program = ctx.accounts.system_program.to_account_info();
+        let reward_pool = ctx.accounts.reward_pool.to_account_info();
 
-    let voter_weight_record = &mut ctx.accounts.voter_weight_record;
-    voter_weight_record.account_discriminator =
-        spl_governance_addin_api::voter_weight::VoterWeightRecord::ACCOUNT_DISCRIMINATOR;
-    voter_weight_record.realm = registrar.realm;
-    voter_weight_record.governing_token_mint = registrar.realm_governing_token_mint;
-    voter_weight_record.governing_token_owner = voter_authority;
+        // TODO: should it be voter or voter authority?
+        cpi_instructions::initialize_mining(
+            &REWARD_CONTRACT_ID,
+            reward_pool,
+            mining,
+            user,
+            payer,
+            system_program,
+        )?;
+    }
 
     Ok(())
 }

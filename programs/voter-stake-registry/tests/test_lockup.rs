@@ -19,14 +19,14 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
 
     let voter_authority = &context.users[1].key;
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
     let registrar = context
@@ -66,9 +66,24 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
         )
         .await;
 
+    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_mining = find_deposit_mining_addr(
+        &voter_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
+
     let voter = context
         .addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     // test deposit and withdraw
@@ -92,16 +107,19 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await?;
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, &voter_authority, 0)
+        .unlock_tokens(&registrar, &voter, voter_authority, 0)
         .await
         .expect_err("fails because it's too early to unlock is invalid");
     context
@@ -110,10 +128,13 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &&context.users[1].key,
+            &context.users[1].key,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await
         .expect_err("fails because it's impossible to withdraw without unlock");
@@ -133,14 +154,14 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
 
     let voter_authority = &context.users[1].key;
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
     let registrar = context
@@ -180,9 +201,24 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
         )
         .await;
 
+    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_mining = find_deposit_mining_addr(
+        &voter_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
+
     let voter = context
         .addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     // test deposit and withdraw
@@ -206,10 +242,13 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await?;
 
@@ -223,7 +262,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
     // unlock is possible
     context
         .addin
-        .unlock_tokens(&registrar, &voter, &voter_authority, 0)
+        .unlock_tokens(&registrar, &voter, voter_authority, 0)
         .await
         .unwrap();
 
@@ -234,10 +273,13 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &&context.users[1].key,
+            &context.users[1].key,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await
         .expect_err("fails because cooldown is ongoing");
@@ -257,14 +299,14 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
 
     let voter_authority = &context.users[1].key;
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
     let registrar = context
@@ -304,9 +346,24 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         )
         .await;
 
+    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_mining = find_deposit_mining_addr(
+        &voter_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
+
     let voter = context
         .addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     // test deposit and withdraw
@@ -330,10 +387,13 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await?;
     let secs_per_day = 24 * 60 * 60;
@@ -345,7 +405,7 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, &voter_authority, 0)
+        .unlock_tokens(&registrar, &voter, voter_authority, 0)
         .await
         .unwrap();
 
@@ -362,10 +422,13 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &&context.users[1].key,
+            &context.users[1].key,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();

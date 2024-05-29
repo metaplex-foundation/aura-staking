@@ -55,11 +55,16 @@ pub struct Withdraw<'info> {
 
     pub token_program: Program<'info, Token>,
 
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    #[account(mut)]
+    pub reward_pool: UncheckedAccount<'info>,
+
     /// CHECK: mining PDA will be checked in the rewards contract
+    #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    pub reward_pool: UncheckedAccount<'info>,
+    /// CHECK: Rewards Program account
+    pub rewards_program: UncheckedAccount<'info>,
 }
 
 impl<'info> Withdraw<'info> {

@@ -62,6 +62,18 @@ impl Voter {
         require!(d.is_used, VsrError::UnusedDepositEntryIndex);
         Ok(d)
     }
+
+    pub fn active_deposit(&self, index: u8) -> Result<&DepositEntry> {
+        let index = index as usize;
+        require_gt!(
+            self.deposits.len(),
+            index,
+            VsrError::OutOfBoundsDepositEntryIndex
+        );
+        let d = &self.deposits[index];
+        require!(d.is_used, VsrError::UnusedDepositEntryIndex);
+        Ok(d)
+    }
 }
 
 #[macro_export]

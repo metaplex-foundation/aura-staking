@@ -19,14 +19,14 @@ async fn test_basic() -> Result<(), TransportError> {
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
 
     let voter_authority = &context.users[1].key;
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
     let registrar = context
@@ -66,9 +66,24 @@ async fn test_basic() -> Result<(), TransportError> {
         )
         .await;
 
+    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_mining = find_deposit_mining_addr(
+        &voter_authority.pubkey(),
+        &rewards_pool,
+        &context.rewards.program_id,
+    );
+
     let voter = context
         .addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     // test deposit and withdraw
@@ -93,16 +108,20 @@ async fn test_basic() -> Result<(), TransportError> {
             LockupPeriod::None,
         )
         .await?;
+
     context
         .addin
         .deposit(
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await?;
 
@@ -124,10 +143,13 @@ async fn test_basic() -> Result<(), TransportError> {
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &&context.users[2].key,
+            &context.users[2].key,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await
         .expect_err("fails because voter_authority is invalid");
@@ -138,10 +160,13 @@ async fn test_basic() -> Result<(), TransportError> {
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
             0,
             10000,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
         )
         .await?;
 
@@ -166,7 +191,7 @@ async fn test_basic() -> Result<(), TransportError> {
         .await?;
     context
         .addin
-        .close_voter(&registrar, &voter, &mngo_voting_mint, &voter_authority)
+        .close_voter(&registrar, &voter, &mngo_voting_mint, voter_authority)
         .await?;
     let lamports_after = context
         .solana
