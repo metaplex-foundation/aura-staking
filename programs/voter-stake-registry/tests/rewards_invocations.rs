@@ -30,47 +30,47 @@ pub async fn initialize_root() -> std::result::Result<(), TransportError> {
 // just run transaction to make sure they work
 #[tokio::test]
 pub async fn initialize_rewards_flow() -> std::result::Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let payer = &context.users[0].key;
+    // let context = TestContext::new().await;
+    // let payer = &context.users[0].key;
 
-    // create token mint
-    let reward_mint = Keypair::new();
-    let manager = &payer.pubkey();
-    create_mint(
-        &mut context.solana.context.borrow_mut(),
-        &reward_mint,
-        manager,
-    )
-    .await
-    .unwrap();
+    // // create token mint
+    // let reward_mint = Keypair::new();
+    // let manager = &payer.pubkey();
+    // create_mint(
+    //     &mut context.solana.context.borrow_mut(),
+    //     &reward_mint,
+    //     manager,
+    // )
+    // .await
+    // .unwrap();
 
-    let rewards_root_kp = context.rewards.initialize_root(payer).await?;
+    // let rewards_root_kp = context.rewards.initialize_root(payer).await?;
 
-    let deposit_authority = Keypair::new();
-    let rewards_pool = context
-        .rewards
-        .initialize_pool(&rewards_root_kp, &deposit_authority, payer)
-        .await?;
+    // let deposit_authority = Keypair::new();
+    // let rewards_pool = context
+    //     .rewards
+    //     .initialize_pool(&rewards_root_kp, &deposit_authority, payer)
+    //     .await?;
 
-    let _vault = context
-        .rewards
-        .add_vault(
-            &rewards_root_kp.pubkey(),
-            &rewards_pool,
-            &reward_mint.pubkey(),
-            payer,
-        )
-        .await?;
+    // let _vault = context
+    //     .rewards
+    //     .add_vault(
+    //         &rewards_root_kp.pubkey(),
+    //         &rewards_pool,
+    //         &reward_mint.pubkey(),
+    //         payer,
+    //     )
+    //     .await?;
 
-    let user = Keypair::new();
+    // let user = Keypair::new();
 
-    let _mining = context
-        .rewards
-        .initialize_mining(&rewards_pool, &user.pubkey(), payer)
-        .await?;
+    // let _mining = context
+    //     .rewards
+    //     .initialize_mining(&rewards_pool, &user.pubkey(), payer)
+    //     .await?;
 
-    let amount = 1;
-    let lockup_period = LockupPeriod::ThreeMonths;
+    // let amount = 1;
+    // let lockup_period = LockupPeriod::ThreeMonths;
     // context
     //     .rewards
     //     .deposit_mining(

@@ -77,32 +77,17 @@ pub async fn create_mint(
 pub async fn initialize_rewards_contract(
     payer: &Keypair,
     context: &TestContext,
+    reward_mint: &Pubkey,
+    deposit_authority: &Pubkey,
 ) -> Result<Pubkey, TransportError> {
-    // create token mint
-    let reward_mint = Keypair::new();
-    let manager = &payer.pubkey();
-    create_mint(
-        &mut context.solana.context.borrow_mut(),
-        &reward_mint,
-        manager,
-    )
-    .await
-    .unwrap();
-
     let rewards_root = context.rewards.initialize_root(payer).await?;
-    let deposit_authority = Keypair::new();
     let rewards_pool = context
         .rewards
-        .initialize_pool(&rewards_root, &deposit_authority, payer)
+        .initialize_pool(&rewards_root.pubkey(), deposit_authority, payer)
         .await?;
     let _vault = context
         .rewards
-        .add_vault(
-            &rewards_root.pubkey(),
-            &rewards_pool,
-            &reward_mint.pubkey(),
-            payer,
-        )
+        .add_vault(&rewards_root.pubkey(), &rewards_pool, reward_mint, payer)
         .await?;
 
     Ok(rewards_pool)

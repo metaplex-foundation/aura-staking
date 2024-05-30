@@ -332,7 +332,7 @@ impl AddinCookie {
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
         voting_mint: &VotingMintConfigCookie,
-        authority: &Keypair,
+        deposit_authority: &Keypair,
         token_address: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
@@ -354,7 +354,7 @@ impl AddinCookie {
                 voter: voter.address,
                 vault,
                 deposit_token: token_address,
-                deposit_authority: authority.pubkey(),
+                deposit_authority: deposit_authority.pubkey(),
                 token_program: spl_token::id(),
                 reward_pool: *reward_pool,
                 deposit_mining: *deposit_mining,
@@ -370,7 +370,7 @@ impl AddinCookie {
         }];
 
         // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
+        let signer = Keypair::from_base58_string(&deposit_authority.to_base58_string());
 
         self.solana
             .process_transaction(&instructions, Some(&[&signer]))

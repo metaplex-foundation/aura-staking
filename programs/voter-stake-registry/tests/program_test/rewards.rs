@@ -52,19 +52,19 @@ impl RewardsCookie {
 
     pub async fn initialize_pool(
         &self,
-        rewards_root: &Keypair,
-        deposit_authority: &Keypair,
+        rewards_root: &Pubkey,
+        deposit_authority: &Pubkey,
         payer: &Keypair,
     ) -> std::result::Result<Pubkey, BanksClientError> {
         let (reward_pool, _bump) = Pubkey::find_program_address(
-            &["reward_pool".as_bytes(), &rewards_root.pubkey().to_bytes()],
+            &["reward_pool".as_bytes(), &rewards_root.key().to_bytes()],
             &self.program_id,
         );
 
         let accounts = vec![
-            AccountMeta::new_readonly(rewards_root.pubkey(), false),
+            AccountMeta::new_readonly(rewards_root.key(), false),
             AccountMeta::new(reward_pool, false),
-            AccountMeta::new_readonly(deposit_authority.pubkey(), false),
+            AccountMeta::new_readonly(deposit_authority.key(), false),
             AccountMeta::new(payer.pubkey(), true),
             AccountMeta::new_readonly(system_program::id(), false),
         ];
@@ -199,16 +199,16 @@ impl RewardsCookie {
     pub async fn deposit_mining<'a>(
         &self,
         reward_pool: &Pubkey,
-        user: &Pubkey,
         deposit_authority: &Keypair,
         amount: u64,
         lockup_period: LockupPeriod,
         mint_account: &Pubkey,
+        owner: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let (mining, _bump) = Pubkey::find_program_address(
             &[
                 "mining".as_bytes(),
-                &user.key().to_bytes(),
+                &owner.key().to_bytes(),
                 &reward_pool.key().to_bytes(),
             ],
             &self.program_id,
@@ -217,7 +217,6 @@ impl RewardsCookie {
         let accounts = vec![
             AccountMeta::new(*reward_pool, false),
             AccountMeta::new(mining, false),
-            AccountMeta::new_readonly(*user, false),
             AccountMeta::new_readonly(deposit_authority.pubkey(), true),
         ];
 
@@ -227,6 +226,7 @@ impl RewardsCookie {
                 amount,
                 lockup_period,
                 reward_mint_addr: *mint_account,
+                owner: *owner,
             },
             accounts,
         );

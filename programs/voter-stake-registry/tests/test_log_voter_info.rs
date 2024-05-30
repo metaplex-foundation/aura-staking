@@ -44,10 +44,10 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         )
         .await;
 
-    let voter_authority = &context.users[1].key;
+    let deposit_authority = &context.users[1].key;
     let voter_mngo = context.users[1].token_accounts[0];
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), payer)
+        .create_token_owner_record(deposit_authority.pubkey(), payer)
         .await;
 
     let registrar = addin
@@ -69,7 +69,16 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         )
         .await;
 
-    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let rewards_pool = initialize_rewards_contract(
+        payer,
+        &context,
+        &mngo_voting_mint.mint.pubkey.unwrap(),
+        &deposit_authority.pubkey(),
+    )
+    .await?;
+
+    // TODO: ??? voter_authority == deposit_authority ???
+    let voter_authority = deposit_authority;
     let deposit_mining = find_deposit_mining_addr(
         &voter_authority.pubkey(),
         &rewards_pool,

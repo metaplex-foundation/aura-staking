@@ -60,13 +60,13 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
         )
         .await;
 
-    let voter_authority = &context.users[1].key;
-    let voter2_authority = &context.users[2].key;
+    let deposit_authority = &context.users[1].key;
+    let deposit2_authority = &context.users[2].key;
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), payer)
+        .create_token_owner_record(deposit_authority.pubkey(), payer)
         .await;
     let token_owner_record2 = realm
-        .create_token_owner_record(voter2_authority.pubkey(), payer)
+        .create_token_owner_record(deposit2_authority.pubkey(), payer)
         .await;
 
     let registrar = addin
@@ -88,7 +88,16 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
         )
         .await;
 
-    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let rewards_pool = initialize_rewards_contract(
+        payer,
+        &context,
+        &mngo_voting_mint.mint.pubkey.unwrap(),
+        &deposit_authority.pubkey(),
+    )
+    .await?;
+
+    // TODO: ??? voter_authority == deposit_authority ???
+    let voter_authority = deposit_authority;
     let deposit_mining_voter = find_deposit_mining_addr(
         &voter_authority.pubkey(),
         &rewards_pool,
@@ -106,6 +115,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
         )
         .await;
 
+    let voter2_authority = deposit2_authority;
     let deposit_mining_voter2 = find_deposit_mining_addr(
         &voter2_authority.pubkey(),
         &rewards_pool,
