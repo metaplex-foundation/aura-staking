@@ -15,13 +15,13 @@ pub struct Registrar {
 
     /// Storage for voting mints and their configuration.
     /// The length should be adjusted for one's use case.
-    pub voting_mints: [VotingMintConfig; 4],
+    pub voting_mints: [VotingMintConfig; 1],
 
     /// Debug only: time offset, to allow tests to move forward in time.
     pub time_offset: i64,
     pub bump: u8,
 }
-const_assert!(std::mem::size_of::<Registrar>() == 7 + 4 * 32 + 4 * 96 + 8 + 1);
+const_assert!(std::mem::size_of::<Registrar>() == 7 + 4 * 32 + 96 + 8 + 1);
 const_assert!(std::mem::size_of::<Registrar>() % 8 == 0);
 
 pub const REGISTRAR_DISCRIMINATOR: [u8; 8] = [193, 202, 205, 51, 78, 168, 150, 128];
