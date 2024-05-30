@@ -113,7 +113,6 @@ pub fn create_voter(
         // initialize Mining account for Voter
         let mining = ctx.accounts.deposit_mining.to_account_info();
         let payer = ctx.accounts.payer.to_account_info();
-        // let voter = ctx.accounts.voter.to_account_info();
         let user = ctx.accounts.voter_authority.to_account_info();
         let system_program = ctx.accounts.system_program.to_account_info();
         let reward_pool = ctx.accounts.reward_pool.to_account_info();

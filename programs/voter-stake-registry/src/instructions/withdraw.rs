@@ -1,4 +1,4 @@
-use crate::cpi_instructions::{withdraw_mining, REWARD_CONTRACT_ID};
+use crate::cpi_instructions::withdraw_mining;
 use crate::voter::{load_token_owner_record, VoterWeightRecord};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
@@ -84,7 +84,6 @@ impl<'info> Withdraw<'info> {
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
 pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-    // NOTE: that block is mandatory because otherwise runtime borrow checking will fail!
     {
         // Transfer the tokens to withdraw.
         let voter = &mut ctx.accounts.voter.load()?;
@@ -94,102 +93,92 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
             amount,
         )?;
     }
+    {
+        // Load the accounts.
+        let registrar = &ctx.accounts.registrar.load()?;
+        let voter = &mut ctx.accounts.voter.load_mut()?;
 
-    // Load the accounts.
-    let registrar = &ctx.accounts.registrar.load()?;
-    let voter = &mut ctx.accounts.voter.load_mut()?;
+        // Get the exchange rate for the token being withdrawn.
+        let mint_idx = registrar.voting_mint_config_index(ctx.accounts.destination.mint)?;
 
-    // Get the exchange rate for the token being withdrawn.
-    let mint_idx = registrar.voting_mint_config_index(ctx.accounts.destination.mint)?;
+        // Governance may forbid withdraws, for example when engaged in a vote.
+        // Not applicable for tokens that don't contribute to voting power.
+        if registrar.voting_mints[mint_idx].grants_vote_weight() {
+            let token_owner_record = load_token_owner_record(
+                &voter.voter_authority,
+                &ctx.accounts.token_owner_record.to_account_info(),
+                registrar,
+            )?;
+            token_owner_record.assert_can_withdraw_governing_tokens()?;
+        }
 
-    // Governance may forbid withdraws, for example when engaged in a vote.
-    // Not applicable for tokens that don't contribute to voting power.
-    if registrar.voting_mints[mint_idx].grants_vote_weight() {
-        let token_owner_record = load_token_owner_record(
-            &voter.voter_authority,
-            &ctx.accounts.token_owner_record.to_account_info(),
-            registrar,
-        )?;
-        token_owner_record.assert_can_withdraw_governing_tokens()?;
-    }
+        // Get the deposit being withdrawn from.
+        let curr_ts = registrar.clock_unix_timestamp();
+        let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
 
-    // Get the deposit being withdrawn from.
-    let curr_ts = registrar.clock_unix_timestamp();
-    let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
+        // check whether funds are cooled down
+        if deposit_entry.lockup.kind == LockupKind::Constant {
+            require!(
+                deposit_entry.lockup.cooldown_requested,
+                VsrError::UnlockMustBeCalledFirst
+            );
+            require!(
+                curr_ts >= deposit_entry.lockup.cooldown_ends_at,
+                VsrError::InvalidTimestampArguments
+            );
+        }
 
-    // check whether funds are cooled down
-    if deposit_entry.lockup.kind == LockupKind::Constant {
-        require!(
-            deposit_entry.lockup.cooldown_requested,
-            VsrError::UnlockMustBeCalledFirst
+        require_gte!(
+            deposit_entry.amount_unlocked(curr_ts),
+            amount,
+            VsrError::InsufficientUnlockedTokens
         );
-        require!(
-            curr_ts >= deposit_entry.lockup.cooldown_ends_at,
-            VsrError::InvalidTimestampArguments
+        require_eq!(
+            mint_idx,
+            deposit_entry.voting_mint_config_idx as usize,
+            VsrError::InvalidMint
+        );
+
+        // Bookkeeping for withdrawn funds.
+        require_gte!(
+            deposit_entry.amount_deposited_native,
+            amount,
+            VsrError::InternalProgramError
+        );
+
+        deposit_entry.amount_deposited_native = deposit_entry
+            .amount_deposited_native
+            .checked_sub(amount)
+            .unwrap();
+
+        msg!(
+            "Withdrew amount {} at deposit index {} with lockup kind {:?} and {} seconds left",
+            amount,
+            deposit_entry_index,
+            deposit_entry.lockup.kind,
+            deposit_entry.lockup.seconds_left(curr_ts),
         );
     }
-
-    require_gte!(
-        deposit_entry.amount_unlocked(curr_ts),
-        amount,
-        VsrError::InsufficientUnlockedTokens
-    );
-    require_eq!(
-        mint_idx,
-        deposit_entry.voting_mint_config_idx as usize,
-        VsrError::InvalidMint
-    );
-
-    // Bookkeeping for withdrawn funds.
-    require_gte!(
-        deposit_entry.amount_deposited_native,
-        amount,
-        VsrError::InternalProgramError
-    );
-
-    deposit_entry.amount_deposited_native = deposit_entry
-        .amount_deposited_native
-        .checked_sub(amount)
-        .unwrap();
-
-    msg!(
-        "Withdrew amount {} at deposit index {} with lockup kind {:?} and {} seconds left",
-        amount,
-        deposit_entry_index,
-        deposit_entry.lockup.kind,
-        deposit_entry.lockup.seconds_left(curr_ts),
-    );
 
     // Update the voter weight record
+    let voter = &ctx.accounts.voter.load()?;
     let record = &mut ctx.accounts.voter_weight_record;
     record.voter_weight = voter.weight()?;
     record.voter_weight_expiry = Some(Clock::get()?.slot);
 
+    let rewards_program = &ctx.accounts.rewards_program;
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
     let deposit_authority = &ctx.accounts.voter_authority;
-    let reward_mint = &ctx.accounts.destination.mint;
-    let voter = &ctx.accounts.voter;
-
-    let (_reward_pool_pubkey, pool_bump_seed) = Pubkey::find_program_address(
-        &[&reward_pool.key().to_bytes(), &reward_mint.key().to_bytes()],
-        &REWARD_CONTRACT_ID,
-    );
-
-    let signers_seeds = &[
-        &reward_pool.key().to_bytes()[..32],
-        &reward_mint.key().to_bytes()[..32],
-        &[pool_bump_seed],
-    ];
+    let owner = &ctx.accounts.voter_authority;
 
     withdraw_mining(
-        &REWARD_CONTRACT_ID,
+        rewards_program.to_account_info(),
         reward_pool.to_account_info(),
         mining.to_account_info(),
-        voter.to_account_info(),
         deposit_authority.to_account_info(),
         amount,
-        &[signers_seeds],
+        owner.key,
     )?;
 
     Ok(())
