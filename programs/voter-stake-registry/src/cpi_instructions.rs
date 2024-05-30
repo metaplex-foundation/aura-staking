@@ -77,6 +77,8 @@ pub enum RewardsInstruction {
         lockup_period: LockupPeriod,
         /// Specifies mint addr
         reward_mint_addr: Pubkey,
+        /// Specifies the owner of the Mining Account
+        owner: Pubkey,
     },
 
     /// Withdraws amount of supply to the mining account
@@ -89,6 +91,8 @@ pub enum RewardsInstruction {
     WithdrawMining {
         /// Amount to withdraw
         amount: u64,
+        /// Owner of Mining Account
+        owner: Pubkey,
     },
 
     /// Claims amount of rewards
@@ -159,17 +163,15 @@ pub fn deposit_mining<'a>(
     program_id: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
-    user: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
     amount: u64,
     lockup_period: LockupPeriod,
-    signers_seeds: &[&[&[u8]]],
-    reward_mint: &Pubkey,
+    reward_mint_addr: &Pubkey,
+    owner: &Pubkey,
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
-        AccountMeta::new_readonly(user.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
     ];
 
@@ -178,16 +180,13 @@ pub fn deposit_mining<'a>(
         &RewardsInstruction::DepositMining {
             amount,
             lockup_period,
-            reward_mint_addr: *reward_mint,
+            reward_mint_addr: *reward_mint_addr,
+            owner: *owner,
         },
         accounts,
     );
 
-    invoke_signed(
-        &ix,
-        &[reward_pool, mining, user, deposit_authority, program_id],
-        signers_seeds,
-    )
+    invoke(&ix, &[reward_pool, mining, deposit_authority, program_id])
 }
 
 /// Restake deposit
@@ -234,30 +233,27 @@ pub fn extend_deposit<'a>(
 /// Rewards withdraw mining
 #[allow(clippy::too_many_arguments)]
 pub fn withdraw_mining<'a>(
-    program_id: &Pubkey,
+    program_id: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
-    user: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
     amount: u64,
-    signers_seeds: &[&[&[u8]]],
+    owner: &Pubkey,
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
-        AccountMeta::new_readonly(user.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
     ];
 
     let ix = Instruction::new_with_borsh(
-        *program_id,
-        &RewardsInstruction::WithdrawMining { amount },
+        program_id.key(),
+        &RewardsInstruction::WithdrawMining {
+            amount,
+            owner: *owner,
+        },
         accounts,
     );
 
-    invoke_signed(
-        &ix,
-        &[reward_pool, mining, user, deposit_authority],
-        signers_seeds,
-    )
+    invoke(&ix, &[reward_pool, mining, deposit_authority, program_id])
 }
