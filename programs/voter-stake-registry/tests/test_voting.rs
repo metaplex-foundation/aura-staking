@@ -68,7 +68,14 @@ async fn test_voting() -> Result<(), TransportError> {
         )
         .await;
 
-    let rewards_pool = initialize_rewards_contract(payer, &context).await?;
+    let deposit_authority = &mngo_voting_mint.mint.authority;
+    let rewards_pool = initialize_rewards_contract(
+        payer,
+        &context,
+        &mngo_voting_mint.mint.pubkey.unwrap(),
+        &deposit_authority.pubkey(),
+    )
+    .await?;
     let deposit_mining_voter = find_deposit_mining_addr(
         &voter_authority.pubkey(),
         &rewards_pool,
