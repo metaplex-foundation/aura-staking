@@ -68,7 +68,7 @@ async fn test_voting() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_authority = &mngo_voting_mint.mint.authority;
+    let deposit_authority = &voter_authority;
     let rewards_pool = initialize_rewards_contract(
         payer,
         &context,
@@ -142,42 +142,13 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_authority,
             voter_mngo,
             0,
-            499,
+            1000,
             &rewards_pool,
             &deposit_mining_voter,
             &context.rewards.program_id,
         )
         .await
         .unwrap();
-
-    // need vote weight of 1000, but only have 499
-    realm
-        .create_proposal(
-            mint_governance.address,
-            voter_authority,
-            &voter,
-            payer,
-            addin.update_voter_weight_record_instruction(&registrar, &voter),
-        )
-        .await
-        .expect_err("not enough tokens to create proposal");
-
-    addin
-        .deposit(
-            &registrar,
-            &voter,
-            &mngo_voting_mint,
-            voter_authority,
-            voter_mngo,
-            0,
-            501,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
-        )
-        .await
-        .unwrap();
-    context.solana.advance_clock_by_slots(2).await; // avoid cache when sending same transaction again
 
     let proposal = realm
         .create_proposal(

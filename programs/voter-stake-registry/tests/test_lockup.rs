@@ -210,7 +210,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_authority = &mngo_voting_mint.mint.authority;
+    let deposit_authority = &voter_authority;
     let rewards_pool = initialize_rewards_contract(
         payer,
         &context,
@@ -362,7 +362,7 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         )
         .await;
 
-    let deposit_authority = &mngo_voting_mint.mint.authority;
+    let deposit_authority = &voter_authority;
     let rewards_pool = initialize_rewards_contract(
         payer,
         &context,

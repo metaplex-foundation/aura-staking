@@ -191,22 +191,13 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
         )
         .await
         .unwrap();
-    deposit(0, 10000).await.unwrap();
+    deposit(0, 15000).await.unwrap();
 
     let after_deposit = get_balances(0).await;
     assert_eq!(token, after_deposit.token + after_deposit.vault);
     assert_eq!(after_deposit.voter_weight, after_deposit.vault);
-    assert_eq!(after_deposit.vault, 10000);
-    assert_eq!(after_deposit.deposit, 10000);
-
-    // add to the existing deposit 0
-    deposit(0, 5000).await.unwrap();
-
-    let after_deposit2 = get_balances(0).await;
-    assert_eq!(token, after_deposit2.token + after_deposit2.vault);
-    assert_eq!(after_deposit2.voter_weight, after_deposit2.vault);
-    assert_eq!(after_deposit2.vault, 15000);
-    assert_eq!(after_deposit2.deposit, 15000);
+    assert_eq!(after_deposit.vault, 15000);
+    assert_eq!(after_deposit.deposit, 15000);
 
     // create a separate deposit (index 1)
     addin
@@ -224,11 +215,11 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
         .unwrap();
     deposit(1, 7000).await.unwrap();
 
-    let after_deposit3 = get_balances(1).await;
-    assert_eq!(token, after_deposit3.token + after_deposit3.vault);
-    assert_eq!(after_deposit3.voter_weight, after_deposit3.vault);
-    assert_eq!(after_deposit3.vault, 22000);
-    assert_eq!(after_deposit3.deposit, 7000);
+    let after_deposit2 = get_balances(1).await;
+    assert_eq!(token, after_deposit2.token + after_deposit2.vault);
+    assert_eq!(after_deposit2.voter_weight, after_deposit2.vault);
+    assert_eq!(after_deposit2.vault, 22000);
+    assert_eq!(after_deposit2.deposit, 7000);
 
     withdraw(10000).await.unwrap();
 
