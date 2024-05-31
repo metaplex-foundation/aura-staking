@@ -82,9 +82,9 @@ async fn test_all_deposits() -> Result<(), TransportError> {
                 voter_authority,
                 &mngo_voting_mint,
                 i,
-                LockupKind::None,
+                LockupKind::Constant,
                 None,
-                LockupPeriod::None,
+                LockupPeriod::ThreeMonths,
             )
             .await
             .unwrap();
@@ -106,12 +106,9 @@ async fn test_all_deposits() -> Result<(), TransportError> {
     }
 
     // advance time, to be in the middle of all deposit lockups
-    addin
-        .set_time_offset(&registrar, &realm_authority, 32 * 24 * 60 * 60)
-        .await;
-    context.solana.advance_clock_by_slots(2).await;
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 45 * 86400).await;
 
-    // the two most expensive calls which scale with number of deposts
+    // the two most expensive calls which scale with number of deposits
     // are update_voter_weight_record and withdraw - both compute the vote weight
 
     let vwr = addin
@@ -119,6 +116,16 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         .await
         .unwrap();
     assert_eq!(vwr.voter_weight, 12000 * 32);
+
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 50 * 86400).await;
+
+    context
+        .addin
+        .unlock_tokens(&registrar, &voter, voter_authority, 0)
+        .await
+        .unwrap();
+
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400).await;
 
     // make sure withdrawing works with all deposits filled
     addin

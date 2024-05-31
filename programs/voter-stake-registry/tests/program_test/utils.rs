@@ -1,3 +1,5 @@
+use std::borrow::BorrowMut;
+
 use bytemuck::{bytes_of, Contiguous};
 use solana_program::program_error::ProgramError;
 use solana_program_test::{BanksClientError, ProgramTestContext};
@@ -107,4 +109,21 @@ pub fn find_deposit_mining_addr(
         rewards_program_addr,
     );
     deposit_mining
+}
+
+pub async fn advance_clock_by_ts(context: &mut ProgramTestContext, ts: i64) {
+    let old_clock = context
+        .banks_client
+        .get_sysvar::<solana_program::clock::Clock>()
+        .await
+        .unwrap();
+
+    let initial_slot = context.banks_client.get_root_slot().await.unwrap();
+    context
+        .warp_to_slot(initial_slot + (ts / 2) as u64)
+        .unwrap();
+
+    let mut new_clock = old_clock.clone();
+    new_clock.unix_timestamp += ts;
+    context.borrow_mut().set_sysvar(&new_clock);
 }
