@@ -158,6 +158,12 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
             deposit_entry.lockup.kind,
             deposit_entry.lockup.seconds_left(curr_ts),
         );
+
+        if deposit_entry.lockup.kind == LockupKind::None
+            && deposit_entry.lockup.period == LockupPeriod::None
+        {
+            return Ok(());
+        }
     }
 
     // Update the voter weight record
