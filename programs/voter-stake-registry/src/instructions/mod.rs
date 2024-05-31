@@ -12,6 +12,7 @@ pub use unlock_tokens::*;
 pub use update_voter_weight_record::*;
 pub use withdraw::*;
 
+mod claim;
 mod close_deposit_entry;
 mod close_voter;
 mod configure_voting_mint;
