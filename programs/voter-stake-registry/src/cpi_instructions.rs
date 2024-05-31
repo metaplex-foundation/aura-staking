@@ -257,3 +257,42 @@ pub fn withdraw_mining<'a>(
 
     invoke(&ix, &[reward_pool, mining, deposit_authority, program_id])
 }
+
+/// Rewards withdraw mining
+#[allow(clippy::too_many_arguments)]
+pub fn claim<'a>(
+    program_id: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    reward_mint: AccountInfo<'a>,
+    vault: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    user: AccountInfo<'a>,
+    user_reward_token_account: AccountInfo<'a>,
+    token_program: AccountInfo<'a>,
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new_readonly(reward_pool.key(), false),
+        AccountMeta::new_readonly(reward_mint.key(), false),
+        AccountMeta::new(vault.key(), false),
+        AccountMeta::new(mining.key(), false),
+        AccountMeta::new(user.key(), true),
+        AccountMeta::new(user_reward_token_account.key(), false),
+        AccountMeta::new_readonly(token_program.key(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(program_id.key(), &RewardsInstruction::Claim, accounts);
+
+    invoke(
+        &ix,
+        &[
+            reward_pool,
+            reward_mint,
+            vault,
+            mining,
+            user,
+            user_reward_token_account,
+            token_program,
+            program_id,
+        ],
+    )
+}
