@@ -70,12 +70,17 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     if amount == 0 {
         return Ok(());
     }
+
     let registrar = &ctx.accounts.registrar.load()?;
     let curr_ts = registrar.clock_unix_timestamp();
 
     {
         let voter = &mut ctx.accounts.voter.load_mut()?;
         let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
+        require!(
+            d_entry.amount_deposited_native == 0,
+            VsrError::DepositingIsForbidded
+        );
 
         // Get the exchange rate entry associated with this deposit.
         let mint_idx = registrar.voting_mint_config_index(ctx.accounts.deposit_token.mint)?;
@@ -84,20 +89,26 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
             d_entry.voting_mint_config_idx as usize,
             VsrError::InvalidMint
         );
-        // Deposit tokens into the vault and increase the lockup amount too.
 
+        // Deposit tokens into the vault and increase the lockup amount too.
         token::transfer(ctx.accounts.transfer_ctx(), amount)?;
         d_entry.amount_deposited_native =
             d_entry.amount_deposited_native.checked_add(amount).unwrap();
+    }
+
+    let voter = &ctx.accounts.voter.load()?;
+    let owner = &voter.voter_authority;
+    let d_entry = voter.active_deposit(deposit_entry_index)?;
+
+    // no sense to call cpi if lockup had not been staked
+    if d_entry.lockup.kind == LockupKind::None || d_entry.lockup.period == LockupPeriod::None {
+        return Ok(());
     }
 
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
     let deposit_authority = &ctx.accounts.deposit_authority;
     let reward_mint = &ctx.accounts.deposit_token.mint;
-    let voter = &ctx.accounts.voter.load()?;
-    let owner = &voter.voter_authority;
-    let d_entry = voter.active_deposit(deposit_entry_index)?;
 
     cpi_instructions::deposit_mining(
         ctx.accounts.rewards_program.to_account_info(),
