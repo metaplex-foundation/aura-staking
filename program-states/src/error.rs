@@ -125,4 +125,7 @@ pub enum VsrError {
     // 6040 / 0x1798
     #[msg("")]
     RestakeDepositIsNotAllowed,
+    // 6041 / 0x1799
+    #[msg("To deposit additional tokens, extend the deposit")]
+    DepositingIsForbidded,
 }
