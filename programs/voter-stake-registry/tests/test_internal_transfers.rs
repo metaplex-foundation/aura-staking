@@ -222,16 +222,16 @@ async fn test_internal_transfer_kind_of_constant() -> Result<(), TransportError>
             payer,
             0,
             &context.mints[0],
-            0,    // dump values, they doen't matter
-            1.0,  // dump values, they doen't matter
-            1.0,  // dump values, they doen't matter
-            1,    // dump values, they doen't matter
-            None, // dump values, they doen't matter
-            None, // dump values, they doen't matter
+            0,    // dump values, they don't matter
+            1.0,  // dump values, they don't matter
+            1.0,  // dump values, they don't matter
+            1,    // dump values, they don't matter
+            None, // dump values, they don't matter
+            None, // dump values, they don't matter
         )
         .await;
 
-    let deposit_authority = &mngo_voting_mint.mint.authority;
+    let deposit_authority = &voter_authority;
     let rewards_pool = initialize_rewards_contract(
         payer,
         &context,
