@@ -1,3 +1,4 @@
+pub use claim::*;
 pub use close_deposit_entry::*;
 pub use close_voter::*;
 pub use configure_voting_mint::*;

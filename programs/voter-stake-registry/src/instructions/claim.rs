@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount};
 
 use crate::cpi_instructions;
@@ -7,10 +6,10 @@ use crate::cpi_instructions;
 #[derive(Accounts)]
 pub struct Claim<'info> {
     /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
 
-    pub reward_mint: Account<'info, Mint>,
+    /// CHECK: Rewards mint addr will be checked in the rewards contract
+    pub reward_mint: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub vault: UncheckedAccount<'info>,
@@ -20,6 +19,7 @@ pub struct Claim<'info> {
     pub deposit_mining: UncheckedAccount<'info>,
 
     // pub voter_authority: Signer<'info>,
+    #[account(mut)]
     pub owner: Signer<'info>,
 
     #[account(mut)]
