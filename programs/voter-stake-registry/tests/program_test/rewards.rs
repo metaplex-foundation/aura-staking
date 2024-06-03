@@ -127,15 +127,23 @@ impl RewardsCookie {
         &self,
         reward_pool: &Pubkey,
         reward_mint: &Pubkey,
-        vault: &Pubkey,
         authority: &Keypair,
         source_token_account: &Pubkey,
         amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
+        let (vault, _bump) = Pubkey::find_program_address(
+            &[
+                "vault".as_bytes(),
+                &reward_pool.to_bytes(),
+                &reward_mint.to_bytes(),
+            ],
+            &self.program_id,
+        );
+
         let accounts = vec![
             AccountMeta::new(*reward_pool, false),
             AccountMeta::new_readonly(*reward_mint, false),
-            AccountMeta::new(*vault, false),
+            AccountMeta::new(vault, false),
             AccountMeta::new_readonly(authority.pubkey(), true),
             AccountMeta::new(*source_token_account, false),
             AccountMeta::new_readonly(spl_token::id(), false),

@@ -32,7 +32,7 @@ impl SolanaCookie {
         let mut context = self.context.borrow_mut();
 
         let mut transaction =
-            Transaction::new_with_payer(&instructions, Some(&context.payer.pubkey()));
+            Transaction::new_with_payer(instructions, Some(&context.payer.pubkey()));
 
         let mut all_signers = vec![&context.payer];
 
@@ -97,7 +97,7 @@ impl SolanaCookie {
         self.process_transaction(&instructions, Some(&[&keypair]))
             .await
             .unwrap();
-        return keypair.pubkey();
+        keypair.pubkey()
     }
 
     #[allow(dead_code)]
@@ -127,5 +127,35 @@ impl SolanaCookie {
     #[allow(dead_code)]
     pub fn program_output(&self) -> super::ProgramOutput {
         self.program_output.read().unwrap().clone()
+    }
+
+    #[allow(dead_code)]
+    pub async fn create_spl_ata(&self, owner: &Pubkey, mint: &Pubkey, payer: &Keypair) -> Pubkey {
+        // let rent = self.rent.minimum_balance(spl_token::state::Account::LEN);
+
+        let (ata_addr, _ata_bump) = Pubkey::find_program_address(
+            &[
+                &owner.to_bytes(),
+                &spl_token::ID.to_bytes(),
+                &mint.to_bytes(),
+            ],
+            &spl_associated_token_account::ID,
+        );
+
+        let create_ata_ix =
+            spl_associated_token_account::instruction::create_associated_token_account(
+                &payer.pubkey(),
+                owner,
+                mint,
+                &spl_token::ID,
+            );
+
+        let instructions = &[create_ata_ix];
+
+        self.process_transaction(instructions, Some(&[payer]))
+            .await
+            .unwrap();
+
+        ata_addr
     }
 }
