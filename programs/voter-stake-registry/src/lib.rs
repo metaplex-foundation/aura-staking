@@ -159,4 +159,8 @@ pub mod voter_stake_registry {
     ) -> Result<()> {
         instructions::restake_deposit(ctx, deposit_entry_index, lockup_period)
     }
+
+    pub fn claim(ctx: Context<Claim>) -> Result<()> {
+        instructions::claim(ctx)
+    }
 }
