@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::sync::Arc;
 
 use mplx_staking_states::state::LockupPeriod;
+
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
     instruction::Instruction,
@@ -634,11 +635,57 @@ impl AddinCookie {
         new_clock.unix_timestamp += time_offset - old_offset;
         self.solana.context.borrow_mut().set_sysvar(&new_clock);
     }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn claim(
+        &self,
+        reward_pool: &Pubkey,
+        reward_mint: &Pubkey,
+        reward_mining: &Pubkey,
+        owner: &Keypair,
+        owner_reward_ata: &Pubkey,
+        rewards_program: &Pubkey,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Claim);
+
+        let (vault_pubkey, _) = Pubkey::find_program_address(
+            &[
+                b"vault".as_ref(),
+                reward_pool.as_ref(),
+                reward_mint.as_ref(),
+            ],
+            rewards_program,
+        );
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &voter_stake_registry::accounts::Claim {
+                reward_pool: *reward_pool,
+                reward_mint: *reward_mint,
+                vault: vault_pubkey,
+                deposit_mining: *reward_mining,
+                owner: owner.pubkey(),
+                user_reward_token_account: *owner_reward_ata,
+                token_program: spl_token::id(),
+                rewards_program: *rewards_program,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[owner]))
+            .await
+    }
 }
 
 impl VotingMintConfigCookie {
     pub async fn vault_balance(&self, solana: &SolanaCookie, voter: &VoterCookie) -> u64 {
-        let vault = voter.vault_address(&self);
+        let vault = voter.vault_address(self);
         solana.get_account::<TokenAccount>(vault).await.amount
     }
 }

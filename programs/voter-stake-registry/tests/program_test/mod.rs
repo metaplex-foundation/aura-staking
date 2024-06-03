@@ -154,26 +154,25 @@ impl TestContext {
             }, // symbol: "USDC".to_string()
         ];
         // Add mints in loop
-        for mint_index in 0..mints.len() {
-            let mint_pk: Pubkey;
-            if mints[mint_index].pubkey.is_none() {
-                mint_pk = Pubkey::new_unique();
+        for mint in mints.iter_mut() {
+            let mint_pk = if mint.pubkey.is_none() {
+                Pubkey::new_unique()
             } else {
-                mint_pk = mints[mint_index].pubkey.unwrap();
-            }
+                mint.pubkey.unwrap()
+            };
 
             test.add_packable_account(
                 mint_pk,
                 u32::MAX as u64,
                 &Mint {
                     is_initialized: true,
-                    mint_authority: COption::Some(mints[mint_index].authority.pubkey()),
-                    decimals: mints[mint_index].decimals,
+                    mint_authority: COption::Some(mint.authority.pubkey()),
+                    decimals: mint.decimals,
                     ..Mint::default()
                 },
                 &spl_token::id(),
             );
-            mints[mint_index].pubkey = Some(mint_pk);
+            mint.pubkey = Some(mint_pk);
         }
         let quote_index = mints.len() - 1;
 
@@ -194,13 +193,14 @@ impl TestContext {
             // give every user 10^18 (< 2^60) of every token
             // ~~ 1 trillion in case of 6 decimals
             let mut token_accounts = Vec::new();
-            for mint_index in 0..mints.len() {
+            for mint in mints.iter() {
+                // for mint_index in 0..mints.len() {
                 let token_key = Pubkey::new_unique();
                 test.add_packable_account(
                     token_key,
                     u32::MAX as u64,
                     &spl_token::state::Account {
-                        mint: mints[mint_index].pubkey.unwrap(),
+                        mint: mint.pubkey.unwrap(),
                         owner: user_key.pubkey(),
                         amount: 1_000_000_000_000_000_000,
                         state: spl_token::state::AccountState::Initialized,
@@ -238,7 +238,7 @@ impl TestContext {
                 time_offset: RefCell::new(0),
             },
             rewards: RewardsCookie {
-                solana: solana.clone(),
+                solana,
                 program_id: rewards_program_id,
             },
             mints,

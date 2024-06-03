@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use crate::{solana, utils::*};
+use crate::utils::*;
 use solana_program::pubkey::*;
 use solana_sdk::signature::Keypair;
 

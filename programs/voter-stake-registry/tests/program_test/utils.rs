@@ -11,7 +11,7 @@ use solana_sdk::system_instruction;
 use solana_sdk::transaction::Transaction;
 use solana_sdk::transport::TransportError;
 
-use crate::{AddinCookie, RegistrarCookie, TestContext};
+use crate::TestContext;
 
 #[allow(dead_code)]
 pub fn gen_signer_seeds<'a>(nonce: &'a u64, acc_pk: &'a Pubkey) -> [&'a [u8]; 2] {
