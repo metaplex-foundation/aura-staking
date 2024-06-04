@@ -172,6 +172,16 @@ impl LockupPeriod {
             LockupPeriod::None => 0,
         }
     }
+
+    pub fn multiplier(&self) -> u64 {
+        match self {
+            LockupPeriod::None => 0,
+            LockupPeriod::ThreeMonths => 2,
+            LockupPeriod::SixMonths => 4,
+            LockupPeriod::OneYear => 6,
+            LockupPeriod::Flex => 1,
+        }
+    }
 }
 
 #[repr(u8)]
