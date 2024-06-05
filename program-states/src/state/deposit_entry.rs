@@ -58,6 +58,15 @@ impl DepositEntry {
             .checked_sub(self.amount_locked(curr_ts))
             .unwrap()
     }
+
+    /// Returns the weighted stake for the given deposit at the specified timestamp.
+    #[inline(always)]
+    pub fn weighted_stake(&self, curr_ts: u64) -> u64 {
+        if !self.is_used {
+            return 0;
+        }
+        self.lockup.multiplier(curr_ts) * self.amount_deposited_native
+    }
 }
 
 #[cfg(test)]
@@ -110,5 +119,83 @@ mod tests {
         assert_eq!(voting_power, 20_000);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_weighted_stake_unused() {
+        let deposit = DepositEntry {
+            amount_deposited_native: 20_000,
+            lockup: Lockup::default(),
+            is_used: false,
+            voting_mint_config_idx: 0,
+            _reserved1: [0; 6],
+        };
+        assert_eq!(deposit.weighted_stake(0), 0);
+    }
+
+    #[test]
+    fn test_weighted_stake_expired() {
+        let amount = 20_000;
+        let deposit = DepositEntry {
+            amount_deposited_native: amount,
+            lockup: Lockup {
+                start_ts: 0,
+                end_ts: 0,
+                kind: Constant,
+                period: LockupPeriod::Flex,
+                cooldown_requested: false,
+                cooldown_ends_at: 0,
+                _reserved1: [0; 5],
+            },
+            is_used: true,
+            voting_mint_config_idx: 0,
+            _reserved1: [0; 6],
+        };
+        assert_eq!(deposit.weighted_stake(10), amount);
+    }
+
+    #[test]
+    fn test_weighted_stake_under_cooldown() {
+        let amount = 20_000;
+        let deposit = DepositEntry {
+            amount_deposited_native: amount,
+            lockup: Lockup {
+                start_ts: 0,
+                end_ts: 100,
+                kind: Constant,
+                period: LockupPeriod::Flex,
+                cooldown_requested: true,
+                cooldown_ends_at: 200,
+                _reserved1: [0; 5],
+            },
+            is_used: true,
+            voting_mint_config_idx: 0,
+            _reserved1: [0; 6],
+        };
+        assert_eq!(deposit.weighted_stake(150), 0);
+    }
+
+    #[test]
+    fn test_weighted_stake() {
+        let amount = 20_000;
+        let deposit = DepositEntry {
+            amount_deposited_native: amount,
+            lockup: Lockup {
+                start_ts: 0,
+                end_ts: 100,
+                kind: Constant,
+                period: LockupPeriod::OneYear,
+                cooldown_requested: false,
+                cooldown_ends_at: 0,
+                _reserved1: [0; 5],
+            },
+            is_used: true,
+            voting_mint_config_idx: 0,
+            _reserved1: [0; 6],
+        };
+        assert_eq!(
+            deposit.weighted_stake(50),
+            amount * LockupPeriod::OneYear.multiplier()
+        );
     }
 }
