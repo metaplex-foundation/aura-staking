@@ -114,7 +114,7 @@ pub fn deposit(
 
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
-    let deposit_authority = &ctx.accounts.deposit_authority;
+    let pool_deposit_authority = &ctx.accounts.registrar.to_account_info();
     let signers_seeds = &[
         &realm_pubkey.key().to_bytes(),
         b"registrar".as_ref(),
@@ -126,7 +126,7 @@ pub fn deposit(
         ctx.accounts.rewards_program.to_account_info(),
         reward_pool.to_account_info(),
         mining.to_account_info(),
-        deposit_authority.to_account_info(),
+        pool_deposit_authority.to_account_info(),
         amount,
         d_entry.lockup.period,
         owner,

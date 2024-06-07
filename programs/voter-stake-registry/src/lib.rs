@@ -89,18 +89,8 @@ pub mod voter_stake_registry {
         ctx: Context<CreateVoter>,
         voter_bump: u8,
         voter_weight_record_bump: u8,
-        registrar_bump: u8,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
     ) -> Result<()> {
-        instructions::create_voter(
-            ctx,
-            voter_bump,
-            voter_weight_record_bump,
-            registrar_bump,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
-        )
+        instructions::create_voter(ctx, voter_bump, voter_weight_record_bump)
     }
 
     pub fn create_deposit_entry(

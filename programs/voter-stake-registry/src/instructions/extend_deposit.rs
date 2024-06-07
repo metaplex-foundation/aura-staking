@@ -88,7 +88,7 @@ pub fn restake_deposit(
 
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
-    let deposit_authority = &ctx.accounts.deposit_authority;
+    let pool_deposit_authority = &ctx.accounts.registrar;
     let reward_mint = &ctx.accounts.deposit_token.mint;
     let voter = &ctx.accounts.voter;
 
@@ -105,7 +105,7 @@ pub fn restake_deposit(
         mining.to_account_info(),
         reward_mint,
         voter.to_account_info(),
-        deposit_authority.to_account_info(),
+        pool_deposit_authority.to_account_info(),
         amount,
         lockup_period,
         start_ts,

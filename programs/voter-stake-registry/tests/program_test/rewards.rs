@@ -23,96 +23,51 @@ pub struct RewardsCookie {
 }
 
 impl RewardsCookie {
-    pub async fn initialize_root(
-        &self,
-        payer: &Keypair,
-    ) -> std::result::Result<Keypair, BanksClientError> {
-        let rewards_root = Keypair::new();
-
-        let accounts = vec![
-            AccountMeta::new(rewards_root.pubkey(), true),
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new_readonly(system_program::id(), false),
-        ];
-
-        let ix = Instruction::new_with_borsh(
-            self.program_id,
-            &RewardsInstruction::InitializeRoot,
-            accounts,
-        );
-
-        let signers = vec![payer, &rewards_root];
-
-        self.solana
-            .process_transaction(&[ix], Some(&signers))
-            .await?;
-
-        Ok(rewards_root)
-    }
-
     pub async fn initialize_pool(
         &self,
-        rewards_root: &Pubkey,
         deposit_authority: &Pubkey,
+        fill_authority: &Pubkey,
+        distribution_authority: &Pubkey,
         payer: &Keypair,
-    ) -> std::result::Result<Pubkey, BanksClientError> {
-        let (reward_pool, _bump) = Pubkey::find_program_address(
-            &["reward_pool".as_bytes(), &rewards_root.key().to_bytes()],
+        reward_mint: &Pubkey,
+    ) -> std::result::Result<(Pubkey, Pubkey), BanksClientError> {
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &[
+                "reward_pool".as_bytes(),
+                &deposit_authority.key().to_bytes(),
+                &fill_authority.key().to_bytes(),
+            ],
             &self.program_id,
         );
 
-        let accounts = vec![
-            AccountMeta::new_readonly(rewards_root.key(), false),
-            AccountMeta::new(reward_pool, false),
-            AccountMeta::new_readonly(deposit_authority.key(), false),
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new_readonly(system_program::id(), false),
-        ];
-
-        let ix = Instruction::new_with_borsh(
-            self.program_id,
-            &RewardsInstruction::InitializePool,
-            accounts,
-        );
-
-        let signers = vec![payer];
-
-        self.solana
-            .process_transaction(&[ix], Some(&signers))
-            .await?;
-
-        Ok(reward_pool)
-    }
-
-    pub async fn add_vault(
-        &self,
-        rewards_root: &Pubkey,
-        reward_pool: &Pubkey,
-        reward_mint: &Pubkey,
-        payer: &Keypair,
-    ) -> std::result::Result<Pubkey, BanksClientError> {
-        let (vault, _bump) = Pubkey::find_program_address(
+        let (reward_vault, _reward_vault_bump) = Pubkey::find_program_address(
             &[
                 "vault".as_bytes(),
-                &reward_pool.to_bytes(),
-                &reward_mint.to_bytes(),
+                &reward_pool.key().to_bytes(),
+                &reward_mint.key().to_bytes(),
             ],
             &self.program_id,
         );
 
         let accounts = vec![
-            AccountMeta::new_readonly(*rewards_root, false),
-            AccountMeta::new(*reward_pool, false),
+            AccountMeta::new(reward_pool, false),
             AccountMeta::new_readonly(*reward_mint, false),
-            AccountMeta::new(vault, false),
+            AccountMeta::new(reward_vault, false),
             AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new_readonly(sysvar::rent::id(), false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(system_program::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
         ];
 
-        let ix =
-            Instruction::new_with_borsh(self.program_id, &RewardsInstruction::AddVault, accounts);
+        let ix = Instruction::new_with_borsh(
+            self.program_id,
+            &RewardsInstruction::InitializePool {
+                deposit_authority: *deposit_authority,
+                fill_authority: *fill_authority,
+                distribution_authority: *distribution_authority,
+            },
+            accounts,
+        );
 
         let signers = vec![payer];
 
@@ -120,16 +75,17 @@ impl RewardsCookie {
             .process_transaction(&[ix], Some(&signers))
             .await?;
 
-        Ok(vault)
+        Ok((reward_pool, reward_vault))
     }
 
     pub async fn fill_vault(
         &self,
         reward_pool: &Pubkey,
         reward_mint: &Pubkey,
-        authority: &Keypair,
+        fill_authority: &Keypair,
         source_token_account: &Pubkey,
         amount: u64,
+        distribution_ends_at: u64,
     ) -> std::result::Result<(), BanksClientError> {
         let (vault, _bump) = Pubkey::find_program_address(
             &[
@@ -144,18 +100,59 @@ impl RewardsCookie {
             AccountMeta::new(*reward_pool, false),
             AccountMeta::new_readonly(*reward_mint, false),
             AccountMeta::new(vault, false),
-            AccountMeta::new_readonly(authority.pubkey(), true),
+            AccountMeta::new_readonly(fill_authority.pubkey(), true),
             AccountMeta::new(*source_token_account, false),
             AccountMeta::new_readonly(spl_token::id(), false),
         ];
 
         let ix = Instruction::new_with_borsh(
             self.program_id,
-            &RewardsInstruction::FillVault { amount },
+            &RewardsInstruction::FillVault {
+                amount,
+                distribution_ends_at,
+            },
             accounts,
         );
 
-        let signers = vec![authority];
+        let signers = vec![fill_authority];
+
+        self.solana
+            .process_transaction(&[ix], Some(&signers))
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn distribute_rewards(
+        &self,
+        reward_pool: &Pubkey,
+        reward_mint: &Pubkey,
+        reward_vault: &Pubkey,
+        distribute_authority: &Keypair,
+    ) -> std::result::Result<(), BanksClientError> {
+        let (vault, _bump) = Pubkey::find_program_address(
+            &[
+                "vault".as_bytes(),
+                &reward_pool.to_bytes(),
+                &reward_mint.to_bytes(),
+            ],
+            &self.program_id,
+        );
+
+        let accounts = vec![
+            AccountMeta::new(*reward_pool, false),
+            AccountMeta::new_readonly(*reward_mint, false),
+            AccountMeta::new(*reward_vault, false),
+            AccountMeta::new_readonly(distribute_authority.pubkey(), true),
+        ];
+
+        let ix = Instruction::new_with_borsh(
+            self.program_id,
+            &RewardsInstruction::DistributeRewards,
+            accounts,
+        );
+
+        let signers = vec![distribute_authority];
 
         self.solana
             .process_transaction(&[ix], Some(&signers))
@@ -168,13 +165,13 @@ impl RewardsCookie {
     pub async fn initialize_mining<'a>(
         &self,
         reward_pool: &Pubkey,
-        user: &Pubkey,
+        mining_owner: &Pubkey,
         payer: &Keypair,
     ) -> std::result::Result<Pubkey, BanksClientError> {
         let (mining, _bump) = Pubkey::find_program_address(
             &[
                 "mining".as_bytes(),
-                &user.key().to_bytes(),
+                &mining_owner.key().to_bytes(),
                 &reward_pool.key().to_bytes(),
             ],
             &self.program_id,
@@ -183,14 +180,15 @@ impl RewardsCookie {
         let accounts = vec![
             AccountMeta::new(*reward_pool, false),
             AccountMeta::new(mining, false),
-            AccountMeta::new_readonly(*user, false),
             AccountMeta::new(payer.pubkey(), true),
             AccountMeta::new_readonly(system_program::id(), false),
         ];
 
         let ix = Instruction::new_with_borsh(
             self.program_id,
-            &RewardsInstruction::InitializeMining,
+            &RewardsInstruction::InitializeMining {
+                mining_owner: *mining_owner,
+            },
             accounts,
         );
 
@@ -210,7 +208,6 @@ impl RewardsCookie {
         deposit_authority: &Keypair,
         amount: u64,
         lockup_period: LockupPeriod,
-        mint_account: &Pubkey,
         owner: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let (mining, _bump) = Pubkey::find_program_address(
@@ -233,7 +230,6 @@ impl RewardsCookie {
             &RewardsInstruction::DepositMining {
                 amount,
                 lockup_period,
-                reward_mint_addr: *mint_account,
                 owner: *owner,
             },
             accounts,

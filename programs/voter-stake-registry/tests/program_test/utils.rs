@@ -9,9 +9,6 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::system_instruction;
 use solana_sdk::transaction::Transaction;
-use solana_sdk::transport::TransportError;
-
-use crate::TestContext;
 
 #[allow(dead_code)]
 pub fn gen_signer_seeds<'a>(nonce: &'a u64, acc_pk: &'a Pubkey) -> [&'a [u8]; 2] {
@@ -74,25 +71,6 @@ pub async fn create_mint(
     );
 
     context.banks_client.process_transaction(tx).await
-}
-
-pub async fn initialize_rewards_contract(
-    payer: &Keypair,
-    context: &TestContext,
-    reward_mint: &Pubkey,
-    deposit_authority: &Pubkey,
-) -> Result<Pubkey, TransportError> {
-    let rewards_root = context.rewards.initialize_root(payer).await?;
-    let rewards_pool = context
-        .rewards
-        .initialize_pool(&rewards_root.pubkey(), deposit_authority, payer)
-        .await?;
-    let _vault = context
-        .rewards
-        .add_vault(&rewards_root.pubkey(), &rewards_pool, reward_mint, payer)
-        .await?;
-
-    Ok(rewards_pool)
 }
 
 pub fn find_deposit_mining_addr(

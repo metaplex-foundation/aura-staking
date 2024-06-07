@@ -18,9 +18,12 @@ pub struct Claim<'info> {
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
-    // pub voter_authority: Signer<'info>,
     #[account(mut)]
     pub mining_owner: Signer<'info>,
+
+    /// CHECK: Registrar plays the role of deposit_authority on the Rewards Contract,
+    /// therefore their PDA that should sign the CPI call
+    pub registrar: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub user_reward_token_account: Account<'info, TokenAccount>,
@@ -46,6 +49,7 @@ pub fn claim(
     let rewards_mint = ctx.accounts.reward_mint.to_account_info();
     let vault = ctx.accounts.vault.to_account_info();
     let deposit_mining = ctx.accounts.deposit_mining.to_account_info();
+    let deposit_authority = ctx.accounts.registrar.to_account_info();
     let mining_owner = ctx.accounts.mining_owner.to_account_info();
     let user_reward_token_account = ctx.accounts.user_reward_token_account.to_account_info();
     let token_program = ctx.accounts.token_program.to_account_info();
@@ -63,6 +67,7 @@ pub fn claim(
         vault,
         deposit_mining,
         mining_owner,
+        deposit_authority,
         user_reward_token_account,
         token_program,
         signers_seeds,
