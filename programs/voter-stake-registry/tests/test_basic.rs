@@ -66,13 +66,20 @@ async fn test_basic() -> Result<(), TransportError> {
         )
         .await;
 
-    let rewards_pool = initialize_rewards_contract(
-        payer,
-        &context,
-        &mngo_voting_mint.mint.pubkey.unwrap(),
-        &deposit_authority.pubkey(),
-    )
-    .await?;
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let reward_mint = &context.mints[0].pubkey.unwrap();
+    let pool_deposit_authority = &registrar.address;
+    let (rewards_pool, _rewards_vault) = context
+        .rewards
+        .initialize_pool(
+            pool_deposit_authority,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            payer,
+            reward_mint,
+        )
+        .await?;
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;

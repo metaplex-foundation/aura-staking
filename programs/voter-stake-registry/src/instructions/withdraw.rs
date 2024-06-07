@@ -182,7 +182,7 @@ pub fn withdraw(
     let rewards_program = &ctx.accounts.rewards_program;
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
-    let deposit_authority = &ctx.accounts.voter_authority;
+    let pool_deposit_authority = &ctx.accounts.registrar;
     let owner = &ctx.accounts.voter_authority;
     let signers_seeds = &[
         &realm_pubkey.key().to_bytes(),
@@ -195,7 +195,7 @@ pub fn withdraw(
         rewards_program.to_account_info(),
         reward_pool.to_account_info(),
         mining.to_account_info(),
-        deposit_authority.to_account_info(),
+        pool_deposit_authority.to_account_info(),
         amount,
         owner.key,
         signers_seeds,

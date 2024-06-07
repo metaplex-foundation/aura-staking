@@ -10,6 +10,8 @@ use crate::voter::VoterWeightRecord;
 
 #[derive(Accounts)]
 pub struct CreateVoter<'info> {
+    /// Also, Registrar plays the role of deposit_authority on the Rewards Contract,
+    /// therefore their PDA that should sign the CPI call
     pub registrar: AccountLoader<'info, Registrar>,
 
     #[account(
@@ -69,9 +71,6 @@ pub fn create_voter(
     ctx: Context<CreateVoter>,
     voter_bump: u8,
     voter_weight_record_bump: u8,
-    registrar_bump: u8,
-    realm_governing_mint_pubkey: Pubkey,
-    realm_pubkey: Pubkey,
 ) -> Result<()> {
     // Forbid creating voter accounts from CPI. The goal is to make automation
     // impossible that weakens some of the limitations intentionally imposed on
@@ -119,12 +118,6 @@ pub fn create_voter(
         let user = ctx.accounts.voter_authority.key;
         let system_program = ctx.accounts.system_program.to_account_info();
         let reward_pool = ctx.accounts.reward_pool.to_account_info();
-        let signers_seeds = &[
-            &realm_pubkey.key().to_bytes(),
-            b"registrar".as_ref(),
-            &realm_governing_mint_pubkey.key().to_bytes(),
-            &[registrar_bump][..],
-        ];
 
         cpi_instructions::initialize_mining(
             &REWARD_CONTRACT_ID,
@@ -133,7 +126,6 @@ pub fn create_voter(
             user,
             payer,
             system_program,
-            signers_seeds,
         )?;
     }
 

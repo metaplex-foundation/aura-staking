@@ -1,6 +1,6 @@
 use anchor_spl::token::TokenAccount;
 use solana_program_test::*;
-use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
+use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
@@ -66,13 +66,20 @@ async fn successeful_claim() -> Result<(), TransportError> {
         )
         .await;
 
-    let rewards_pool = initialize_rewards_contract(
-        payer,
-        &context,
-        &mngo_voting_mint.mint.pubkey.unwrap(),
-        &deposit_authority.pubkey(),
-    )
-    .await?;
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let reward_mint = &context.mints[0].pubkey.unwrap();
+    let pool_deposit_authority = &registrar.address;
+    let (rewards_pool, rewards_vault) = context
+        .rewards
+        .initialize_pool(
+            pool_deposit_authority,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            payer,
+            reward_mint,
+        )
+        .await?;
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;
@@ -135,28 +142,51 @@ async fn successeful_claim() -> Result<(), TransportError> {
         )
         .await?;
 
-    let rewards_source_ata = context.users[0].token_accounts[0];
+    let rewards_source_ata = context.users[3].token_accounts[0];
+    let amount = 100;
+    let distribution_ends_at = context
+        .solana
+        .context
+        .borrow_mut()
+        .banks_client
+        .get_sysvar::<solana_program::clock::Clock>()
+        .await
+        .unwrap()
+        .unix_timestamp as u64
+        + 86400;
     context
         .rewards
         .fill_vault(
             &rewards_pool,
-            &mngo_voting_mint.mint.pubkey.unwrap(),
-            payer,
+            reward_mint,
+            &fill_authority,
             &rewards_source_ata,
-            100,
+            amount,
+            distribution_ends_at,
         )
         .await
         .unwrap();
 
     context
+        .rewards
+        .distribute_rewards(
+            &rewards_pool,
+            reward_mint,
+            &rewards_vault,
+            &distribution_authority,
+        )
+        .await?;
+
+    context
         .addin
         .claim(
             &rewards_pool,
-            &mngo_voting_mint.mint.pubkey.unwrap(),
+            reward_mint,
             &deposit_mining,
             voter_authority,
             &voter_authority_ata,
             &context.rewards.program_id,
+            &registrar,
         )
         .await?;
 

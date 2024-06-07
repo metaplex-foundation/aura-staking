@@ -6,7 +6,7 @@ use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
     instruction::{AccountMeta, Instruction},
-    program::invoke_signed,
+    program::{invoke, invoke_signed},
     system_program,
 };
 
@@ -31,6 +31,9 @@ pub enum RewardsInstruction {
         deposit_authority: Pubkey,
         /// Account can fill the reward vault
         fill_authority: Pubkey,
+        /// Account that can distribute money among users after
+        /// if RewardVault had been filled with rewards
+        distribution_authority: Pubkey,
     },
 
     /// Fills the reward pool with rewards
@@ -140,7 +143,6 @@ pub fn initialize_mining<'a>(
     mining_owner: &Pubkey,
     payer: AccountInfo<'a>,
     system_program: AccountInfo<'a>,
-    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
@@ -157,11 +159,7 @@ pub fn initialize_mining<'a>(
         accounts,
     );
 
-    invoke_signed(
-        &ix,
-        &[reward_pool, mining, payer, system_program],
-        &[signers_seeds],
-    )
+    invoke(&ix, &[reward_pool, mining, payer, system_program])
 }
 
 /// Rewards deposit mining
@@ -281,7 +279,8 @@ pub fn claim<'a>(
     reward_mint: AccountInfo<'a>,
     vault: AccountInfo<'a>,
     mining: AccountInfo<'a>,
-    user: AccountInfo<'a>,
+    mining_owner: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
     user_reward_token_account: AccountInfo<'a>,
     token_program: AccountInfo<'a>,
     signers_seeds: &[&[u8]],
@@ -291,7 +290,8 @@ pub fn claim<'a>(
         AccountMeta::new_readonly(reward_mint.key(), false),
         AccountMeta::new(vault.key(), false),
         AccountMeta::new(mining.key(), false),
-        AccountMeta::new(user.key(), true),
+        AccountMeta::new_readonly(mining_owner.key(), true),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
         AccountMeta::new(user_reward_token_account.key(), false),
         AccountMeta::new_readonly(token_program.key(), false),
     ];
@@ -305,7 +305,8 @@ pub fn claim<'a>(
             reward_mint,
             vault,
             mining,
-            user,
+            mining_owner,
+            deposit_authority,
             user_reward_token_account,
             token_program,
             program_id,

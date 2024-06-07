@@ -22,6 +22,9 @@ pub struct RegistrarCookie {
     pub address: Pubkey,
     pub authority: Pubkey,
     pub mint: MintCookie,
+    pub registrar_bump: u8,
+    pub realm_pubkey: Pubkey,
+    pub realm_governing_token_mint_pubkey: Pubkey,
 }
 
 #[derive(Clone)]
@@ -78,12 +81,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the user secret
-        let signer1 = Keypair::from_base58_string(&payer.to_base58_string());
-        let signer2 = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer1, &signer2]))
+            .process_transaction(&instructions, Some(&[payer, authority]))
             .await
             .unwrap();
 
@@ -91,6 +90,9 @@ impl AddinCookie {
             address: registrar,
             authority: realm.authority,
             mint: realm.community_token_mint.clone(),
+            registrar_bump,
+            realm_pubkey: realm.realm,
+            realm_governing_token_mint_pubkey: community_token_mint,
         }
     }
 
@@ -126,11 +128,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[authority]))
             .await
     }
 
@@ -188,12 +187,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the user secret
-        //let signer1 = Keypair::from_base58_string(&payer.to_base58_string());
-        let signer2 = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer2]))
+            .process_transaction(&instructions, Some(&[authority]))
             .await
             .unwrap();
 
@@ -257,12 +252,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer1 = Keypair::from_base58_string(&payer.to_base58_string());
-        let signer2 = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer1, &signer2]))
+            .process_transaction(&instructions, Some(&[payer, authority]))
             .await
             .unwrap();
 
@@ -319,11 +310,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer1 = Keypair::from_base58_string(&voter_authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer1]))
+            .process_transaction(&instructions, Some(&[voter_authority]))
             .await
     }
 
@@ -347,6 +335,9 @@ impl AddinCookie {
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Deposit {
                 deposit_entry_index,
                 amount,
+                realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
+                registrar_bump: registrar.registrar_bump,
+                realm_pubkey: registrar.realm_pubkey,
             });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
@@ -370,11 +361,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&deposit_authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[deposit_authority]))
             .await
     }
 
@@ -405,11 +393,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[authority]))
             .await
     }
 
@@ -433,6 +418,9 @@ impl AddinCookie {
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Withdraw {
                 deposit_entry_index,
                 amount,
+                realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
+                registrar_bump: registrar.registrar_bump,
+                realm_pubkey: registrar.realm_pubkey,
             });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
@@ -458,11 +446,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[authority]))
             .await
     }
 
@@ -496,11 +481,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&voter_authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[voter_authority]))
             .await
     }
 
@@ -573,11 +555,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[authority]))
             .await
     }
 
@@ -642,11 +621,16 @@ impl AddinCookie {
         reward_pool: &Pubkey,
         reward_mint: &Pubkey,
         reward_mining: &Pubkey,
-        owner: &Keypair,
+        mining_owner: &Keypair,
         owner_reward_ata: &Pubkey,
         rewards_program: &Pubkey,
+        registrar: &RegistrarCookie,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Claim);
+        let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Claim {
+            realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
+            registrar_bump: registrar.registrar_bump,
+            realm_pubkey: registrar.realm_pubkey,
+        });
 
         let (vault_pubkey, _) = Pubkey::find_program_address(
             &[
@@ -663,7 +647,8 @@ impl AddinCookie {
                 reward_mint: *reward_mint,
                 vault: vault_pubkey,
                 deposit_mining: *reward_mining,
-                owner: owner.pubkey(),
+                mining_owner: mining_owner.pubkey(),
+                registrar: registrar.address,
                 user_reward_token_account: *owner_reward_ata,
                 token_program: spl_token::id(),
                 rewards_program: *rewards_program,
@@ -678,7 +663,7 @@ impl AddinCookie {
         }];
 
         self.solana
-            .process_transaction(&instructions, Some(&[owner]))
+            .process_transaction(&instructions, Some(&[mining_owner]))
             .await
     }
 }
