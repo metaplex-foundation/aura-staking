@@ -89,8 +89,18 @@ pub mod voter_stake_registry {
         ctx: Context<CreateVoter>,
         voter_bump: u8,
         voter_weight_record_bump: u8,
+        registrar_bump: u8,
+        realm_governing_mint_pubkey: Pubkey,
+        realm_pubkey: Pubkey,
     ) -> Result<()> {
-        instructions::create_voter(ctx, voter_bump, voter_weight_record_bump)
+        instructions::create_voter(
+            ctx,
+            voter_bump,
+            voter_weight_record_bump,
+            registrar_bump,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
+        )
     }
 
     pub fn create_deposit_entry(
@@ -103,12 +113,40 @@ pub mod voter_stake_registry {
         instructions::create_deposit_entry(ctx, deposit_entry_index, kind, start_ts, period)
     }
 
-    pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-        instructions::deposit(ctx, deposit_entry_index, amount)
+    pub fn deposit(
+        ctx: Context<Deposit>,
+        deposit_entry_index: u8,
+        amount: u64,
+        registrar_bump: u8,
+        realm_governing_mint_pubkey: Pubkey,
+        realm_pubkey: Pubkey,
+    ) -> Result<()> {
+        instructions::deposit(
+            ctx,
+            deposit_entry_index,
+            amount,
+            registrar_bump,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
+        )
     }
 
-    pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-        instructions::withdraw(ctx, deposit_entry_index, amount)
+    pub fn withdraw(
+        ctx: Context<Withdraw>,
+        deposit_entry_index: u8,
+        amount: u64,
+        registrar_bump: u8,
+        realm_governing_mint_pubkey: Pubkey,
+        realm_pubkey: Pubkey,
+    ) -> Result<()> {
+        instructions::withdraw(
+            ctx,
+            deposit_entry_index,
+            amount,
+            registrar_bump,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
+        )
     }
 
     pub fn close_deposit_entry(
@@ -156,11 +194,31 @@ pub mod voter_stake_registry {
         ctx: Context<RestakeDeposit>,
         deposit_entry_index: u8,
         lockup_period: LockupPeriod,
+        registrar_bump: u8,
+        realm_governing_mint_pubkey: Pubkey,
+        realm_pubkey: Pubkey,
     ) -> Result<()> {
-        instructions::restake_deposit(ctx, deposit_entry_index, lockup_period)
+        instructions::restake_deposit(
+            ctx,
+            deposit_entry_index,
+            lockup_period,
+            registrar_bump,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
+        )
     }
 
-    pub fn claim(ctx: Context<Claim>) -> Result<()> {
-        instructions::claim(ctx)
+    pub fn claim(
+        ctx: Context<Claim>,
+        registrar_bump: u8,
+        realm_governing_mint_pubkey: Pubkey,
+        realm_pubkey: Pubkey,
+    ) -> Result<()> {
+        instructions::claim(
+            ctx,
+            registrar_bump,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
+        )
     }
 }

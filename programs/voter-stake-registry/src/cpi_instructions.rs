@@ -6,7 +6,7 @@ use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
     instruction::{AccountMeta, Instruction},
-    program::{invoke, invoke_signed},
+    program::invoke_signed,
     system_program,
 };
 
@@ -14,29 +14,24 @@ pub const REWARD_CONTRACT_ID: Pubkey =
     solana_program::pubkey!("J8oa8UUJBydrTKtCdkvwmQQ27ZFDq54zAxWJY5Ey72Ji");
 
 #[derive(Debug, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
+
 pub enum RewardsInstruction {
     /// Creates and initializes a reward pool account
     ///
     /// Accounts:
-    /// [R] Root account (ex-Config program account)
-    /// [W] Reward pool account
-    /// [R] Deposit authority
-    /// [WS] Payer
-    /// [R] System program
-    InitializePool,
-
-    /// Creates a new vault account and adds it to the reward pool
-    ///
-    /// Accounts:
-    /// [R] Root account (ex-Config program account)
     /// [W] Reward pool account
     /// [R] Reward mint account
     /// [W] Vault account
     /// [WS] Payer
+    /// [R] Rent sysvar
     /// [R] Token program
     /// [R] System program
-    /// [R] Rent sysvar
-    AddVault,
+    InitializePool {
+        /// Account responsible for charging mining owners
+        deposit_authority: Pubkey,
+        /// Account can fill the reward vault
+        fill_authority: Pubkey,
+    },
 
     /// Fills the reward pool with rewards
     ///
@@ -50,17 +45,21 @@ pub enum RewardsInstruction {
     FillVault {
         /// Amount to fill
         amount: u64,
+        /// Rewards distribution ends at given date
+        distribution_ends_at: u64,
     },
 
-    /// Initializes mining account for the specified user
+    /// Initializes mining account for the specified mining owner
     ///
     /// Accounts:
     /// [W] Reward pool account
     /// [W] Mining
-    /// [R] User
     /// [WS] Payer
     /// [R] System program
-    InitializeMining,
+    InitializeMining {
+        /// Represent the end-user, owner of the mining
+        mining_owner: Pubkey,
+    },
 
     /// Deposits amount of supply to the mining account
     ///
@@ -68,15 +67,12 @@ pub enum RewardsInstruction {
     /// [W] Reward pool account
     /// [W] Mining
     /// [R] Mint of rewards account
-    /// [R] User
     /// [RS] Deposit authority
     DepositMining {
         /// Amount to deposit
         amount: u64,
         /// Lockup Period
         lockup_period: LockupPeriod,
-        /// Specifies mint addr
-        reward_mint_addr: Pubkey,
         /// Specifies the owner of the Mining Account
         owner: Pubkey,
     },
@@ -86,12 +82,12 @@ pub enum RewardsInstruction {
     /// Accounts:
     /// [W] Reward pool account
     /// [W] Mining
-    /// [R] User
+    /// [R] Mining owner
     /// [RS] Deposit authority
     WithdrawMining {
         /// Amount to withdraw
         amount: u64,
-        /// Owner of Mining Account
+        /// Specifies the owner of the Mining Account
         owner: Pubkey,
     },
 
@@ -102,18 +98,11 @@ pub enum RewardsInstruction {
     /// [R] Mint of rewards account
     /// [W] Vault for rewards account
     /// [W] Mining
-    /// [RS] User
-    /// [W] User reward token account
+    /// [RS] Mining owner
+    /// [RS] Deposit authority
+    /// [W] Mining owner reward token account
     /// [R] Token program
     Claim,
-
-    /// Creates and initializes a reward root
-    ///
-    /// Accounts:
-    /// [WS] Root account (ex-Config program account)
-    /// [WS] Authority
-    /// [R] System program
-    InitializeRoot,
 
     /// Restakes deposit
     ///
@@ -121,7 +110,7 @@ pub enum RewardsInstruction {
     /// [W] Reward pool account
     /// [W] Mining
     /// [R] Mint of rewards account
-    /// [R] User
+    /// [R] Mining owner
     /// [RS] Deposit authority
     RestakeDeposit {
         /// Requested lockup period for restaking
@@ -131,6 +120,15 @@ pub enum RewardsInstruction {
         /// Deposit start_ts
         deposit_start_ts: u64,
     },
+
+    /// Distributes tokens among mining owners
+    ///
+    /// Accounts:
+    /// [W] Reward pool account
+    /// [R] Mint of rewards account
+    /// [W] Vault for rewards account
+    /// [RS] Distribute rewards authority
+    DistributeRewards,
 }
 
 /// Rewards initialize mining
@@ -139,22 +137,31 @@ pub fn initialize_mining<'a>(
     program_id: &Pubkey,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
-    user: AccountInfo<'a>,
+    mining_owner: &Pubkey,
     payer: AccountInfo<'a>,
     system_program: AccountInfo<'a>,
+    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
-        AccountMeta::new_readonly(user.key(), false),
         AccountMeta::new(payer.key(), true),
         AccountMeta::new_readonly(system_program::id(), false),
     ];
 
-    let ix =
-        Instruction::new_with_borsh(*program_id, &RewardsInstruction::InitializeMining, accounts);
+    let ix = Instruction::new_with_borsh(
+        *program_id,
+        &RewardsInstruction::InitializeMining {
+            mining_owner: *mining_owner,
+        },
+        accounts,
+    );
 
-    invoke(&ix, &[reward_pool, mining, user, payer, system_program])
+    invoke_signed(
+        &ix,
+        &[reward_pool, mining, payer, system_program],
+        &[signers_seeds],
+    )
 }
 
 /// Rewards deposit mining
@@ -166,8 +173,8 @@ pub fn deposit_mining<'a>(
     deposit_authority: AccountInfo<'a>,
     amount: u64,
     lockup_period: LockupPeriod,
-    reward_mint_addr: &Pubkey,
     owner: &Pubkey,
+    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
@@ -180,13 +187,16 @@ pub fn deposit_mining<'a>(
         &RewardsInstruction::DepositMining {
             amount,
             lockup_period,
-            reward_mint_addr: *reward_mint_addr,
             owner: *owner,
         },
         accounts,
     );
 
-    invoke(&ix, &[reward_pool, mining, deposit_authority, program_id])
+    invoke_signed(
+        &ix,
+        &[reward_pool, mining, deposit_authority, program_id],
+        &[signers_seeds],
+    )
 }
 
 /// Restake deposit
@@ -201,7 +211,7 @@ pub fn extend_deposit<'a>(
     amount: u64,
     lockup_period: LockupPeriod,
     deposit_start_ts: u64,
-    signers_seeds: &[&[&[u8]]],
+    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
@@ -224,7 +234,7 @@ pub fn extend_deposit<'a>(
     invoke_signed(
         &ix,
         &[reward_pool, mining, user, deposit_authority],
-        signers_seeds,
+        &[signers_seeds],
     )?;
 
     Ok(())
@@ -239,6 +249,7 @@ pub fn withdraw_mining<'a>(
     deposit_authority: AccountInfo<'a>,
     amount: u64,
     owner: &Pubkey,
+    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
@@ -255,7 +266,11 @@ pub fn withdraw_mining<'a>(
         accounts,
     );
 
-    invoke(&ix, &[reward_pool, mining, deposit_authority, program_id])
+    invoke_signed(
+        &ix,
+        &[reward_pool, mining, deposit_authority, program_id],
+        &[signers_seeds],
+    )
 }
 
 /// Rewards withdraw mining
@@ -269,6 +284,7 @@ pub fn claim<'a>(
     user: AccountInfo<'a>,
     user_reward_token_account: AccountInfo<'a>,
     token_program: AccountInfo<'a>,
+    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new_readonly(reward_pool.key(), false),
@@ -282,7 +298,7 @@ pub fn claim<'a>(
 
     let ix = Instruction::new_with_borsh(program_id.key(), &RewardsInstruction::Claim, accounts);
 
-    invoke(
+    invoke_signed(
         &ix,
         &[
             reward_pool,
@@ -294,5 +310,6 @@ pub fn claim<'a>(
             token_program,
             program_id,
         ],
+        &[signers_seeds],
     )
 }

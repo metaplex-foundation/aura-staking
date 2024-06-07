@@ -83,7 +83,14 @@ impl<'info> Withdraw<'info> {
 ///
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
-pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+pub fn withdraw(
+    ctx: Context<Withdraw>,
+    deposit_entry_index: u8,
+    amount: u64,
+    registrar_bump: u8,
+    realm_governing_mint_pubkey: Pubkey,
+    realm_pubkey: Pubkey,
+) -> Result<()> {
     {
         // Transfer the tokens to withdraw.
         let voter = &mut ctx.accounts.voter.load()?;
@@ -177,6 +184,12 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
     let mining = &ctx.accounts.deposit_mining;
     let deposit_authority = &ctx.accounts.voter_authority;
     let owner = &ctx.accounts.voter_authority;
+    let signers_seeds = &[
+        &realm_pubkey.key().to_bytes(),
+        b"registrar".as_ref(),
+        &realm_governing_mint_pubkey.key().to_bytes(),
+        &[registrar_bump][..],
+    ];
 
     withdraw_mining(
         rewards_program.to_account_info(),
@@ -185,6 +198,7 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
         deposit_authority.to_account_info(),
         amount,
         owner.key,
+        signers_seeds,
     )?;
 
     Ok(())

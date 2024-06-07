@@ -20,7 +20,7 @@ pub struct Claim<'info> {
 
     // pub voter_authority: Signer<'info>,
     #[account(mut)]
-    pub owner: Signer<'info>,
+    pub mining_owner: Signer<'info>,
 
     #[account(mut)]
     pub user_reward_token_account: Account<'info, TokenAccount>,
@@ -35,15 +35,26 @@ pub struct Claim<'info> {
 ///
 /// Tokens will be transfered from Vault in Rewards account to User's user_reward_token_account.
 /// This call actually doesn't mutating Staking's accounts, only Reward's accounts will be mutated.
-pub fn claim(ctx: Context<Claim>) -> Result<()> {
+pub fn claim(
+    ctx: Context<Claim>,
+    registrar_bump: u8,
+    realm_governing_mint_pubkey: Pubkey,
+    realm_pubkey: Pubkey,
+) -> Result<()> {
     let rewards_program = ctx.accounts.rewards_program.to_account_info();
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let rewards_mint = ctx.accounts.reward_mint.to_account_info();
     let vault = ctx.accounts.vault.to_account_info();
     let deposit_mining = ctx.accounts.deposit_mining.to_account_info();
-    let user = ctx.accounts.owner.to_account_info();
+    let mining_owner = ctx.accounts.mining_owner.to_account_info();
     let user_reward_token_account = ctx.accounts.user_reward_token_account.to_account_info();
     let token_program = ctx.accounts.token_program.to_account_info();
+    let signers_seeds = &[
+        &realm_pubkey.key().to_bytes(),
+        b"registrar".as_ref(),
+        &realm_governing_mint_pubkey.key().to_bytes(),
+        &[registrar_bump][..],
+    ];
 
     cpi_instructions::claim(
         rewards_program,
@@ -51,9 +62,10 @@ pub fn claim(ctx: Context<Claim>) -> Result<()> {
         rewards_mint,
         vault,
         deposit_mining,
-        user,
+        mining_owner,
         user_reward_token_account,
         token_program,
+        signers_seeds,
     )?;
 
     // TODO: add msg about claimed amount, getting use of return_data function
