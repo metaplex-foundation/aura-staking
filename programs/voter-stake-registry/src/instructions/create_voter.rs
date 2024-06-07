@@ -69,6 +69,9 @@ pub fn create_voter(
     ctx: Context<CreateVoter>,
     voter_bump: u8,
     voter_weight_record_bump: u8,
+    registrar_bump: u8,
+    realm_governing_mint_pubkey: Pubkey,
+    realm_pubkey: Pubkey,
 ) -> Result<()> {
     // Forbid creating voter accounts from CPI. The goal is to make automation
     // impossible that weakens some of the limitations intentionally imposed on
@@ -113,11 +116,16 @@ pub fn create_voter(
         // initialize Mining account for Voter
         let mining = ctx.accounts.deposit_mining.to_account_info();
         let payer = ctx.accounts.payer.to_account_info();
-        let user = ctx.accounts.voter_authority.to_account_info();
+        let user = ctx.accounts.voter_authority.key;
         let system_program = ctx.accounts.system_program.to_account_info();
         let reward_pool = ctx.accounts.reward_pool.to_account_info();
+        let signers_seeds = &[
+            &realm_pubkey.key().to_bytes(),
+            b"registrar".as_ref(),
+            &realm_governing_mint_pubkey.key().to_bytes(),
+            &[registrar_bump][..],
+        ];
 
-        // TODO: should it be voter or voter authority?
         cpi_instructions::initialize_mining(
             &REWARD_CONTRACT_ID,
             reward_pool,
@@ -125,6 +133,7 @@ pub fn create_voter(
             user,
             payer,
             system_program,
+            signers_seeds,
         )?;
     }
 

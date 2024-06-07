@@ -58,6 +58,9 @@ pub fn restake_deposit(
     ctx: Context<RestakeDeposit>,
     deposit_entry_index: u8,
     lockup_period: LockupPeriod,
+    registrar_bump: u8,
+    realm_governing_mint_pubkey: Pubkey,
+    realm_pubkey: Pubkey,
 ) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
@@ -89,15 +92,11 @@ pub fn restake_deposit(
     let reward_mint = &ctx.accounts.deposit_token.mint;
     let voter = &ctx.accounts.voter;
 
-    let (_reward_pool_pubkey, pool_bump_seed) = Pubkey::find_program_address(
-        &[&reward_pool.key().to_bytes(), &reward_mint.key().to_bytes()],
-        &REWARD_CONTRACT_ID,
-    );
-
     let signers_seeds = &[
-        &reward_pool.key().to_bytes()[..32],
-        &reward_mint.key().to_bytes()[..32],
-        &[pool_bump_seed],
+        &realm_pubkey.key().to_bytes(),
+        b"registrar".as_ref(),
+        &realm_governing_mint_pubkey.key().to_bytes(),
+        &[registrar_bump][..],
     ];
 
     extend_deposit(
@@ -110,7 +109,7 @@ pub fn restake_deposit(
         amount,
         lockup_period,
         start_ts,
-        &[signers_seeds],
+        signers_seeds,
     )?;
 
     d_entry.lockup.start_ts = curr_ts;

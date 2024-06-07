@@ -66,7 +66,14 @@ impl<'info> Deposit<'info> {
 ///
 /// `deposit_entry_index`: Index of the deposit entry.
 /// `amount`: Number of native tokens to transfer.
-pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+pub fn deposit(
+    ctx: Context<Deposit>,
+    deposit_entry_index: u8,
+    amount: u64,
+    registrar_bump: u8,
+    realm_governing_mint_pubkey: Pubkey,
+    realm_pubkey: Pubkey,
+) -> Result<()> {
     if amount == 0 {
         return Ok(());
     }
@@ -108,7 +115,12 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
     let deposit_authority = &ctx.accounts.deposit_authority;
-    let reward_mint = &ctx.accounts.deposit_token.mint;
+    let signers_seeds = &[
+        &realm_pubkey.key().to_bytes(),
+        b"registrar".as_ref(),
+        &realm_governing_mint_pubkey.key().to_bytes(),
+        &[registrar_bump][..],
+    ];
 
     cpi_instructions::deposit_mining(
         ctx.accounts.rewards_program.to_account_info(),
@@ -117,8 +129,8 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
         deposit_authority.to_account_info(),
         amount,
         d_entry.lockup.period,
-        reward_mint,
         owner,
+        signers_seeds,
     )?;
 
     msg!(
