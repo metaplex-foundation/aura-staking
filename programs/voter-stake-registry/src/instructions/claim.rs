@@ -12,6 +12,8 @@ pub struct Claim<'info> {
     pub reward_mint: UncheckedAccount<'info>,
 
     #[account(mut)]
+    /// CHECK: Rewards vault is used as a source of rewards and
+    /// is checked on the rewards contract
     pub vault: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
