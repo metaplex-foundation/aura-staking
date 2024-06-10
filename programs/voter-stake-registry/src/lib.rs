@@ -9,7 +9,7 @@ mod instructions;
 pub mod voter;
 
 // The program address.
-declare_id!("3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s");
+declare_id!("36WUaavkjamJNEhjw4drmdo11NBFbgfxCFVcwLoEDmiq");
 
 /// # Introduction
 ///
