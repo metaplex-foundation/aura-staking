@@ -2,13 +2,13 @@ anchor_version = "0.26.0"
 solana_version = "1.14.10"
 
 [programs.localnet]
-voter_stake_registry = "3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s"
+voter_stake_registry = "9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8"
 
 [programs.devnet]
-voter_stake_registry = "3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s"
+voter_stake_registry = "9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8"
 
 [programs.mainnet]
-voter_stake_registry = "3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s"
+voter_stake_registry = "9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8"
 
 [provider]
 cluster = "devnet"

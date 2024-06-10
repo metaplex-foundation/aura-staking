@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use anchor_lang::prelude::*;
 use anchor_lang::AnchorDeserialize;
@@ -18,7 +18,7 @@ use voter_stake_registry::cpi_instructions::RewardsInstruction;
 use crate::SolanaCookie;
 
 pub struct RewardsCookie {
-    pub solana: Arc<SolanaCookie>,
+    pub solana: Rc<SolanaCookie>,
     pub program_id: Pubkey,
 }
 

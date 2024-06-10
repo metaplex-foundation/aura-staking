@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::sync::Arc;
+use std::rc::Rc;
 
 use mplx_staking_states::state::LockupPeriod;
 
@@ -13,7 +13,7 @@ use crate::*;
 
 #[derive(Clone)]
 pub struct AddinCookie {
-    pub solana: Arc<solana::SolanaCookie>,
+    pub solana: Rc<solana::SolanaCookie>,
     pub program_id: Pubkey,
     pub time_offset: RefCell<i64>,
 }
