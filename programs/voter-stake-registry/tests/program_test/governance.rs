@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use solana_program::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
@@ -9,7 +9,7 @@ use crate::*;
 
 #[derive(Clone)]
 pub struct GovernanceCookie {
-    pub solana: Arc<solana::SolanaCookie>,
+    pub solana: Rc<solana::SolanaCookie>,
     pub program_id: Pubkey,
 }
 

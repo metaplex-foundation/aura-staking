@@ -1,5 +1,6 @@
 use log::*;
 use std::cell::RefCell;
+use std::rc::Rc;
 use std::{str::FromStr, sync::Arc, sync::RwLock};
 
 use solana_program::{program_option::COption, program_pack::Pack};
@@ -83,7 +84,7 @@ impl Log for LoggerWrapper {
 }
 
 pub struct TestContext {
-    pub solana: Arc<SolanaCookie>,
+    pub solana: Rc<SolanaCookie>,
     pub governance: GovernanceCookie,
     pub rewards: RewardsCookie,
     pub addin: AddinCookie,
@@ -109,11 +110,9 @@ impl TestContext {
             output: program_output.clone(),
         }));
 
-        let addin_program_id = voter_stake_registry::id();
-
         let mut test = ProgramTest::new(
             "voter_stake_registry",
-            addin_program_id,
+            voter_stake_registry::id(),
             processor!(voter_stake_registry::entry),
         );
         // intentionally set to half the limit, to catch potential problems early
@@ -220,7 +219,7 @@ impl TestContext {
         let mut context = test.start_with_context().await;
         let rent = context.banks_client.get_rent().await.unwrap();
 
-        let solana = Arc::new(SolanaCookie {
+        let solana = Rc::new(SolanaCookie {
             context: RefCell::new(context),
             rent,
             program_output: program_output.clone(),
@@ -234,7 +233,7 @@ impl TestContext {
             },
             addin: AddinCookie {
                 solana: solana.clone(),
-                program_id: addin_program_id,
+                program_id: voter_stake_registry::id(),
                 time_offset: RefCell::new(0),
             },
             rewards: RewardsCookie {
