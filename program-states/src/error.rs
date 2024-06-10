@@ -128,4 +128,7 @@ pub enum VsrError {
     // 6041 / 0x1799
     #[msg("To deposit additional tokens, extend the deposit")]
     DepositingIsForbidded,
+    // 6042 / 0x179a
+    #[msg("Cpi call must return data, but data is absent")]
+    CpiReturnDataIsAbsent,
 }

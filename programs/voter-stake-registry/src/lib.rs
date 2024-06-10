@@ -9,7 +9,7 @@ mod instructions;
 pub mod voter;
 
 // The program address.
-declare_id!("36WUaavkjamJNEhjw4drmdo11NBFbgfxCFVcwLoEDmiq");
+declare_id!("3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s");
 
 /// # Introduction
 ///
@@ -203,7 +203,7 @@ pub mod voter_stake_registry {
         registrar_bump: u8,
         realm_governing_mint_pubkey: Pubkey,
         realm_pubkey: Pubkey,
-    ) -> Result<()> {
+    ) -> Result<u64> {
         instructions::claim(
             ctx,
             registrar_bump,

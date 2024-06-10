@@ -1,7 +1,11 @@
+use std::borrow::Borrow;
+
+use crate::borsh::BorshDeserialize;
+use crate::cpi_instructions;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
-
-use crate::cpi_instructions;
+use mplx_staking_states::error::VsrError;
+use solana_program::program::get_return_data;
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
@@ -45,7 +49,7 @@ pub fn claim(
     registrar_bump: u8,
     realm_governing_mint_pubkey: Pubkey,
     realm_pubkey: Pubkey,
-) -> Result<()> {
+) -> Result<u64> {
     let rewards_program = ctx.accounts.rewards_program.to_account_info();
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let rewards_mint = ctx.accounts.reward_mint.to_account_info();
@@ -75,6 +79,11 @@ pub fn claim(
         signers_seeds,
     )?;
 
-    // TODO: add msg about claimed amount, getting use of return_data function
-    Ok(())
+    if let Some((_rewards_program_id, claimed_rewards_raw)) = get_return_data() {
+        let claimed_rewards = u64::deserialize(&mut claimed_rewards_raw.borrow())?;
+        msg!("Rewards are clamed {:?}", claimed_rewards);
+        Ok(claimed_rewards)
+    } else {
+        Err(VsrError::CpiReturnDataIsAbsent.into())
+    }
 }
