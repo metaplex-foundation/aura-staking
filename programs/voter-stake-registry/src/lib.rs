@@ -61,8 +61,13 @@ pub mod voter_stake_registry {
 
     use super::*;
 
-    pub fn create_registrar(ctx: Context<CreateRegistrar>, registrar_bump: u8) -> Result<()> {
-        instructions::create_registrar(ctx, registrar_bump)
+    pub fn create_registrar(
+        ctx: Context<CreateRegistrar>,
+        registrar_bump: u8,
+        fill_authority: Pubkey,
+        distribution_authority: Pubkey,
+    ) -> Result<()> {
+        instructions::create_registrar(ctx, registrar_bump, fill_authority, distribution_authority)
     }
 
     pub fn configure_voting_mint(

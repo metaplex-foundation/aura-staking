@@ -5,7 +5,6 @@ use mplx_staking_states::state::*;
 use std::mem::size_of;
 
 use crate::cpi_instructions;
-use crate::cpi_instructions::REWARD_CONTRACT_ID;
 use crate::voter::VoterWeightRecord;
 
 #[derive(Accounts)]
@@ -118,9 +117,10 @@ pub fn create_voter(
         let user = ctx.accounts.voter_authority.key;
         let system_program = ctx.accounts.system_program.to_account_info();
         let reward_pool = ctx.accounts.reward_pool.to_account_info();
+        let rewards_program_id = ctx.accounts.rewards_program.to_account_info();
 
         cpi_instructions::initialize_mining(
-            &REWARD_CONTRACT_ID,
+            rewards_program_id,
             reward_pool,
             mining,
             user,
