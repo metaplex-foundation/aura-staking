@@ -29,8 +29,18 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
-    let registrar = addin
-        .create_registrar(&realm, &realm_authority, payer)
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
+        .addin
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     let mngo_voting_mint = addin
         .configure_voting_mint(
@@ -47,21 +57,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             None,
         )
         .await;
-
-    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
-    let distribution_authority = Keypair::new();
-    let reward_mint = &context.mints[0].pubkey.unwrap();
-    let pool_deposit_authority = &registrar.address;
-    let (rewards_pool, _rewards_vault) = context
-        .rewards
-        .initialize_pool(
-            pool_deposit_authority,
-            &fill_authority.pubkey(),
-            &distribution_authority.pubkey(),
-            payer,
-            reward_mint,
-        )
-        .await?;
 
     let deposit_mining = find_deposit_mining_addr(
         &voter_authority.pubkey(),

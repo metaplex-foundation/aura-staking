@@ -29,9 +29,18 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
         .create_token_owner_record(deposit_authority.pubkey(), payer)
         .await;
 
-    let registrar = context
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
         .addin
-        .create_registrar(&realm, &realm_authority, payer)
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     context
         .addin
@@ -65,21 +74,6 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             None,
         )
         .await;
-
-    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
-    let distribution_authority = Keypair::new();
-    let reward_mint = &context.mints[0].pubkey.unwrap();
-    let pool_deposit_authority = &registrar.address;
-    let (rewards_pool, _rewards_vault) = context
-        .rewards
-        .initialize_pool(
-            pool_deposit_authority,
-            &fill_authority.pubkey(),
-            &distribution_authority.pubkey(),
-            payer,
-            reward_mint,
-        )
-        .await?;
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;
@@ -180,9 +174,18 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
         .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
-    let registrar = context
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
         .addin
-        .create_registrar(&realm, &realm_authority, payer)
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     context
         .addin
@@ -217,20 +220,6 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
         )
         .await;
 
-    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
-    let distribution_authority = Keypair::new();
-    let reward_mint = &context.mints[0].pubkey.unwrap();
-    let pool_deposit_authority = &registrar.address;
-    let (rewards_pool, _rewards_vault) = context
-        .rewards
-        .initialize_pool(
-            pool_deposit_authority,
-            &fill_authority.pubkey(),
-            &distribution_authority.pubkey(),
-            payer,
-            reward_mint,
-        )
-        .await?;
     let deposit_mining = find_deposit_mining_addr(
         &voter_authority.pubkey(),
         &rewards_pool,
@@ -338,9 +327,18 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
-    let registrar = context
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
         .addin
-        .create_registrar(&realm, &realm_authority, payer)
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     context
         .addin
@@ -375,20 +373,6 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         )
         .await;
 
-    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
-    let distribution_authority = Keypair::new();
-    let reward_mint = &context.mints[0].pubkey.unwrap();
-    let pool_deposit_authority = &registrar.address;
-    let (rewards_pool, _rewards_vault) = context
-        .rewards
-        .initialize_pool(
-            pool_deposit_authority,
-            &fill_authority.pubkey(),
-            &distribution_authority.pubkey(),
-            payer,
-            reward_mint,
-        )
-        .await?;
     let deposit_mining = find_deposit_mining_addr(
         &voter_authority.pubkey(),
         &rewards_pool,

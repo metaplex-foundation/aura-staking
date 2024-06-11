@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use anchor_lang::Key;
 use mplx_staking_states::state::LockupPeriod;
 
 use solana_sdk::pubkey::Pubkey;
@@ -45,7 +46,10 @@ impl AddinCookie {
         realm: &GovernanceRealmCookie,
         authority: &Keypair,
         payer: &Keypair,
-    ) -> RegistrarCookie {
+        fill_authority: &Pubkey,
+        distribution_authority: &Pubkey,
+        rewards_program: &Pubkey,
+    ) -> (RegistrarCookie, Pubkey) {
         let community_token_mint = realm.community_token_mint.pubkey.unwrap();
 
         let (registrar, registrar_bump) = Pubkey::find_program_address(
@@ -58,7 +62,29 @@ impl AddinCookie {
         );
 
         let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::CreateRegistrar { registrar_bump },
+            &voter_stake_registry::instruction::CreateRegistrar {
+                registrar_bump,
+                fill_authority: *fill_authority,
+                distribution_authority: *distribution_authority,
+            },
+        );
+
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &[
+                "reward_pool".as_bytes(),
+                &registrar.key().to_bytes(),
+                &fill_authority.key().to_bytes(),
+            ],
+            rewards_program,
+        );
+
+        let (reward_vault, _reward_vault_bump) = Pubkey::find_program_address(
+            &[
+                "vault".as_bytes(),
+                &reward_pool.key().to_bytes(),
+                &community_token_mint.to_bytes(),
+            ],
+            rewards_program,
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
@@ -71,6 +97,10 @@ impl AddinCookie {
                 payer: payer.pubkey(),
                 system_program: solana_sdk::system_program::id(),
                 rent: solana_program::sysvar::rent::id(),
+                reward_pool,
+                reward_vault,
+                token_program: spl_token::id(),
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -86,14 +116,16 @@ impl AddinCookie {
             .await
             .unwrap();
 
-        RegistrarCookie {
+        let registrar_cookie = RegistrarCookie {
             address: registrar,
             authority: realm.authority,
             mint: realm.community_token_mint.clone(),
             registrar_bump,
             realm_pubkey: realm.realm,
             realm_governing_token_mint_pubkey: community_token_mint,
-        }
+        };
+
+        (registrar_cookie, reward_pool)
     }
 
     pub async fn internal_transfer_unlocked(
