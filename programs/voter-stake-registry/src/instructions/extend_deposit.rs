@@ -18,19 +18,12 @@ pub struct RestakeDeposit<'info> {
         bump = voter.load()?.voter_bump,
         has_one = registrar)]
     pub voter: AccountLoader<'info, Voter>,
-
-    #[account(
-        mut,
-        associated_token::authority = voter,
-        associated_token::mint = deposit_token.mint,
-    )]
-    pub vault: Box<Account<'info, TokenAccount>>,
-
     #[account(
         mut,
         constraint = deposit_token.owner == deposit_authority.key(),
     )]
     pub deposit_token: Box<Account<'info, TokenAccount>>,
+    /// The owner of the deposit and its reward's mining account
     pub deposit_authority: Signer<'info>,
 
     pub token_program: Program<'info, Token>,
@@ -40,6 +33,7 @@ pub struct RestakeDeposit<'info> {
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
+    /// PDA("mining", mining owner[aka voter_authority in our case], reward_pool)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 

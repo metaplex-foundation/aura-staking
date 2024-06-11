@@ -35,10 +35,12 @@ pub struct Deposit<'info> {
     pub token_program: Program<'info, Token>,
 
     /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    /// PDA("reward_pool", deposit_authority[aka registrar in our case], fill_authority)
     #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
+    /// PDA("mining", mining owner[aka voter_authority in our case], reward_pool)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
