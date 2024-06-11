@@ -29,9 +29,18 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .create_token_owner_record(deposit_authority.pubkey(), payer)
         .await;
 
-    let registrar = context
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
         .addin
-        .create_registrar(&realm, &realm_authority, payer)
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     context
         .addin
@@ -65,21 +74,6 @@ async fn successeful_claim() -> Result<(), TransportError> {
             None,
         )
         .await;
-
-    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
-    let distribution_authority = Keypair::new();
-    let reward_mint = &context.mints[0].pubkey.unwrap();
-    let pool_deposit_authority = &registrar.address;
-    let (rewards_pool, rewards_vault) = context
-        .rewards
-        .initialize_pool(
-            pool_deposit_authority,
-            &fill_authority.pubkey(),
-            &distribution_authority.pubkey(),
-            payer,
-            reward_mint,
-        )
-        .await?;
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;
@@ -154,6 +148,8 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .unwrap()
         .unix_timestamp as u64
         + 86400;
+
+    let reward_mint = &realm.community_token_mint.pubkey.unwrap();
     context
         .rewards
         .fill_vault(
@@ -169,12 +165,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
 
     context
         .rewards
-        .distribute_rewards(
-            &rewards_pool,
-            reward_mint,
-            &rewards_vault,
-            &distribution_authority,
-        )
+        .distribute_rewards(&rewards_pool, reward_mint, &distribution_authority)
         .await?;
 
     context
