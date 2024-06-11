@@ -94,11 +94,6 @@ export type VoterStakeRegistry = {
           "isSigner": true
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -107,12 +102,53 @@ export type VoterStakeRegistry = {
           "name": "rent",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "rewardPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Account that will be created via CPI to the rewards,",
+            "it's responsible for being a \"root\" for all entities",
+            "inside rewards contract"
+          ]
+        },
+        {
+          "name": "rewardVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "This account is responsible for storing money for rewards"
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "registrarBump",
           "type": "u8"
+        },
+        {
+          "name": "fillAuthority",
+          "type": "publicKey"
+        },
+        {
+          "name": "distributionAuthority",
+          "type": "publicKey"
         }
       ]
     },
@@ -1169,11 +1205,6 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": true
         },
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1182,12 +1213,53 @@ export const IDL: VoterStakeRegistry = {
           "name": "rent",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "rewardPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Account that will be created via CPI to the rewards,",
+            "it's responsible for being a \"root\" for all entities",
+            "inside rewards contract"
+          ]
+        },
+        {
+          "name": "rewardVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "This account is responsible for storing money for rewards"
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "registrarBump",
           "type": "u8"
+        },
+        {
+          "name": "fillAuthority",
+          "type": "publicKey"
+        },
+        {
+          "name": "distributionAuthority",
+          "type": "publicKey"
         }
       ]
     },
