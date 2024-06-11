@@ -110,7 +110,8 @@ export type VoterStakeRegistry = {
           "docs": [
             "Account that will be created via CPI to the rewards,",
             "it's responsible for being a \"root\" for all entities",
-            "inside rewards contract"
+            "inside rewards contract",
+            "It's the PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
           ]
         },
         {
@@ -118,7 +119,8 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "This account is responsible for storing money for rewards"
+            "This account is responsible for storing money for rewards",
+            "PDA(\"vault\", reward_pool, reward_mint)"
           ]
         },
         {
@@ -265,12 +267,18 @@ export type VoterStakeRegistry = {
         {
           "name": "rewardPool",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+          ]
         },
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+          ]
         },
         {
           "name": "rewardsProgram",
@@ -404,12 +412,18 @@ export type VoterStakeRegistry = {
         {
           "name": "rewardPool",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+          ]
         },
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+          ]
         },
         {
           "name": "rewardsProgram",
@@ -713,11 +727,6 @@ export type VoterStakeRegistry = {
           "isSigner": false
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "depositToken",
           "isMut": true,
           "isSigner": false
@@ -725,7 +734,10 @@ export type VoterStakeRegistry = {
         {
           "name": "depositAuthority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "docs": [
+            "The owner of the deposit and its reward's mining account"
+          ]
         },
         {
           "name": "tokenProgram",
@@ -740,7 +752,10 @@ export type VoterStakeRegistry = {
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+          ]
         },
         {
           "name": "rewardsProgram",
@@ -779,7 +794,10 @@ export type VoterStakeRegistry = {
         {
           "name": "rewardPool",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+          ]
         },
         {
           "name": "rewardMint",
@@ -791,13 +809,17 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "is checked on the rewards contract"
+            "is checked on the rewards contract",
+            "PDA(\"vault\", reward_pool, reward_mint)"
           ]
         },
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+          ]
         },
         {
           "name": "miningOwner",
@@ -1221,7 +1243,8 @@ export const IDL: VoterStakeRegistry = {
           "docs": [
             "Account that will be created via CPI to the rewards,",
             "it's responsible for being a \"root\" for all entities",
-            "inside rewards contract"
+            "inside rewards contract",
+            "It's the PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
           ]
         },
         {
@@ -1229,7 +1252,8 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "This account is responsible for storing money for rewards"
+            "This account is responsible for storing money for rewards",
+            "PDA(\"vault\", reward_pool, reward_mint)"
           ]
         },
         {
@@ -1376,12 +1400,18 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "rewardPool",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+          ]
         },
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+          ]
         },
         {
           "name": "rewardsProgram",
@@ -1515,12 +1545,18 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "rewardPool",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+          ]
         },
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+          ]
         },
         {
           "name": "rewardsProgram",
@@ -1824,11 +1860,6 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": false
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "depositToken",
           "isMut": true,
           "isSigner": false
@@ -1836,7 +1867,10 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "depositAuthority",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "docs": [
+            "The owner of the deposit and its reward's mining account"
+          ]
         },
         {
           "name": "tokenProgram",
@@ -1851,7 +1885,10 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+          ]
         },
         {
           "name": "rewardsProgram",
@@ -1890,7 +1927,10 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "rewardPool",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+          ]
         },
         {
           "name": "rewardMint",
@@ -1902,13 +1942,17 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "is checked on the rewards contract"
+            "is checked on the rewards contract",
+            "PDA(\"vault\", reward_pool, reward_mint)"
           ]
         },
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+          ]
         },
         {
           "name": "miningOwner",
