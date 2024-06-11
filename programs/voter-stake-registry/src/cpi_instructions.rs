@@ -11,7 +11,7 @@ use solana_program::{
 };
 
 pub const REWARD_CONTRACT_ID: Pubkey =
-    solana_program::pubkey!("J8oa8UUJBydrTKtCdkvwmQQ27ZFDq54zAxWJY5Ey72Ji");
+    solana_program::pubkey!("BF5PatmRTQDgEKoXR7iHRbkibEEi83nVM38cUKWzQcTR");
 
 #[derive(Debug, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
 
@@ -134,10 +134,61 @@ pub enum RewardsInstruction {
     DistributeRewards,
 }
 
+/// This function initializes pool. Some sort of a "root"
+/// of the rewards contract
+#[allow(clippy::too_many_arguments)]
+pub fn initialize_pool<'a>(
+    program_id: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    reward_mint: AccountInfo<'a>,
+    reward_vault: AccountInfo<'a>,
+    payer: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+    token_program: AccountInfo<'a>,
+    system_program: AccountInfo<'a>,
+    deposit_authority: Pubkey,
+    fill_authority: Pubkey,
+    distribution_authority: Pubkey,
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new(reward_pool.key(), false),
+        AccountMeta::new_readonly(reward_mint.key(), false),
+        AccountMeta::new(reward_vault.key(), false),
+        AccountMeta::new(payer.key(), true),
+        AccountMeta::new_readonly(rent.key(), false),
+        AccountMeta::new_readonly(token_program.key(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::InitializePool {
+            deposit_authority,
+            fill_authority,
+            distribution_authority,
+        },
+        accounts,
+    );
+
+    invoke(
+        &ix,
+        &[
+            reward_pool,
+            reward_mint,
+            reward_vault,
+            payer,
+            rent,
+            token_program,
+            system_program,
+            program_id,
+        ],
+    )
+}
+
 /// Rewards initialize mining
 #[allow(clippy::too_many_arguments)]
 pub fn initialize_mining<'a>(
-    program_id: &Pubkey,
+    program_id: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     mining_owner: &Pubkey,
@@ -152,14 +203,17 @@ pub fn initialize_mining<'a>(
     ];
 
     let ix = Instruction::new_with_borsh(
-        *program_id,
+        program_id.key(),
         &RewardsInstruction::InitializeMining {
             mining_owner: *mining_owner,
         },
         accounts,
     );
 
-    invoke(&ix, &[reward_pool, mining, payer, system_program])
+    invoke(
+        &ix,
+        &[reward_pool, mining, payer, system_program, program_id],
+    )
 }
 
 /// Rewards deposit mining
