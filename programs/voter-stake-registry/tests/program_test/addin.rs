@@ -70,11 +70,7 @@ impl AddinCookie {
         );
 
         let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
-            &[
-                "reward_pool".as_bytes(),
-                &registrar.key().to_bytes(),
-                &fill_authority.key().to_bytes(),
-            ],
+            &["reward_pool".as_bytes(), &registrar.key().to_bytes()],
             rewards_program,
         );
 

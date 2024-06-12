@@ -10,7 +10,7 @@ use solana_program::program::get_return_data;
 #[derive(Accounts)]
 pub struct Claim<'info> {
     /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA("reward_pool", deposit_authority[aka registrar in our case], fill_authority)
+    /// PDA("reward_pool", deposit_authority[aka registrar in our case])
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: Rewards mint addr will be checked in the rewards contract
