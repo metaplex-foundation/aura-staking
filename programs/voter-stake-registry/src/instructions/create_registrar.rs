@@ -42,13 +42,13 @@ pub struct CreateRegistrar<'info> {
     /// Account that will be created via CPI to the rewards,
     /// it's responsible for being a "root" for all entities
     /// inside rewards contract
-    /// PDA("reward_pool", deposit_authority[aka registrar in our case])
+    /// PDA(["reward_pool", deposit_authority[aka registrar in our case]], rewards_program)
     #[account(mut)]
     reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: any address is allowed
     /// This account is responsible for storing money for rewards
-    /// PDA("vault", reward_pool, reward_mint)
+    /// PDA(["vault", reward_pool, reward_mint], reward_program)
     #[account(mut)]
     reward_vault: UncheckedAccount<'info>,
 
