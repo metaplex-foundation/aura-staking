@@ -1974,10 +1974,8 @@ version = "0.0.1"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "borsh",
  "bytemuck",
  "static_assertions",
- "thiserror",
 ]
 
 [[package]]
@@ -4705,13 +4703,10 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "base64 0.13.0",
- "bincode",
  "bytemuck",
  "env_logger",
  "log",
  "mplx-staking-states",
- "serde",
- "solana-logger",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
@@ -4719,7 +4714,6 @@ dependencies = [
  "spl-governance",
  "spl-governance-addin-api",
  "spl-token",
- "static_assertions",
 ]
 
 [[package]]
