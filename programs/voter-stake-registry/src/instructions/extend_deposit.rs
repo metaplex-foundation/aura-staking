@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use mplx_staking_states::error::*;
 use mplx_staking_states::state::*;
 
@@ -28,6 +28,13 @@ pub struct RestakeDeposit<'info> {
 
     pub token_program: Program<'info, Token>,
 
+    #[account(
+        mut,
+        associated_token::authority = voter,
+        associated_token::mint = deposit_token.mint,
+    )]
+    pub vault: Box<Account<'info, TokenAccount>>,
+
     /// CHECK: Reward Pool PDA will be checked in the rewards contract
     #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
@@ -41,25 +48,54 @@ pub struct RestakeDeposit<'info> {
     pub rewards_program: UncheckedAccount<'info>,
 }
 
+impl<'info> RestakeDeposit<'info> {
+    pub fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        let program = self.token_program.to_account_info();
+        let accounts = Transfer {
+            from: self.deposit_token.to_account_info(),
+            to: self.vault.to_account_info(),
+            authority: self.deposit_authority.to_account_info(),
+        };
+        CpiContext::new(program, accounts)
+    }
+}
+
 /// Prolongs the deposit
 ///
-/// The deposit will be restaked with the same lockup period as it was previously.
-///
+/// The deposit will be restaked with the same lockup period as it was previously in case it's not expired.
+/// If the deposit has expired, it can be restaked with any LockupPeriod.
 /// The deposit entry must have been initialized with create_deposit_entry.
 ///
 /// `deposit_entry_index`: Index of the deposit entry.
 pub fn restake_deposit(
     ctx: Context<RestakeDeposit>,
     deposit_entry_index: u8,
-    lockup_period: LockupPeriod,
+    new_lockup_period: LockupPeriod,
     registrar_bump: u8,
     realm_governing_mint_pubkey: Pubkey,
     realm_pubkey: Pubkey,
+    additional_amount: u64,
 ) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
-
     let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
+    let start_ts = d_entry.lockup.start_ts;
+    let curr_ts = registrar.clock_unix_timestamp();
+    let amount = d_entry.amount_deposited_native;
+    let old_lockup_period = if d_entry.lockup.expired(curr_ts) {
+        LockupPeriod::Flex
+    } else {
+        d_entry.lockup.period
+    };
+
+    // different type of deposit is only allowed if
+    // the current deposit has expired
+    if old_lockup_period != LockupPeriod::Flex {
+        require!(
+            new_lockup_period == d_entry.lockup.period,
+            VsrError::RestakeDepositIsNotAllowed
+        );
+    }
 
     // Get the exchange rate entry associated with this deposit.
     let mint_idx = registrar.voting_mint_config_index(ctx.accounts.deposit_token.mint)?;
@@ -69,22 +105,19 @@ pub fn restake_deposit(
         VsrError::InvalidMint
     );
 
-    let start_ts = d_entry.lockup.start_ts;
-    let curr_ts = registrar.clock_unix_timestamp();
-    let amount = d_entry.amount_deposited_native;
-
-    if lockup_period != LockupPeriod::Flex {
-        require!(
-            lockup_period == d_entry.lockup.period,
-            VsrError::RestakeDepositIsNotAllowed
-        );
-    }
-
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
     let pool_deposit_authority = &ctx.accounts.registrar;
-    let reward_mint = &ctx.accounts.deposit_token.mint;
     let voter = &ctx.accounts.voter;
+    let base_amount = d_entry.amount_deposited_native;
+    let mining_owner = &voter.load()?.voter_authority;
+
+    if additional_amount > 0 {
+        // Deposit tokens into the vault and increase the lockup amount too.
+        token::transfer(ctx.accounts.transfer_ctx(), amount)?;
+        d_entry.amount_deposited_native =
+            d_entry.amount_deposited_native.checked_add(amount).unwrap();
+    }
 
     let signers_seeds = &[
         &realm_pubkey.key().to_bytes(),
@@ -97,18 +130,19 @@ pub fn restake_deposit(
         &REWARD_CONTRACT_ID,
         reward_pool.to_account_info(),
         mining.to_account_info(),
-        reward_mint,
-        voter.to_account_info(),
         pool_deposit_authority.to_account_info(),
-        amount,
-        lockup_period,
+        old_lockup_period,
+        new_lockup_period,
         start_ts,
+        base_amount,
+        additional_amount,
+        mining_owner,
         signers_seeds,
     )?;
 
     d_entry.lockup.start_ts = curr_ts;
     d_entry.lockup.end_ts = curr_ts
-        .checked_add(lockup_period.to_secs())
+        .checked_add(new_lockup_period.to_secs())
         .ok_or(VsrError::InvalidTimestampArguments)?;
 
     msg!(
