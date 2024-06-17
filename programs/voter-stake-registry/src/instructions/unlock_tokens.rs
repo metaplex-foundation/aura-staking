@@ -35,9 +35,16 @@ pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Res
         VsrError::DepositStillLocked
     );
 
+    deposit_entry.lockup.cooldown_ends_at = if deposit_entry.lockup.period == LockupPeriod::Test {
+        curr_ts
+            .checked_add(60)
+            .ok_or(VsrError::InvalidTimestampArguments)?
+    } else {
+        curr_ts
+            .checked_add(COOLDOWN_SECS)
+            .ok_or(VsrError::InvalidTimestampArguments)?
+    };
+
     deposit_entry.lockup.cooldown_requested = true;
-    deposit_entry.lockup.cooldown_ends_at = curr_ts
-        .checked_add(COOLDOWN_SECS)
-        .ok_or(VsrError::InvalidTimestampArguments)?;
     Ok(())
 }

@@ -1376,6 +1376,9 @@ export type VoterStakeRegistry = {
           },
           {
             "name": "Flex"
+          },
+          {
+            "name": "Test"
           }
         ]
       }
@@ -3048,6 +3051,9 @@ export const IDL: VoterStakeRegistry = {
           },
           {
             "name": "Flex"
+          },
+          {
+            "name": "Test"
           }
         ]
       }
