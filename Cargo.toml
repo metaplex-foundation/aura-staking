@@ -5,3 +5,6 @@ members = [
     # Drop everything below this line before running "anchor publish":
     # Otherwise the build will fail since Anchor uploads only parts of the source tree.
 ]
+
+[profile.release]
+overflow-checks = true

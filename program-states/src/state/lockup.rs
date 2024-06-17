@@ -172,6 +172,7 @@ pub enum LockupPeriod {
     SixMonths,
     OneYear,
     Flex,
+    Test,
 }
 
 impl Default for LockupPeriod {
@@ -188,6 +189,7 @@ impl LockupPeriod {
             LockupPeriod::OneYear => SECS_PER_MONTH * 12,
             LockupPeriod::Flex => SECS_PER_DAY * 5,
             LockupPeriod::None => 0,
+            LockupPeriod::Test => 120,
         }
     }
 
