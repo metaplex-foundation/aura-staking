@@ -188,18 +188,20 @@ pub mod voter_stake_registry {
     pub fn restake_deposit(
         ctx: Context<RestakeDeposit>,
         deposit_entry_index: u8,
-        lockup_period: LockupPeriod,
+        new_lockup_period: LockupPeriod,
         registrar_bump: u8,
         realm_governing_mint_pubkey: Pubkey,
         realm_pubkey: Pubkey,
+        additional_amount: u64,
     ) -> Result<()> {
         instructions::restake_deposit(
             ctx,
             deposit_entry_index,
-            lockup_period,
+            new_lockup_period,
             registrar_bump,
             realm_governing_mint_pubkey,
             realm_pubkey,
+            additional_amount,
         )
     }
 

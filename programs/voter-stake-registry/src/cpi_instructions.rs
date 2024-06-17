@@ -31,8 +31,7 @@ pub enum RewardsInstruction {
         deposit_authority: Pubkey,
         /// Account can fill the reward vault
         fill_authority: Pubkey,
-        /// Account that can distribute money among users after
-        /// if RewardVault had been filled with rewards
+        /// Account can distribute rewards for stakers
         distribution_authority: Pubkey,
     },
 
@@ -116,12 +115,22 @@ pub enum RewardsInstruction {
     /// [R] Mining owner
     /// [RS] Deposit authority
     RestakeDeposit {
+        /// Lockup period before restaking. Actually it's only needed
+        /// for Flex to AnyPeriod edge case
+        old_lockup_period: LockupPeriod,
         /// Requested lockup period for restaking
-        lockup_period: LockupPeriod,
-        /// Amount of tokens to be restaked
-        amount: u64,
+        new_lockup_period: LockupPeriod,
         /// Deposit start_ts
         deposit_start_ts: u64,
+        /// Amount of tokens to be restaked, this
+        /// number cannot be decreased. It reflects the number of staked tokens
+        /// before the restake function call
+        base_amount: u64,
+        /// In case user wants to increase it's staked number of tokens,
+        /// the addition amount might be provided
+        additional_amount: u64,
+        /// The wallet who owns the mining account
+        mining_owner: Pubkey,
     },
 
     /// Distributes tokens among mining owners
@@ -257,35 +266,37 @@ pub fn extend_deposit<'a>(
     program_id: &Pubkey,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
-    reward_mint: &Pubkey,
-    user: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
-    amount: u64,
-    lockup_period: LockupPeriod,
+    old_lockup_period: LockupPeriod,
+    new_lockup_period: LockupPeriod,
     deposit_start_ts: u64,
+    base_amount: u64,
+    additional_amount: u64,
+    mining_owner: &Pubkey,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
-        AccountMeta::new_readonly(*reward_mint, false),
-        AccountMeta::new_readonly(user.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
     ];
 
     let ix = Instruction::new_with_borsh(
         *program_id,
         &RewardsInstruction::RestakeDeposit {
-            lockup_period,
-            amount,
+            old_lockup_period,
+            new_lockup_period,
             deposit_start_ts,
+            base_amount,
+            additional_amount,
+            mining_owner: *mining_owner,
         },
         accounts,
     );
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, user, deposit_authority],
+        &[reward_pool, mining, deposit_authority],
         &[signers_seeds],
     )?;
 
