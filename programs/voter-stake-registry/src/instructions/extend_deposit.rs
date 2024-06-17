@@ -4,7 +4,6 @@ use mplx_staking_states::error::*;
 use mplx_staking_states::state::*;
 
 use crate::cpi_instructions::extend_deposit;
-use crate::cpi_instructions::REWARD_CONTRACT_ID;
 
 #[derive(Accounts)]
 pub struct RestakeDeposit<'info> {
@@ -113,9 +112,11 @@ pub fn restake_deposit(
 
     if additional_amount > 0 {
         // Deposit tokens into the vault and increase the lockup amount too.
-        token::transfer(ctx.accounts.transfer_ctx(), amount)?;
-        d_entry.amount_deposited_native =
-            d_entry.amount_deposited_native.checked_add(amount).unwrap();
+        token::transfer(ctx.accounts.transfer_ctx(), additional_amount)?;
+        d_entry.amount_deposited_native = d_entry
+            .amount_deposited_native
+            .checked_add(additional_amount)
+            .unwrap();
     }
 
     let signers_seeds = &[
@@ -126,7 +127,7 @@ pub fn restake_deposit(
     ];
 
     extend_deposit(
-        &REWARD_CONTRACT_ID,
+        ctx.accounts.rewards_program.to_account_info(),
         reward_pool.to_account_info(),
         mining.to_account_info(),
         pool_deposit_authority.to_account_info(),
