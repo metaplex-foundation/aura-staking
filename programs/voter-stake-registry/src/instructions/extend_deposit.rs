@@ -78,6 +78,7 @@ pub fn restake_deposit(
 ) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
+    let mining_owner = voter.voter_authority;
     let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
     let start_ts = d_entry.lockup.start_ts;
     let curr_ts = registrar.clock_unix_timestamp();
@@ -108,9 +109,7 @@ pub fn restake_deposit(
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
     let pool_deposit_authority = &ctx.accounts.registrar;
-    let voter = &ctx.accounts.voter;
     let base_amount = d_entry.amount_deposited_native;
-    let mining_owner = &voter.load()?.voter_authority;
 
     if additional_amount > 0 {
         // Deposit tokens into the vault and increase the lockup amount too.
@@ -136,7 +135,7 @@ pub fn restake_deposit(
         start_ts,
         base_amount,
         additional_amount,
-        mining_owner,
+        &mining_owner,
         signers_seeds,
     )?;
 
