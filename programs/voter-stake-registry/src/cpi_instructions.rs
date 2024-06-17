@@ -263,7 +263,7 @@ pub fn deposit_mining<'a>(
 /// Restake deposit
 #[allow(clippy::too_many_arguments)]
 pub fn extend_deposit<'a>(
-    program_id: &Pubkey,
+    program_id: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
@@ -282,7 +282,7 @@ pub fn extend_deposit<'a>(
     ];
 
     let ix = Instruction::new_with_borsh(
-        *program_id,
+        program_id.key(),
         &RewardsInstruction::RestakeDeposit {
             old_lockup_period,
             new_lockup_period,
@@ -296,7 +296,7 @@ pub fn extend_deposit<'a>(
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, deposit_authority],
+        &[reward_pool, mining, deposit_authority, program_id],
         &[signers_seeds],
     )?;
 
