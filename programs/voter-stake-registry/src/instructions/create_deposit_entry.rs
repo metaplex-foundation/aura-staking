@@ -1,8 +1,8 @@
+use crate::error::*;
+use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use crate::error::*;
-use crate::state::*;
 
 #[derive(Accounts)]
 pub struct CreateDepositEntry<'info> {
@@ -57,7 +57,6 @@ pub fn create_deposit_entry(
     ctx: Context<CreateDepositEntry>,
     deposit_entry_index: u8,
     kind: LockupKind,
-    start_ts: Option<u64>,
     period: LockupPeriod,
 ) -> Result<()> {
     // Load accounts.
@@ -76,9 +75,7 @@ pub fn create_deposit_entry(
     let d_entry = &mut voter.deposits[deposit_entry_index as usize];
     require!(!d_entry.is_used, VsrError::UnusedDepositEntryIndex);
 
-    let curr_ts = registrar.clock_unix_timestamp();
-    let start_ts = start_ts.unwrap_or(curr_ts);
-
+    let start_ts = registrar.clock_unix_timestamp();
     *d_entry = DepositEntry::default();
     d_entry.is_used = true;
     d_entry.voting_mint_config_idx = mint_idx as u8;

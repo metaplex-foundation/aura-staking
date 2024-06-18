@@ -105,8 +105,19 @@ async fn restake_from_flex() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
             LockupPeriod::OneYear,
         )
         .await?;
@@ -120,9 +131,21 @@ async fn restake_from_flex() -> Result<(), TransportError> {
             reference_account,
             0,
             10000,
-            &rewards_pool,
+        )
+        .await?;
+    context
+        .addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
             &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
@@ -139,7 +162,7 @@ async fn restake_from_flex() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             reference_account,
-            0,
+            1,
             LockupPeriod::OneYear,
             0,
             &rewards_pool,
@@ -151,7 +174,7 @@ async fn restake_from_flex() -> Result<(), TransportError> {
     let vault_balance = mngo_voting_mint
         .vault_balance(&context.solana, &voter)
         .await;
-    let deposit_amount = voter.deposit_amount(&context.solana, 0).await;
+    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
 
     assert_eq!(vault_balance, 10000);
     assert_eq!(deposit_amount, 10000);
@@ -256,9 +279,20 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
-            LockupPeriod::ThreeMonths,
+            LockupPeriod::OneYear,
         )
         .await?;
     context
@@ -271,9 +305,21 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
             reference_account,
             0,
             10000,
-            &rewards_pool,
+        )
+        .await?;
+    context
+        .addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
             &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
@@ -290,7 +336,7 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             reference_account,
-            0,
+            1,
             LockupPeriod::ThreeMonths,
             0,
             &rewards_pool,
@@ -302,7 +348,7 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
     let vault_balance = mngo_voting_mint
         .vault_balance(&context.solana, &voter)
         .await;
-    let deposit_amount = voter.deposit_amount(&context.solana, 0).await;
+    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
 
     assert_eq!(vault_balance, 10000);
     assert_eq!(deposit_amount, 10000);
@@ -407,9 +453,20 @@ async fn restake_from_three_months_deposit_with_top_up() -> Result<(), Transport
             voter_authority,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
-            LockupPeriod::ThreeMonths,
+            LockupPeriod::OneYear,
         )
         .await?;
     context
@@ -422,14 +479,26 @@ async fn restake_from_three_months_deposit_with_top_up() -> Result<(), Transport
             reference_account,
             0,
             10000,
-            &rewards_pool,
+        )
+        .await?;
+    context
+        .addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
             &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
         &mut context.solana.context.borrow_mut(),
-        (SECONDS_PER_DAY * 30) as i64,
+        (SECONDS_PER_DAY * 365) as i64,
     )
     .await;
 
@@ -441,7 +510,7 @@ async fn restake_from_three_months_deposit_with_top_up() -> Result<(), Transport
             &mngo_voting_mint,
             voter_authority,
             reference_account,
-            0,
+            1,
             LockupPeriod::ThreeMonths,
             500,
             &rewards_pool,
@@ -453,7 +522,7 @@ async fn restake_from_three_months_deposit_with_top_up() -> Result<(), Transport
     let vault_balance = mngo_voting_mint
         .vault_balance(&context.solana, &voter)
         .await;
-    let deposit_amount = voter.deposit_amount(&context.solana, 0).await;
+    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
 
     assert_eq!(vault_balance, 10500);
     assert_eq!(deposit_amount, 10500);
@@ -558,9 +627,20 @@ async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
-            LockupPeriod::ThreeMonths,
+            LockupPeriod::OneYear,
         )
         .await?;
     context
@@ -573,14 +653,26 @@ async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
             reference_account,
             0,
             10000,
-            &rewards_pool,
+        )
+        .await?;
+    context
+        .addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
             &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
         &mut context.solana.context.borrow_mut(),
-        (SECONDS_PER_DAY * 100) as i64,
+        (SECONDS_PER_DAY * 365) as i64,
     )
     .await;
 
@@ -592,7 +684,7 @@ async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             reference_account,
-            0,
+            1,
             LockupPeriod::ThreeMonths,
             500,
             &rewards_pool,
@@ -601,7 +693,7 @@ async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
         )
         .await?;
 
-    let deposit_amount = voter.deposit_amount(&context.solana, 0).await;
+    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
 
     assert_eq!(deposit_amount, 10500);
 
@@ -697,6 +789,7 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
+    let reference_account = context.users[1].token_accounts[0];
     context
         .addin
         .create_deposit_entry(
@@ -705,9 +798,20 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
-            LockupPeriod::ThreeMonths,
+            LockupPeriod::OneYear,
         )
         .await?;
     context
@@ -720,9 +824,21 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
             reference_account,
             0,
             10000,
-            &rewards_pool,
+        )
+        .await?;
+    context
+        .addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
             &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
@@ -739,7 +855,7 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             reference_account,
-            0,
+            1,
             LockupPeriod::OneYear,
             500,
             &rewards_pool,

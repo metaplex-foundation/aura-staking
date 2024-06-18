@@ -169,9 +169,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             reference_account,
             deposit_id,
             amount,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
         )
     };
     // test deposit and withdraw
@@ -188,7 +185,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             &mngo_voting_mint,
             0,
             LockupKind::None,
-            None,
             LockupPeriod::None,
         )
         .await
@@ -210,7 +206,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             &mngo_voting_mint,
             1,
             LockupKind::None,
-            None,
             LockupPeriod::None,
         )
         .await
@@ -282,7 +277,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             &mngo_voting_mint,
             5,
             LockupKind::None,
-            None,
             LockupPeriod::None,
         )
         .await
@@ -296,9 +290,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             context.users[2].token_accounts[0],
             5,
             1000,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -325,7 +316,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             &mngo_voting_mint,
             0,
             LockupKind::None,
-            None,
             LockupPeriod::None,
         )
         .await

@@ -113,8 +113,20 @@ async fn test_basic() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await?;
+
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
             LockupPeriod::ThreeMonths,
         )
         .await?;
@@ -129,9 +141,22 @@ async fn test_basic() -> Result<(), TransportError> {
             reference_account,
             0,
             10000,
-            &rewards_pool,
+        )
+        .await?;
+
+    context
+        .addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            deposit_authority,
             &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
         )
         .await?;
 
@@ -144,7 +169,7 @@ async fn test_basic() -> Result<(), TransportError> {
         .vault_balance(&context.solana, &voter)
         .await;
     assert_eq!(vault_after_deposit, 10000);
-    let balance_after_deposit = voter.deposit_amount(&context.solana, 0).await;
+    let balance_after_deposit = voter.deposit_amount(&context.solana, 1).await;
     assert_eq!(balance_after_deposit, 10000);
 
     context
@@ -154,7 +179,7 @@ async fn test_basic() -> Result<(), TransportError> {
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 0)
+        .unlock_tokens(&registrar, &voter, voter_authority, 1)
         .await
         .unwrap();
 
@@ -171,7 +196,7 @@ async fn test_basic() -> Result<(), TransportError> {
             &mngo_voting_mint,
             deposit_authority,
             reference_account,
-            0,
+            1,
             10000,
             &rewards_pool,
             &deposit_mining,

@@ -114,8 +114,19 @@ async fn successeful_claim() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
             LockupPeriod::ThreeMonths,
         )
         .await?;
@@ -130,9 +141,22 @@ async fn successeful_claim() -> Result<(), TransportError> {
             depositer_token_account,
             0,
             10000,
-            &rewards_pool,
+        )
+        .await?;
+
+    context
+        .addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            deposit_authority,
             &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
         )
         .await?;
 
