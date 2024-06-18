@@ -1,5 +1,6 @@
 use crate::error::*;
 use anchor_lang::prelude::*;
+use static_assertions::const_assert;
 
 /// Seconds in one day.
 pub const SECS_PER_DAY: u64 = 86_400;

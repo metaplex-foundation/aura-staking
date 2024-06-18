@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use mplx_staking_states::state::*;
+use crate::state::*;
 
 use crate::voter::VoterWeightRecord;
 

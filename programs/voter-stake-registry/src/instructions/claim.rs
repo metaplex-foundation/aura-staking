@@ -2,9 +2,9 @@ use std::borrow::Borrow;
 
 use crate::borsh::BorshDeserialize;
 use crate::cpi_instructions;
+use crate::error::VsrError;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
-use mplx_staking_states::error::VsrError;
 use solana_program::program::get_return_data;
 
 #[derive(Accounts)]

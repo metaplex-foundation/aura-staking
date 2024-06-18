@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use mplx_staking_states::error::*;
-use mplx_staking_states::state::*;
+use crate::error::*;
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct UnlockTokens<'info> {

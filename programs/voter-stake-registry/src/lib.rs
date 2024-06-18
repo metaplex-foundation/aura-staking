@@ -1,11 +1,14 @@
 use anchor_lang::prelude::*;
+use error::*;
 use instructions::*;
-use mplx_staking_states::state::*;
+use state::*;
 
 pub mod cpi_instructions;
+pub mod error;
 pub mod events;
 mod governance;
 mod instructions;
+pub mod state;
 pub mod voter;
 
 // The program address.
@@ -57,7 +60,7 @@ declare_id!("9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8");
 /// a u64.
 #[program]
 pub mod voter_stake_registry {
-    use mplx_staking_states::state::lockup::{LockupKind, LockupPeriod};
+    use crate::state::lockup::{LockupKind, LockupPeriod};
 
     use super::*;
 

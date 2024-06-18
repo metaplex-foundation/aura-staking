@@ -2,13 +2,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use anchor_lang::Key;
-use mplx_staking_states::state::LockupPeriod;
 
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
     instruction::Instruction,
     signature::{Keypair, Signer},
 };
+use voter_stake_registry::state::{LockupPeriod, Voter};
 
 use crate::*;
 
@@ -301,7 +301,7 @@ impl AddinCookie {
         voter_authority: &Keypair,
         voting_mint: &VotingMintConfigCookie,
         deposit_entry_index: u8,
-        lockup_kind: mplx_staking_states::state::LockupKind,
+        lockup_kind: LockupKind,
         start_ts: Option<u64>,
         period: LockupPeriod,
     ) -> std::result::Result<(), BanksClientError> {
@@ -759,10 +759,7 @@ impl VotingMintConfigCookie {
 
 impl VoterCookie {
     pub async fn deposit_amount(&self, solana: &SolanaCookie, deposit_id: u8) -> u64 {
-        solana
-            .get_account::<mplx_staking_states::state::Voter>(self.address)
-            .await
-            .deposits[deposit_id as usize]
+        solana.get_account::<Voter>(self.address).await.deposits[deposit_id as usize]
             .amount_deposited_native
     }
 
