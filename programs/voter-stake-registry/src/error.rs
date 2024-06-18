@@ -131,4 +131,10 @@ pub enum VsrError {
     // 6042 / 0x179a
     #[msg("Cpi call must return data, but data is absent")]
     CpiReturnDataIsAbsent,
+    // 6043 / 0x179b
+    #[msg("The source for the transfer only can be a deposit on DAO")]
+    LockingIsForbidded,
+    // 6044 / 0x179c
+    #[msg("Locking up tokens is only allowed for freshly-deposited deposit entry")]
+    DepositEntryIsOld,
 }

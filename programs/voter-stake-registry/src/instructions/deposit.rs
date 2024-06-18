@@ -1,9 +1,7 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount};
 use crate::error::*;
 use crate::state::*;
-
-use crate::cpi_instructions;
+use anchor_lang::prelude::*;
+use anchor_spl::token::{self, Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -33,19 +31,6 @@ pub struct Deposit<'info> {
     pub deposit_authority: Signer<'info>,
 
     pub token_program: Program<'info, Token>,
-
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority], reward_program)
-    #[account(mut)]
-    pub reward_pool: UncheckedAccount<'info>,
-
-    /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
-    #[account(mut)]
-    pub deposit_mining: UncheckedAccount<'info>,
-
-    /// CHECK: Rewards Program account
-    pub rewards_program: UncheckedAccount<'info>,
 }
 
 impl<'info> Deposit<'info> {
@@ -68,14 +53,7 @@ impl<'info> Deposit<'info> {
 ///
 /// `deposit_entry_index`: Index of the deposit entry.
 /// `amount`: Number of native tokens to transfer.
-pub fn deposit(
-    ctx: Context<Deposit>,
-    deposit_entry_index: u8,
-    amount: u64,
-    registrar_bump: u8,
-    realm_governing_mint_pubkey: Pubkey,
-    realm_pubkey: Pubkey,
-) -> Result<()> {
+pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
     if amount == 0 {
         return Ok(());
     }
@@ -89,6 +67,12 @@ pub fn deposit(
         require!(
             d_entry.amount_deposited_native == 0,
             VsrError::DepositingIsForbidded
+        );
+        require!(
+            d_entry.lockup.kind == LockupKind::None
+                && d_entry.lockup.period == LockupPeriod::None
+                && d_entry.is_used,
+            VsrError::DepositingIsForbidded,
         );
 
         // Get the exchange rate entry associated with this deposit.
@@ -106,34 +90,7 @@ pub fn deposit(
     }
 
     let voter = &ctx.accounts.voter.load()?;
-    let owner = &voter.voter_authority;
     let d_entry = voter.active_deposit(deposit_entry_index)?;
-
-    // no sense to call cpi if lockup had not been staked
-    if d_entry.lockup.kind == LockupKind::None || d_entry.lockup.period == LockupPeriod::None {
-        return Ok(());
-    }
-
-    let reward_pool = &ctx.accounts.reward_pool;
-    let mining = &ctx.accounts.deposit_mining;
-    let pool_deposit_authority = &ctx.accounts.registrar.to_account_info();
-    let signers_seeds = &[
-        &realm_pubkey.key().to_bytes(),
-        b"registrar".as_ref(),
-        &realm_governing_mint_pubkey.key().to_bytes(),
-        &[registrar_bump][..],
-    ];
-
-    cpi_instructions::deposit_mining(
-        ctx.accounts.rewards_program.to_account_info(),
-        reward_pool.to_account_info(),
-        mining.to_account_info(),
-        pool_deposit_authority.to_account_info(),
-        amount,
-        d_entry.lockup.period,
-        owner,
-        signers_seeds,
-    )?;
 
     msg!(
         "Deposited amount {} at deposit index {} with lockup kind {:?} with lockup period {:?} and {} seconds left. It's used now: {:?}",

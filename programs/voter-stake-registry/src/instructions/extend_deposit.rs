@@ -1,7 +1,7 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use crate::error::*;
 use crate::state::*;
+use anchor_lang::prelude::*;
+use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
 use crate::cpi_instructions::extend_deposit;
 
@@ -79,6 +79,10 @@ pub fn restake_deposit(
     let voter = &mut ctx.accounts.voter.load_mut()?;
     let mining_owner = voter.voter_authority;
     let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
+    require!(
+        d_entry.lockup.period != LockupPeriod::None && d_entry.lockup.kind != LockupKind::None,
+        VsrError::RestakeDepositIsNotAllowed
+    );
     let start_ts = d_entry.lockup.start_ts;
     let curr_ts = registrar.clock_unix_timestamp();
     let amount = d_entry.amount_deposited_native;

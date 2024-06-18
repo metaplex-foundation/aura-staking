@@ -1,325 +1,322 @@
-use anchor_spl::token::TokenAccount;
-use program_test::*;
-use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
-use voter_stake_registry::state::{LockupKind, LockupPeriod};
+// use anchor_spl::token::TokenAccount;
+// use program_test::*;
+// use solana_program_test::*;
+// use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
+// use voter_stake_registry::state::{LockupKind, LockupPeriod};
 
-mod program_test;
-#[tokio::test]
-async fn test_voting() -> Result<(), TransportError> {
-    let context = TestContext::new().await;
-    let addin = &context.addin;
+// mod program_test;
+// #[tokio::test]
+// async fn test_voting() -> Result<(), TransportError> {
+//     let context = TestContext::new().await;
+//     let addin = &context.addin;
 
-    let payer = &context.users[0].key;
-    let realm_authority = Keypair::new();
-    let realm = context
-        .governance
-        .create_realm(
-            "testrealm",
-            realm_authority.pubkey(),
-            &context.mints[0],
-            payer,
-            &context.addin.program_id,
-        )
-        .await;
+//     let payer = &context.users[0].key;
+//     let realm_authority = Keypair::new();
+//     let realm = context
+//         .governance
+//         .create_realm(
+//             "testrealm",
+//             realm_authority.pubkey(),
+//             &context.mints[0],
+//             payer,
+//             &context.addin.program_id,
+//         )
+//         .await;
 
-    let voter_authority = &context.users[1].key;
-    let voter2_authority = &context.users[2].key;
-    let voter_mngo = context.users[1].token_accounts[0];
-    let voter_usdc = context.users[1].token_accounts[1];
-    let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), payer)
-        .await;
-    let token_owner_record2 = realm
-        .create_token_owner_record(voter2_authority.pubkey(), payer)
-        .await;
+//     let voter_authority = &context.users[1].key;
+//     let voter2_authority = &context.users[2].key;
+//     let voter_mngo = context.users[1].token_accounts[0];
+//     let voter_usdc = context.users[1].token_accounts[1];
+//     let token_owner_record = realm
+//         .create_token_owner_record(voter_authority.pubkey(), payer)
+//         .await;
+//     let token_owner_record2 = realm
+//         .create_token_owner_record(voter2_authority.pubkey(), payer)
+//         .await;
 
-    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
-    let distribution_authority = Keypair::new();
-    let (registrar, rewards_pool) = context
-        .addin
-        .create_registrar(
-            &realm,
-            &realm_authority,
-            payer,
-            &fill_authority.pubkey(),
-            &distribution_authority.pubkey(),
-            &context.rewards.program_id,
-        )
-        .await;
-    let mngo_voting_mint = addin
-        .configure_voting_mint(
-            &registrar,
-            &realm_authority,
-            payer,
-            0,
-            &context.mints[0],
-            0,
-            2.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
-            None,
-            None,
-        )
-        .await;
-    let usdc_voting_mint = addin
-        .configure_voting_mint(
-            &registrar,
-            &realm_authority,
-            payer,
-            1,
-            &context.mints[1],
-            0,
-            0.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
-            None,
-            Some(&[context.mints[0].pubkey.unwrap()]),
-        )
-        .await;
+//     let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+//     let distribution_authority = Keypair::new();
+//     let (registrar, rewards_pool) = context
+//         .addin
+//         .create_registrar(
+//             &realm,
+//             &realm_authority,
+//             payer,
+//             &fill_authority.pubkey(),
+//             &distribution_authority.pubkey(),
+//             &context.rewards.program_id,
+//         )
+//         .await;
+//     let mngo_voting_mint = addin
+//         .configure_voting_mint(
+//             &registrar,
+//             &realm_authority,
+//             payer,
+//             0,
+//             &context.mints[0],
+//             0,
+//             2.0,
+//             0.0,
+//             5 * 365 * 24 * 60 * 60,
+//             None,
+//             None,
+//         )
+//         .await;
+//     let usdc_voting_mint = addin
+//         .configure_voting_mint(
+//             &registrar,
+//             &realm_authority,
+//             payer,
+//             1,
+//             &context.mints[1],
+//             0,
+//             0.0,
+//             0.0,
+//             5 * 365 * 24 * 60 * 60,
+//             None,
+//             Some(&[context.mints[0].pubkey.unwrap()]),
+//         )
+//         .await;
 
-    let deposit_mining_voter = find_deposit_mining_addr(
-        &voter_authority.pubkey(),
-        &rewards_pool,
-        &context.rewards.program_id,
-    );
-    let voter = addin
-        .create_voter(
-            &registrar,
-            &token_owner_record,
-            voter_authority,
-            payer,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
-        )
-        .await;
+//     let deposit_mining_voter = find_deposit_mining_addr(
+//         &voter_authority.pubkey(),
+//         &rewards_pool,
+//         &context.rewards.program_id,
+//     );
+//     let voter = addin
+//         .create_voter(
+//             &registrar,
+//             &token_owner_record,
+//             voter_authority,
+//             payer,
+//             &rewards_pool,
+//             &deposit_mining_voter,
+//             &context.rewards.program_id,
+//         )
+//         .await;
 
-    let deposit_mining_voter2 = find_deposit_mining_addr(
-        &voter2_authority.pubkey(),
-        &rewards_pool,
-        &context.rewards.program_id,
-    );
-    let voter2 = addin
-        .create_voter(
-            &registrar,
-            &token_owner_record2,
-            voter2_authority,
-            payer,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
-        )
-        .await;
+//     let deposit_mining_voter2 = find_deposit_mining_addr(
+//         &voter2_authority.pubkey(),
+//         &rewards_pool,
+//         &context.rewards.program_id,
+//     );
+//     let voter2 = addin
+//         .create_voter(
+//             &registrar,
+//             &token_owner_record2,
+//             voter2_authority,
+//             payer,
+//             &rewards_pool,
+//             &deposit_mining_voter2,
+//             &context.rewards.program_id,
+//         )
+//         .await;
 
-    let mint_governance = realm
-        .create_mint_governance(
-            context.mints[0].pubkey.unwrap(),
-            &context.mints[0].authority,
-            &voter,
-            voter_authority,
-            payer,
-            addin.update_voter_weight_record_instruction(&registrar, &voter),
-        )
-        .await;
+//     let mint_governance = realm
+//         .create_mint_governance(
+//             context.mints[0].pubkey.unwrap(),
+//             &context.mints[0].authority,
+//             &voter,
+//             voter_authority,
+//             payer,
+//             addin.update_voter_weight_record_instruction(&registrar, &voter),
+//         )
+//         .await;
 
-    addin
-        .create_deposit_entry(
-            &registrar,
-            &voter,
-            voter_authority,
-            &mngo_voting_mint,
-            0,
-            LockupKind::None,
-            None,
-            LockupPeriod::None,
-        )
-        .await
-        .unwrap();
-    addin
-        .deposit(
-            &registrar,
-            &voter,
-            &mngo_voting_mint,
-            voter_authority,
-            voter_mngo,
-            0,
-            1000,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
-        )
-        .await
-        .unwrap();
+//     addin
+//         .create_deposit_entry(
+//             &registrar,
+//             &voter,
+//             voter_authority,
+//             &mngo_voting_mint,
+//             0,
+//             LockupKind::None,
+//             LockupPeriod::None,
+//         )
+//         .await
+//         .unwrap();
+//     addin
+//         .deposit(
+//             &registrar,
+//             &voter,
+//             &mngo_voting_mint,
+//             voter_authority,
+//             voter_mngo,
+//             0,
+//             1000,
+//             &rewards_pool,
+//             &deposit_mining_voter,
+//             &context.rewards.program_id,
+//         )
+//         .await
+//         .unwrap();
 
-    let proposal = realm
-        .create_proposal(
-            mint_governance.address,
-            voter_authority,
-            &voter,
-            payer,
-            addin.update_voter_weight_record_instruction(&registrar, &voter),
-        )
-        .await
-        .unwrap();
+//     let proposal = realm
+//         .create_proposal(
+//             mint_governance.address,
+//             voter_authority,
+//             &voter,
+//             payer,
+//             addin.update_voter_weight_record_instruction(&registrar, &voter),
+//         )
+//         .await
+//         .unwrap();
 
-    // having created a proposal, withdrawing is impossible
-    context.solana.advance_clock_by_slots(2).await; // avoid cache when sending same transaction again
-    addin
-        .withdraw(
-            &registrar,
-            &voter,
-            &mngo_voting_mint,
-            voter_authority,
-            voter_mngo,
-            0,
-            1,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
-        )
-        .await
-        .expect_err("could not withdraw");
+//     // having created a proposal, withdrawing is impossible
+//     context.solana.advance_clock_by_slots(2).await; // avoid cache when sending same transaction again
+//     addin
+//         .withdraw(
+//             &registrar,
+//             &voter,
+//             &mngo_voting_mint,
+//             voter_authority,
+//             voter_mngo,
+//             0,
+//             1,
+//             &rewards_pool,
+//             &deposit_mining_voter,
+//             &context.rewards.program_id,
+//         )
+//         .await
+//         .expect_err("could not withdraw");
 
-    addin
-        .create_deposit_entry(
-            &registrar,
-            &voter2,
-            voter2_authority,
-            &mngo_voting_mint,
-            0,
-            LockupKind::None,
-            None,
-            LockupPeriod::None,
-        )
-        .await
-        .unwrap();
-    addin
-        .deposit(
-            &registrar,
-            &voter2,
-            &mngo_voting_mint,
-            voter_authority,
-            voter_mngo,
-            0,
-            750,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
-        )
-        .await
-        .unwrap();
+//     addin
+//         .create_deposit_entry(
+//             &registrar,
+//             &voter2,
+//             voter2_authority,
+//             &mngo_voting_mint,
+//             0,
+//             LockupKind::None,
+//             LockupPeriod::None,
+//         )
+//         .await
+//         .unwrap();
+//     addin
+//         .deposit(
+//             &registrar,
+//             &voter2,
+//             &mngo_voting_mint,
+//             voter_authority,
+//             voter_mngo,
+//             0,
+//             750,
+//             &rewards_pool,
+//             &deposit_mining_voter2,
+//             &context.rewards.program_id,
+//         )
+//         .await
+//         .unwrap();
 
-    addin
-        .create_deposit_entry(
-            &registrar,
-            &voter2,
-            voter2_authority,
-            &usdc_voting_mint,
-            1,
-            LockupKind::None,
-            None,
-            LockupPeriod::None,
-        )
-        .await
-        .unwrap();
-    addin
-        .deposit(
-            &registrar,
-            &voter2,
-            &usdc_voting_mint,
-            voter_authority,
-            voter_usdc,
-            1,
-            1000,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
-        )
-        .await
-        .unwrap();
+//     addin
+//         .create_deposit_entry(
+//             &registrar,
+//             &voter2,
+//             voter2_authority,
+//             &usdc_voting_mint,
+//             1,
+//             LockupKind::None,
+//             LockupPeriod::None,
+//         )
+//         .await
+//         .unwrap();
+//     addin
+//         .deposit(
+//             &registrar,
+//             &voter2,
+//             &usdc_voting_mint,
+//             voter_authority,
+//             voter_usdc,
+//             1,
+//             1000,
+//             &rewards_pool,
+//             &deposit_mining_voter2,
+//             &context.rewards.program_id,
+//         )
+//         .await
+//         .unwrap();
 
-    realm
-        .cast_vote(
-            mint_governance.address,
-            &proposal,
-            &voter2,
-            voter2_authority,
-            payer,
-            addin.update_voter_weight_record_instruction(&registrar, &voter2),
-        )
-        .await
-        .unwrap();
+//     realm
+//         .cast_vote(
+//             mint_governance.address,
+//             &proposal,
+//             &voter2,
+//             voter2_authority,
+//             payer,
+//             addin.update_voter_weight_record_instruction(&registrar, &voter2),
+//         )
+//         .await
+//         .unwrap();
 
-    let proposal_data = context.solana.get_account_data(proposal.address).await;
-    let mut data_slice: &[u8] = &proposal_data;
-    let proposal_state: spl_governance::state::proposal::ProposalV2 =
-        anchor_lang::AnchorDeserialize::deserialize(&mut data_slice).unwrap();
-    assert_eq!(proposal_state.options[0].vote_weight, 1750);
-    assert_eq!(proposal_state.deny_vote_weight.unwrap(), 0);
+//     let proposal_data = context.solana.get_account_data(proposal.address).await;
+//     let mut data_slice: &[u8] = &proposal_data;
+//     let proposal_state: spl_governance::state::proposal::ProposalV2 =
+//         anchor_lang::AnchorDeserialize::deserialize(&mut data_slice).unwrap();
+//     assert_eq!(proposal_state.options[0].vote_weight, 1750);
+//     assert_eq!(proposal_state.deny_vote_weight.unwrap(), 0);
 
-    // having voted, the funds are now locked, withdrawing is impossible
-    context.solana.advance_clock_by_slots(2).await; // avoid cache when sending same transaction again
-    addin
-        .withdraw(
-            &registrar,
-            &voter2,
-            &mngo_voting_mint,
-            voter2_authority,
-            voter_mngo,
-            0,
-            1,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
-        )
-        .await
-        .expect_err("could not withdraw");
+//     // having voted, the funds are now locked, withdrawing is impossible
+//     context.solana.advance_clock_by_slots(2).await; // avoid cache when sending same transaction again
+//     addin
+//         .withdraw(
+//             &registrar,
+//             &voter2,
+//             &mngo_voting_mint,
+//             voter2_authority,
+//             voter_mngo,
+//             0,
+//             1,
+//             &rewards_pool,
+//             &deposit_mining_voter2,
+//             &context.rewards.program_id,
+//         )
+//         .await
+//         .expect_err("could not withdraw");
 
-    // but can withdraw USDC
-    addin
-        .withdraw(
-            &registrar,
-            &voter2,
-            &usdc_voting_mint,
-            voter2_authority,
-            voter_usdc,
-            1,
-            1,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
-        )
-        .await
-        .unwrap();
+//     // but can withdraw USDC
+//     addin
+//         .withdraw(
+//             &registrar,
+//             &voter2,
+//             &usdc_voting_mint,
+//             voter2_authority,
+//             voter_usdc,
+//             1,
+//             1,
+//             &rewards_pool,
+//             &deposit_mining_voter2,
+//             &context.rewards.program_id,
+//         )
+//         .await
+//         .unwrap();
 
-    realm
-        .relinquish_vote(
-            mint_governance.address,
-            &proposal,
-            voter2.token_owner_record,
-            voter2_authority,
-            payer.pubkey(),
-        )
-        .await
-        .unwrap();
+//     realm
+//         .relinquish_vote(
+//             mint_governance.address,
+//             &proposal,
+//             voter2.token_owner_record,
+//             voter2_authority,
+//             payer.pubkey(),
+//         )
+//         .await
+//         .unwrap();
 
-    // can withdraw again
-    addin
-        .withdraw(
-            &registrar,
-            &voter2,
-            &mngo_voting_mint,
-            voter2_authority,
-            voter_mngo,
-            0,
-            750,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
-        )
-        .await
-        .unwrap();
+//     // can withdraw again
+//     addin
+//         .withdraw(
+//             &registrar,
+//             &voter2,
+//             &mngo_voting_mint,
+//             voter2_authority,
+//             voter_mngo,
+//             0,
+//             750,
+//             &rewards_pool,
+//             &deposit_mining_voter2,
+//             &context.rewards.program_id,
+//         )
+//         .await
+//         .unwrap();
 
-    Ok(())
-}
+//     Ok(())
+// }

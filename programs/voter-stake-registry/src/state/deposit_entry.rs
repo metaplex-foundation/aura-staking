@@ -8,9 +8,10 @@ use static_assertions::const_assert;
 #[zero_copy]
 #[derive(Default)]
 pub struct DepositEntry {
-    // Locked state.
+    /// Locked state.
     pub lockup: Lockup,
-
+    /// Delegated staker
+    pub delegate: Pubkey,
     /// Amount in deposited, in native currency. Withdraws of vested tokens
     /// directly reduce this amount.
     ///
@@ -23,7 +24,7 @@ pub struct DepositEntry {
     pub is_used: bool,
     pub _reserved1: [u8; 6],
 }
-const_assert!(std::mem::size_of::<DepositEntry>() == 32 + 8 + 1 + 1 + 6);
+const_assert!(std::mem::size_of::<DepositEntry>() == 32 + 32 + 8 + 1 + 1 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {
@@ -94,8 +95,10 @@ mod tests {
         let saturation: i64 = 5 * day;
         let lockup_start = 10_000_000_000; // arbitrary point
         let period = LockupPeriod::Flex;
+        let delegate = Pubkey::new_unique();
         let deposit = DepositEntry {
             amount_deposited_native: 20_000,
+            delegate,
             lockup: Lockup {
                 start_ts: lockup_start,
                 end_ts: lockup_start + LockupPeriod::Flex.to_secs(), // start + cooldown + period

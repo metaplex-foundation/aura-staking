@@ -105,28 +105,13 @@ pub mod voter_stake_registry {
         ctx: Context<CreateDepositEntry>,
         deposit_entry_index: u8,
         kind: LockupKind,
-        start_ts: Option<u64>,
         period: LockupPeriod,
     ) -> Result<()> {
-        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, start_ts, period)
+        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period)
     }
 
-    pub fn deposit(
-        ctx: Context<Deposit>,
-        deposit_entry_index: u8,
-        amount: u64,
-        registrar_bump: u8,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
-    ) -> Result<()> {
-        instructions::deposit(
-            ctx,
-            deposit_entry_index,
-            amount,
-            registrar_bump,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
-        )
+    pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+        instructions::deposit(ctx, deposit_entry_index, amount)
     }
 
     pub fn withdraw(
@@ -174,17 +159,21 @@ pub mod voter_stake_registry {
         instructions::log_voter_info(ctx, deposit_entry_begin, deposit_entry_count)
     }
 
-    pub fn internal_transfer_unlocked(
-        ctx: Context<InternalTransferUnlocked>,
+    pub fn lock_tokens(
+        ctx: Context<LockTokens>,
         source_deposit_entry_index: u8,
         target_deposit_entry_index: u8,
         amount: u64,
+        realm_governing_mint_pubkey: Pubkey,
+        realm_pubkey: Pubkey,
     ) -> Result<()> {
-        instructions::internal_transfer_unlocked(
+        instructions::lock_tokens(
             ctx,
             source_deposit_entry_index,
             target_deposit_entry_index,
             amount,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
         )
     }
 

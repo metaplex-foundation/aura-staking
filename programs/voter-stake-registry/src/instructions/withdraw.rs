@@ -158,6 +158,16 @@ pub fn withdraw(
             .checked_sub(amount)
             .unwrap();
 
+        // if deposit doesn't have tokens after withdrawal
+        // then is shouldn't be used
+        if deposit_entry.amount_deposited_native == 0
+            && deposit_entry.lockup.kind != LockupKind::None
+            && deposit_entry.lockup.period != LockupPeriod::None
+        {
+            *deposit_entry = DepositEntry::default();
+            deposit_entry.is_used = false;
+        }
+
         msg!(
             "Withdrew amount {} at deposit index {} with lockup kind {:?} and {} seconds left",
             amount,

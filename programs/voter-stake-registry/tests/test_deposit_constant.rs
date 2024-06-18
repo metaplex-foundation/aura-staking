@@ -124,32 +124,29 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             depot_id,
         )
     };
-    let withdraw = |amount: u64| {
+    let withdraw = |amount: u64, d_entry_index: u8| {
         addin.withdraw(
             &registrar,
             &voter,
             &mngo_voting_mint,
             voter_authority,
             reference_account,
-            0,
+            d_entry_index,
             amount,
             &rewards_pool,
             &deposit_mining,
             &context.rewards.program_id,
         )
     };
-    let deposit = |amount: u64| {
+    let deposit = |amount: u64, d_entry_index: u8| {
         addin.deposit(
             &registrar,
             &voter,
             &mngo_voting_mint,
             voter_authority,
             reference_account,
-            0,
+            d_entry_index,
             amount,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
     };
 
@@ -166,20 +163,45 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await
+        .unwrap();
+    addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
             LockupPeriod::ThreeMonths,
         )
         .await
         .unwrap();
-    deposit(10_000).await.unwrap();
+    deposit(10_000, 0).await.unwrap();
+    addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
+            &deposit_mining,
+            &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
+        )
+        .await?;
 
-    let after_deposit = get_balances(0).await;
+    let after_deposit = get_balances(1).await;
     assert_eq!(token, after_deposit.token + after_deposit.vault);
     assert_eq!(after_deposit.voter_weight, after_deposit.vault); // unchanged
     assert_eq!(after_deposit.vault, 10_000);
     assert_eq!(after_deposit.deposit, 10_000);
-    withdraw(1).await.expect_err("all locked up");
+    withdraw(1, 1).await.expect_err("all locked up");
 
     // advance to day 95. Just to be sure withdraw isn't possible without unlocking first
     // even at lockup period + cooldown period (90 + 5 respectively in that case)
@@ -190,10 +212,10 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
 
     // request unlock
     addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 0)
+        .unlock_tokens(&registrar, &voter, voter_authority, 1)
         .await
         .unwrap();
-    withdraw(10_000)
+    withdraw(10_000, 1)
         .await
         .expect_err("Cooldown still not passed");
 
@@ -204,7 +226,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
         .await;
 
     // request claim && withdraw
-    withdraw(10_000).await.unwrap();
+    withdraw(10_000, 1).await.unwrap();
 
     Ok(())
 }
@@ -294,18 +316,15 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             &context.rewards.program_id,
         )
     };
-    let deposit = |amount: u64| {
+    let deposit = |amount: u64, d_entry_index: u8| {
         addin.deposit(
             &registrar,
             &voter,
             &mngo_voting_mint,
             voter_authority,
             reference_account,
-            0,
+            d_entry_index,
             amount,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
     };
 
@@ -317,12 +336,37 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             &mngo_voting_mint,
             0,
             LockupKind::Constant,
-            None,
             LockupPeriod::ThreeMonths,
         )
         .await
         .unwrap();
-    deposit(10000).await.unwrap();
+    addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            voter_authority,
+            &mngo_voting_mint,
+            1,
+            LockupKind::Constant,
+            LockupPeriod::ThreeMonths,
+        )
+        .await
+        .unwrap();
+    deposit(10000, 0).await.unwrap();
+    addin
+        .lock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
+            &deposit_mining,
+            &context.rewards.program_id,
+            0,
+            1,
+            10000,
+            mngo_voting_mint.mint.pubkey.unwrap(),
+            realm.realm,
+        )
+        .await?;
 
     // advance to 100 days
     addin
