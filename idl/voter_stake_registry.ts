@@ -111,7 +111,7 @@ export type VoterStakeRegistry = {
             "Account that will be created via CPI to the rewards,",
             "it's responsible for being a \"root\" for all entities",
             "inside rewards contract",
-            "It's the PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
           ]
         },
         {
@@ -120,7 +120,7 @@ export type VoterStakeRegistry = {
           "isSigner": false,
           "docs": [
             "This account is responsible for storing money for rewards",
-            "PDA(\"vault\", reward_pool, reward_mint)"
+            "PDA([\"vault\", reward_pool, reward_mint], reward_program)"
           ]
         },
         {
@@ -269,7 +269,7 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
           ]
         },
         {
@@ -277,7 +277,7 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
           ]
         },
         {
@@ -414,7 +414,7 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
           ]
         },
         {
@@ -422,7 +422,7 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
           ]
         },
         {
@@ -745,6 +745,11 @@ export type VoterStakeRegistry = {
           "isSigner": false
         },
         {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "rewardPool",
           "isMut": true,
           "isSigner": false
@@ -754,7 +759,7 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
           ]
         },
         {
@@ -769,7 +774,7 @@ export type VoterStakeRegistry = {
           "type": "u8"
         },
         {
-          "name": "lockupPeriod",
+          "name": "newLockupPeriod",
           "type": {
             "defined": "LockupPeriod"
           }
@@ -785,6 +790,10 @@ export type VoterStakeRegistry = {
         {
           "name": "realmPubkey",
           "type": "publicKey"
+        },
+        {
+          "name": "additionalAmount",
+          "type": "u64"
         }
       ]
     },
@@ -796,7 +805,7 @@ export type VoterStakeRegistry = {
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
           ]
         },
         {
@@ -810,7 +819,7 @@ export type VoterStakeRegistry = {
           "isSigner": false,
           "docs": [
             "is checked on the rewards contract",
-            "PDA(\"vault\", reward_pool, reward_mint)"
+            "PDA([\"vault\", reward_pool, reward_mint], reward_program)"
           ]
         },
         {
@@ -818,7 +827,7 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
           ]
         },
         {
@@ -1235,8 +1244,7 @@ export type VoterStakeRegistry = {
               {
                 "name": "distribution_authority",
                 "docs": [
-                  "Account that can distribute money among users after",
-                  "if RewardVault had been filled with rewards"
+                  "Account can distribute rewards for stakers"
                 ],
                 "type": "publicKey"
               }
@@ -1327,7 +1335,17 @@ export type VoterStakeRegistry = {
             "name": "RestakeDeposit",
             "fields": [
               {
-                "name": "lockup_period",
+                "name": "old_lockup_period",
+                "docs": [
+                  "Lockup period before restaking. Actually it's only needed",
+                  "for Flex to AnyPeriod edge case"
+                ],
+                "type": {
+                  "defined": "LockupPeriod"
+                }
+              },
+              {
+                "name": "new_lockup_period",
                 "docs": [
                   "Requested lockup period for restaking"
                 ],
@@ -1336,18 +1354,35 @@ export type VoterStakeRegistry = {
                 }
               },
               {
-                "name": "amount",
-                "docs": [
-                  "Amount of tokens to be restaked"
-                ],
-                "type": "u64"
-              },
-              {
                 "name": "deposit_start_ts",
                 "docs": [
                   "Deposit start_ts"
                 ],
                 "type": "u64"
+              },
+              {
+                "name": "base_amount",
+                "docs": [
+                  "Amount of tokens to be restaked, this",
+                  "number cannot be decreased. It reflects the number of staked tokens",
+                  "before the restake function call"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "additional_amount",
+                "docs": [
+                  "In case user wants to increase it's staked number of tokens,",
+                  "the addition amount might be provided"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "mining_owner",
+                "docs": [
+                  "The wallet who owns the mining account"
+                ],
+                "type": "publicKey"
               }
             ]
           },
@@ -1786,7 +1821,7 @@ export const IDL: VoterStakeRegistry = {
             "Account that will be created via CPI to the rewards,",
             "it's responsible for being a \"root\" for all entities",
             "inside rewards contract",
-            "It's the PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
           ]
         },
         {
@@ -1795,7 +1830,7 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": false,
           "docs": [
             "This account is responsible for storing money for rewards",
-            "PDA(\"vault\", reward_pool, reward_mint)"
+            "PDA([\"vault\", reward_pool, reward_mint], reward_program)"
           ]
         },
         {
@@ -1944,7 +1979,7 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
           ]
         },
         {
@@ -1952,7 +1987,7 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
           ]
         },
         {
@@ -2089,7 +2124,7 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
           ]
         },
         {
@@ -2097,7 +2132,7 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
           ]
         },
         {
@@ -2420,6 +2455,11 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": false
         },
         {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "rewardPool",
           "isMut": true,
           "isSigner": false
@@ -2429,7 +2469,7 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
           ]
         },
         {
@@ -2444,7 +2484,7 @@ export const IDL: VoterStakeRegistry = {
           "type": "u8"
         },
         {
-          "name": "lockupPeriod",
+          "name": "newLockupPeriod",
           "type": {
             "defined": "LockupPeriod"
           }
@@ -2460,6 +2500,10 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "realmPubkey",
           "type": "publicKey"
+        },
+        {
+          "name": "additionalAmount",
+          "type": "u64"
         }
       ]
     },
@@ -2471,7 +2515,7 @@ export const IDL: VoterStakeRegistry = {
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "PDA(\"reward_pool\", deposit_authority[aka registrar in our case], fill_authority)"
+            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
           ]
         },
         {
@@ -2485,7 +2529,7 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": false,
           "docs": [
             "is checked on the rewards contract",
-            "PDA(\"vault\", reward_pool, reward_mint)"
+            "PDA([\"vault\", reward_pool, reward_mint], reward_program)"
           ]
         },
         {
@@ -2493,7 +2537,7 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA(\"mining\", mining owner[aka voter_authority in our case], reward_pool)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
           ]
         },
         {
@@ -2910,8 +2954,7 @@ export const IDL: VoterStakeRegistry = {
               {
                 "name": "distribution_authority",
                 "docs": [
-                  "Account that can distribute money among users after",
-                  "if RewardVault had been filled with rewards"
+                  "Account can distribute rewards for stakers"
                 ],
                 "type": "publicKey"
               }
@@ -3002,7 +3045,17 @@ export const IDL: VoterStakeRegistry = {
             "name": "RestakeDeposit",
             "fields": [
               {
-                "name": "lockup_period",
+                "name": "old_lockup_period",
+                "docs": [
+                  "Lockup period before restaking. Actually it's only needed",
+                  "for Flex to AnyPeriod edge case"
+                ],
+                "type": {
+                  "defined": "LockupPeriod"
+                }
+              },
+              {
+                "name": "new_lockup_period",
                 "docs": [
                   "Requested lockup period for restaking"
                 ],
@@ -3011,18 +3064,35 @@ export const IDL: VoterStakeRegistry = {
                 }
               },
               {
-                "name": "amount",
-                "docs": [
-                  "Amount of tokens to be restaked"
-                ],
-                "type": "u64"
-              },
-              {
                 "name": "deposit_start_ts",
                 "docs": [
                   "Deposit start_ts"
                 ],
                 "type": "u64"
+              },
+              {
+                "name": "base_amount",
+                "docs": [
+                  "Amount of tokens to be restaked, this",
+                  "number cannot be decreased. It reflects the number of staked tokens",
+                  "before the restake function call"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "additional_amount",
+                "docs": [
+                  "In case user wants to increase it's staked number of tokens,",
+                  "the addition amount might be provided"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "mining_owner",
+                "docs": [
+                  "The wallet who owns the mining account"
+                ],
+                "type": "publicKey"
               }
             ]
           },
