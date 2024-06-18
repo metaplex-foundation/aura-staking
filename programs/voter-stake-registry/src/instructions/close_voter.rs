@@ -1,11 +1,12 @@
 use std::ops::DerefMut;
 
-use crate::error::*;
-use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Transfer;
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
+use mplx_staking_states::error::VsrError;
+use mplx_staking_states::state::{Registrar, Voter};
+use mplx_staking_states::voter_seeds;
 
 // Remaining accounts must be all the token token accounts owned by voter, he wants to close,
 // they should be writable so that they can be closed and sol required for rent

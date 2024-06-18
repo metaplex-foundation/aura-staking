@@ -1969,6 +1969,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mplx-staking-states"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
+ "static_assertions",
+]
+
+[[package]]
 name = "nix"
 version = "0.24.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4696,6 +4706,7 @@ dependencies = [
  "bytemuck",
  "env_logger",
  "log",
+ "mplx-staking-states",
  "solana-program",
  "solana-program-test",
  "solana-sdk",

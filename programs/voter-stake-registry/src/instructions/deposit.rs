@@ -1,7 +1,9 @@
-use crate::error::*;
-use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod, Registrar, Voter},
+};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {

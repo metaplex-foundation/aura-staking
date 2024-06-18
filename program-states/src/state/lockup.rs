@@ -1,6 +1,5 @@
 use crate::error::*;
 use anchor_lang::prelude::*;
-use static_assertions::const_assert;
 
 /// Seconds in one day.
 pub const SECS_PER_DAY: u64 = 86_400;
@@ -173,7 +172,6 @@ pub enum LockupPeriod {
     SixMonths,
     OneYear,
     Flex,
-    Test,
 }
 
 impl Default for LockupPeriod {
@@ -190,7 +188,6 @@ impl LockupPeriod {
             LockupPeriod::OneYear => SECS_PER_MONTH * 12,
             LockupPeriod::Flex => SECS_PER_DAY * 5,
             LockupPeriod::None => 0,
-            LockupPeriod::Test => 120,
         }
     }
 

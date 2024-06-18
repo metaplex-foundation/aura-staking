@@ -1,6 +1,9 @@
 use crate::events::*;
+
 use anchor_lang::prelude::*;
-use crate::state::*;
+use mplx_staking_states::state::LockupKind;
+use mplx_staking_states::state::Registrar;
+use mplx_staking_states::state::Voter;
 
 #[derive(Accounts)]
 pub struct LogVoterInfo<'info> {

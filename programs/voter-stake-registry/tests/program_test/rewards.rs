@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use anchor_lang::prelude::*;
 use anchor_lang::AnchorDeserialize;
+use mplx_staking_states::state::LockupPeriod;
 use solana_program_test::*;
 use solana_sdk::program_pack::IsInitialized;
 use solana_sdk::{
@@ -12,7 +13,6 @@ use solana_sdk::{
     system_program,
 };
 use voter_stake_registry::cpi_instructions::RewardsInstruction;
-use voter_stake_registry::state::LockupPeriod;
 
 use crate::SolanaCookie;
 

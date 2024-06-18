@@ -1,6 +1,8 @@
-use crate::error::*;
-use crate::state::*;
 use anchor_lang::prelude::*;
+use mplx_staking_states::error::VsrError;
+use mplx_staking_states::state::LockupKind;
+use mplx_staking_states::state::Registrar;
+use mplx_staking_states::state::Voter;
 
 use crate::cpi_instructions;
 
