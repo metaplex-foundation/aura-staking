@@ -363,12 +363,6 @@ export type VoterStakeRegistry = {
           }
         },
         {
-          "name": "startTs",
-          "type": {
-            "option": "u64"
-          }
-        },
-        {
           "name": "period",
           "type": {
             "defined": "LockupPeriod"
@@ -408,27 +402,6 @@ export type VoterStakeRegistry = {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "rewardPool",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
-          ]
-        },
-        {
-          "name": "depositMining",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
-          ]
-        },
-        {
-          "name": "rewardsProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -439,18 +412,6 @@ export type VoterStakeRegistry = {
         {
           "name": "amount",
           "type": "u64"
-        },
-        {
-          "name": "registrarBump",
-          "type": "u8"
-        },
-        {
-          "name": "realmGoverningMintPubkey",
-          "type": "publicKey"
-        },
-        {
-          "name": "realmPubkey",
-          "type": "publicKey"
         }
       ]
     },
@@ -680,7 +641,7 @@ export type VoterStakeRegistry = {
       ]
     },
     {
-      "name": "internalTransferUnlocked",
+      "name": "lockTokens",
       "accounts": [
         {
           "name": "registrar",
@@ -696,6 +657,27 @@ export type VoterStakeRegistry = {
           "name": "voterAuthority",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rewardPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
+          ]
+        },
+        {
+          "name": "depositMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+          ]
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -710,6 +692,14 @@ export type VoterStakeRegistry = {
         {
           "name": "amount",
           "type": "u64"
+        },
+        {
+          "name": "realmGoverningMintPubkey",
+          "type": "publicKey"
+        },
+        {
+          "name": "realmPubkey",
+          "type": "publicKey"
         }
       ]
     },
@@ -1046,9 +1036,19 @@ export type VoterStakeRegistry = {
         "fields": [
           {
             "name": "lockup",
+            "docs": [
+              "Locked state."
+            ],
             "type": {
               "defined": "Lockup"
             }
+          },
+          {
+            "name": "delegate",
+            "docs": [
+              "Delegated staker"
+            ],
+            "type": "publicKey"
           },
           {
             "name": "amountDepositedNative",
@@ -1704,6 +1704,16 @@ export type VoterStakeRegistry = {
       "code": 6042,
       "name": "CpiReturnDataIsAbsent",
       "msg": "Cpi call must return data, but data is absent"
+    },
+    {
+      "code": 6043,
+      "name": "LockingIsForbidded",
+      "msg": "The source for the transfer only can be a deposit on DAO"
+    },
+    {
+      "code": 6044,
+      "name": "DepositEntryIsOld",
+      "msg": "Locking up tokens is only allowed for freshly-deposited deposit entry"
     }
   ]
 };
@@ -2073,12 +2083,6 @@ export const IDL: VoterStakeRegistry = {
           }
         },
         {
-          "name": "startTs",
-          "type": {
-            "option": "u64"
-          }
-        },
-        {
           "name": "period",
           "type": {
             "defined": "LockupPeriod"
@@ -2118,27 +2122,6 @@ export const IDL: VoterStakeRegistry = {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "rewardPool",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
-          ]
-        },
-        {
-          "name": "depositMining",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
-          ]
-        },
-        {
-          "name": "rewardsProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -2149,18 +2132,6 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "amount",
           "type": "u64"
-        },
-        {
-          "name": "registrarBump",
-          "type": "u8"
-        },
-        {
-          "name": "realmGoverningMintPubkey",
-          "type": "publicKey"
-        },
-        {
-          "name": "realmPubkey",
-          "type": "publicKey"
         }
       ]
     },
@@ -2390,7 +2361,7 @@ export const IDL: VoterStakeRegistry = {
       ]
     },
     {
-      "name": "internalTransferUnlocked",
+      "name": "lockTokens",
       "accounts": [
         {
           "name": "registrar",
@@ -2406,6 +2377,27 @@ export const IDL: VoterStakeRegistry = {
           "name": "voterAuthority",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rewardPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
+          ]
+        },
+        {
+          "name": "depositMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+          ]
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -2420,6 +2412,14 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "amount",
           "type": "u64"
+        },
+        {
+          "name": "realmGoverningMintPubkey",
+          "type": "publicKey"
+        },
+        {
+          "name": "realmPubkey",
+          "type": "publicKey"
         }
       ]
     },
@@ -2756,9 +2756,19 @@ export const IDL: VoterStakeRegistry = {
         "fields": [
           {
             "name": "lockup",
+            "docs": [
+              "Locked state."
+            ],
             "type": {
               "defined": "Lockup"
             }
+          },
+          {
+            "name": "delegate",
+            "docs": [
+              "Delegated staker"
+            ],
+            "type": "publicKey"
           },
           {
             "name": "amountDepositedNative",
@@ -3414,6 +3424,16 @@ export const IDL: VoterStakeRegistry = {
       "code": 6042,
       "name": "CpiReturnDataIsAbsent",
       "msg": "Cpi call must return data, but data is absent"
+    },
+    {
+      "code": 6043,
+      "name": "LockingIsForbidded",
+      "msg": "The source for the transfer only can be a deposit on DAO"
+    },
+    {
+      "code": 6044,
+      "name": "DepositEntryIsOld",
+      "msg": "Locking up tokens is only allowed for freshly-deposited deposit entry"
     }
   ]
 };
