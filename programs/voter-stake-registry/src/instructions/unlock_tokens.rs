@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
-use crate::error::*;
-use crate::state::*;
+use mplx_staking_states::error::VsrError;
+use mplx_staking_states::state::Registrar;
+use mplx_staking_states::state::Voter;
+use mplx_staking_states::state::COOLDOWN_SECS;
 
 #[derive(Accounts)]
 pub struct UnlockTokens<'info> {
@@ -35,16 +37,9 @@ pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Res
         VsrError::DepositStillLocked
     );
 
-    deposit_entry.lockup.cooldown_ends_at = if deposit_entry.lockup.period == LockupPeriod::Test {
-        curr_ts
-            .checked_add(60)
-            .ok_or(VsrError::InvalidTimestampArguments)?
-    } else {
-        curr_ts
-            .checked_add(COOLDOWN_SECS)
-            .ok_or(VsrError::InvalidTimestampArguments)?
-    };
-
     deposit_entry.lockup.cooldown_requested = true;
+    deposit_entry.lockup.cooldown_ends_at = curr_ts
+        .checked_add(COOLDOWN_SECS)
+        .ok_or(VsrError::InvalidTimestampArguments)?;
     Ok(())
 }

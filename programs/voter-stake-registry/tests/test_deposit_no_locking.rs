@@ -1,9 +1,9 @@
 use anchor_spl::token::TokenAccount;
+use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
 
 use program_test::*;
-use voter_stake_registry::state::{LockupKind, LockupPeriod};
 
 mod program_test;
 

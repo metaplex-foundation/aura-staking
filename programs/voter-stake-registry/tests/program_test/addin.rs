@@ -3,12 +3,12 @@ use std::rc::Rc;
 
 use anchor_lang::Key;
 
+use mplx_staking_states::state::Voter;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
     instruction::Instruction,
     signature::{Keypair, Signer},
 };
-use voter_stake_registry::state::{LockupPeriod, Voter};
 
 use crate::*;
 

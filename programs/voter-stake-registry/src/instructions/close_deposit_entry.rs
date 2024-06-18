@@ -1,6 +1,8 @@
-use crate::error::*;
-use crate::state::*;
 use anchor_lang::prelude::*;
+use mplx_staking_states::{
+    error::VsrError,
+    state::{DepositEntry, Voter},
+};
 
 #[derive(Accounts)]
 pub struct CloseDepositEntry<'info> {

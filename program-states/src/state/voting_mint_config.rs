@@ -1,6 +1,5 @@
 use crate::error::*;
 use anchor_lang::prelude::*;
-use static_assertions::const_assert;
 use std::convert::TryFrom;
 
 const SCALED_FACTOR_BASE: u64 = 1_000_000_000;

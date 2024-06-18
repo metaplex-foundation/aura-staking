@@ -2,7 +2,6 @@ use crate::error::*;
 use crate::state::voting_mint_config::VotingMintConfig;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
-use static_assertions::const_assert;
 use std::convert::TryInto;
 
 /// Instance of a voting rights distributor.
