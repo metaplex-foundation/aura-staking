@@ -335,8 +335,8 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             voter_authority,
             &mngo_voting_mint,
             0,
-            LockupKind::Constant,
-            LockupPeriod::ThreeMonths,
+            LockupKind::None,
+            LockupPeriod::None,
         )
         .await
         .unwrap();

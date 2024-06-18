@@ -324,7 +324,7 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
         .await?;
     advance_clock_by_ts(
         &mut context.solana.context.borrow_mut(),
-        (SECONDS_PER_DAY * 30) as i64,
+        (SECONDS_PER_DAY * 365) as i64,
     )
     .await;
 
@@ -357,7 +357,8 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
 }
 
 #[tokio::test]
-async fn restake_from_three_months_deposit_with_top_up() -> Result<(), TransportError> {
+async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<(), TransportError>
+{
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -811,7 +812,7 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
-            LockupPeriod::OneYear,
+            LockupPeriod::ThreeMonths,
         )
         .await?;
     context
