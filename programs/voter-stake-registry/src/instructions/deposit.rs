@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
-use mplx_staking_states::error::*;
-use mplx_staking_states::state::*;
+use crate::error::*;
+use crate::state::*;
 
 use crate::cpi_instructions;
 

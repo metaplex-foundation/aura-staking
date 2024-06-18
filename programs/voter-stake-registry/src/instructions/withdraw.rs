@@ -1,8 +1,8 @@
 use crate::cpi_instructions::withdraw_mining;
 use crate::voter::{load_token_owner_record, VoterWeightRecord};
+use crate::{error::*, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
-use mplx_staking_states::{error::*, state::*};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {

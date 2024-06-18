@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
-use mplx_staking_states::error::*;
-use mplx_staking_states::state::*;
+use crate::error::*;
+use crate::state::*;
 use std::mem::size_of;
 
 use crate::cpi_instructions;

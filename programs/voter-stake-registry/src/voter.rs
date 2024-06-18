@@ -1,5 +1,5 @@
+use crate::{error::VsrError, state::registrar::Registrar};
 use anchor_lang::prelude::*;
-use mplx_staking_states::{error::VsrError, state::registrar::Registrar};
 use spl_governance::state::token_owner_record;
 
 use crate::vote_weight_record;

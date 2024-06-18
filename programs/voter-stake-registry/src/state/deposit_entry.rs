@@ -1,6 +1,7 @@
 use crate::state::lockup::{Lockup, LockupKind};
 
 use anchor_lang::prelude::*;
+use static_assertions::const_assert;
 
 /// Bookkeeping for a single deposit for a given mint and lockup schedule.
 #[zero_copy]

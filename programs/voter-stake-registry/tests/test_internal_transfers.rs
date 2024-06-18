@@ -1,9 +1,10 @@
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
 use std::{cell::RefCell, rc::Rc};
+use voter_stake_registry::state::Voter;
+use voter_stake_registry::state::{LockupKind, LockupPeriod};
 
 const DEPOSIT_A: u8 = 0;
 const DEPOSIT_B: u8 = 1;
@@ -27,9 +28,7 @@ async fn get_lockup_data(
     time_offset: i64,
 ) -> LockupData {
     let now = solana.get_clock().await.unix_timestamp + time_offset;
-    let voter = solana
-        .get_account::<mplx_staking_states::state::Voter>(voter)
-        .await;
+    let voter = solana.get_account::<Voter>(voter).await;
     let d = voter.deposits[index as usize];
     let duration = d.lockup.period.to_secs();
     LockupData::new(
