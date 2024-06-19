@@ -106,6 +106,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
 
     let depositer_token_account = context.users[1].token_accounts[0];
 
+    let delegate = Keypair::new();
     context
         .addin
         .create_deposit_entry(
@@ -116,6 +117,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -128,6 +130,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
+            delegate.pubkey(),
         )
         .await?;
 

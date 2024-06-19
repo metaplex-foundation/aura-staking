@@ -156,6 +156,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
         .token_account_balance(reference_account)
         .await;
 
+    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -165,6 +166,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -177,6 +179,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -328,6 +331,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
         )
     };
 
+    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -337,6 +341,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -349,6 +354,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
+            delegate.pubkey(),
         )
         .await
         .unwrap();

@@ -97,6 +97,7 @@ async fn restake_from_flex() -> Result<(), TransportError> {
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
+    let delegate = Keypair::new();
     context
         .addin
         .create_deposit_entry(
@@ -107,6 +108,7 @@ async fn restake_from_flex() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -119,6 +121,7 @@ async fn restake_from_flex() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -271,6 +274,7 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
+    let delegate = Keypair::new();
     context
         .addin
         .create_deposit_entry(
@@ -281,6 +285,7 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -293,6 +298,7 @@ async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -446,6 +452,7 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
+    let delegate = Keypair::new();
     context
         .addin
         .create_deposit_entry(
@@ -456,6 +463,7 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -468,6 +476,7 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -620,6 +629,7 @@ async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
+    let delegate = Keypair::new();
     context
         .addin
         .create_deposit_entry(
@@ -630,6 +640,7 @@ async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -642,6 +653,7 @@ async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -791,6 +803,7 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
     let reference_account = context.users[1].token_accounts[0];
+    let delegate = Keypair::new();
     context
         .addin
         .create_deposit_entry(
@@ -801,6 +814,7 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await?;
     context
@@ -813,6 +827,7 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
+            delegate.pubkey(),
         )
         .await?;
     context

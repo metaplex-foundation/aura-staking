@@ -177,6 +177,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
         .token_account_balance(reference_account)
         .await;
 
+    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -186,6 +187,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -197,6 +199,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     assert_eq!(after_deposit.vault, 15000);
     assert_eq!(after_deposit.deposit, 15000);
 
+    let delegate = Keypair::new();
     // create a separate deposit (index 1)
     addin
         .create_deposit_entry(
@@ -207,6 +210,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             1,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -269,6 +273,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     assert_eq!(voter2_voter_weight, 0);
 
     // now voter2 deposits
+    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -278,6 +283,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             5,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -308,6 +314,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     assert_eq!(voter2_balances.vault, 1000);
 
     // when voter1 deposits again, they can reuse deposit index 0
+    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -317,6 +324,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();

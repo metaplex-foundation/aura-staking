@@ -122,6 +122,7 @@ async fn test_voting() -> Result<(), TransportError> {
         )
         .await;
 
+    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -131,6 +132,7 @@ async fn test_voting() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -176,6 +178,7 @@ async fn test_voting() -> Result<(), TransportError> {
         .await
         .expect_err("could not withdraw");
 
+    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -185,6 +188,7 @@ async fn test_voting() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -201,6 +205,7 @@ async fn test_voting() -> Result<(), TransportError> {
         .await
         .unwrap();
 
+    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -210,6 +215,7 @@ async fn test_voting() -> Result<(), TransportError> {
             1,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await
         .unwrap();
