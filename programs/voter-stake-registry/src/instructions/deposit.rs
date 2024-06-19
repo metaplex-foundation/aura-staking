@@ -67,10 +67,6 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
         let voter = &mut ctx.accounts.voter.load_mut()?;
         let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
         require!(
-            d_entry.amount_deposited_native == 0,
-            VsrError::DepositingIsForbidded
-        );
-        require!(
             d_entry.lockup.kind == LockupKind::None
                 && d_entry.lockup.period == LockupPeriod::None
                 && d_entry.is_used,
