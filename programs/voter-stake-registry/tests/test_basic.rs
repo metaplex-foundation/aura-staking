@@ -105,6 +105,7 @@ async fn test_basic() -> Result<(), TransportError> {
     let balance_initial = voter.deposit_amount(&context.solana, 0).await;
     assert_eq!(balance_initial, 0);
 
+    let delegate = Keypair::new();
     context
         .addin
         .create_deposit_entry(
@@ -115,6 +116,7 @@ async fn test_basic() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
+            delegate.pubkey(),
         )
         .await?;
 
@@ -128,6 +130,7 @@ async fn test_basic() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
+            delegate.pubkey(),
         )
         .await?;
 

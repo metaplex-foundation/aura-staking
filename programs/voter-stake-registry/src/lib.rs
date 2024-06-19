@@ -101,8 +101,9 @@ pub mod voter_stake_registry {
         deposit_entry_index: u8,
         kind: LockupKind,
         period: LockupPeriod,
+        delegate: Pubkey,
     ) -> Result<()> {
-        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period)
+        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period, delegate)
     }
 
     pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {

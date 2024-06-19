@@ -318,6 +318,7 @@ impl AddinCookie {
         deposit_entry_index: u8,
         lockup_kind: LockupKind,
         period: LockupPeriod,
+        delegate: Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
@@ -326,6 +327,7 @@ impl AddinCookie {
                 deposit_entry_index,
                 kind: lockup_kind,
                 period,
+                delegate,
             },
         );
 
