@@ -5,6 +5,8 @@ use mplx_staking_states::error::VsrError;
 use mplx_staking_states::state::{DepositEntry, Lockup, LockupKind, Voter};
 use mplx_staking_states::state::{LockupPeriod, Registrar};
 
+use crate::clock_unix_timestamp;
+
 #[derive(Accounts)]
 pub struct CreateDepositEntry<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
@@ -33,11 +35,9 @@ pub struct CreateDepositEntry<'info> {
     pub payer: Signer<'info>,
 
     pub deposit_mint: Box<Account<'info, Mint>>,
-
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 /// Creates a new deposit entry.
@@ -77,7 +77,7 @@ pub fn create_deposit_entry(
     let d_entry = &mut voter.deposits[deposit_entry_index as usize];
     require!(!d_entry.is_used, VsrError::UnusedDepositEntryIndex);
 
-    let start_ts = registrar.clock_unix_timestamp();
+    let start_ts = clock_unix_timestamp();
     *d_entry = DepositEntry::default();
     d_entry.delegate = delegate;
     d_entry.is_used = true;

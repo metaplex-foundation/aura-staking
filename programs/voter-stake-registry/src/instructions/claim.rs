@@ -40,6 +40,7 @@ pub struct Claim<'info> {
     pub token_program: Program<'info, Token>,
 
     /// CHECK: Rewards Program account
+    #[account(executable)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 

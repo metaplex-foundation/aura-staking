@@ -1,3 +1,4 @@
+use crate::clock_unix_timestamp;
 use crate::events::*;
 
 use anchor_lang::prelude::*;
@@ -27,7 +28,7 @@ pub fn log_voter_info(
 ) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = ctx.accounts.voter.load()?;
-    let curr_ts = registrar.clock_unix_timestamp();
+    let curr_ts = clock_unix_timestamp();
     let deposit_entry_begin = deposit_entry_begin as usize;
     let deposit_entry_count = deposit_entry_count as usize;
 

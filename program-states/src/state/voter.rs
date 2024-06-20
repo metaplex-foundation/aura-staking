@@ -16,8 +16,6 @@ pub struct Voter {
 const_assert!(std::mem::size_of::<Voter>() == 80 * 32 + 32 + 32 + 1 + 1 + 14);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
-pub const VOTER_DISCRIMINATOR: [u8; 8] = [241, 93, 35, 191, 254, 147, 17, 202];
-
 impl Voter {
     /// The full vote weight available to the voter
     pub fn weight(&self) -> Result<u64> {
