@@ -13,9 +13,6 @@ pub const COOLDOWN_SECS: u64 = 86_400 * 5;
 #[zero_copy]
 #[derive(Default)]
 pub struct Lockup {
-    /// Note, that if start_ts is in the future, the funds are nevertheless
-    /// locked up!
-
     /// Start of the lockup.
     pub start_ts: u64,
 

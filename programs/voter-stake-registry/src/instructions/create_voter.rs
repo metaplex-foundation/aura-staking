@@ -61,6 +61,7 @@ pub struct CreateVoter<'info> {
     pub deposit_mining: UncheckedAccount<'info>,
 
     /// CHECK: Rewards program ID
+    #[account(executable)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 
@@ -94,43 +95,39 @@ pub fn create_voter(
         *ctx.bumps.get("voter_weight_record").unwrap()
     );
 
-    {
-        // Load accounts.
-        let registrar = &ctx.accounts.registrar.load()?;
-        let voter_authority = ctx.accounts.voter_authority.key();
+    // Load accounts.
+    let registrar = &ctx.accounts.registrar.load()?;
+    let voter_authority = ctx.accounts.voter_authority.key();
 
-        let voter = &mut ctx.accounts.voter.load_init()?;
-        voter.voter_bump = voter_bump;
-        voter.voter_weight_record_bump = voter_weight_record_bump;
-        voter.voter_authority = voter_authority;
-        voter.registrar = ctx.accounts.registrar.key();
+    let voter = &mut ctx.accounts.voter.load_init()?;
+    voter.voter_bump = voter_bump;
+    voter.voter_weight_record_bump = voter_weight_record_bump;
+    voter.voter_authority = voter_authority;
+    voter.registrar = ctx.accounts.registrar.key();
 
-        let voter_weight_record = &mut ctx.accounts.voter_weight_record;
-        voter_weight_record.account_discriminator =
-            spl_governance_addin_api::voter_weight::VoterWeightRecord::ACCOUNT_DISCRIMINATOR;
-        voter_weight_record.realm = registrar.realm;
-        voter_weight_record.governing_token_mint = registrar.realm_governing_token_mint;
-        voter_weight_record.governing_token_owner = voter_authority;
-    }
+    let voter_weight_record = &mut ctx.accounts.voter_weight_record;
+    voter_weight_record.account_discriminator =
+        spl_governance_addin_api::voter_weight::VoterWeightRecord::ACCOUNT_DISCRIMINATOR;
+    voter_weight_record.realm = registrar.realm;
+    voter_weight_record.governing_token_mint = registrar.realm_governing_token_mint;
+    voter_weight_record.governing_token_owner = voter_authority;
 
-    {
-        // initialize Mining account for Voter
-        let mining = ctx.accounts.deposit_mining.to_account_info();
-        let payer = ctx.accounts.payer.to_account_info();
-        let user = ctx.accounts.voter_authority.key;
-        let system_program = ctx.accounts.system_program.to_account_info();
-        let reward_pool = ctx.accounts.reward_pool.to_account_info();
-        let rewards_program_id = ctx.accounts.rewards_program.to_account_info();
+    // initialize Mining account for Voter
+    let mining = ctx.accounts.deposit_mining.to_account_info();
+    let payer = ctx.accounts.payer.to_account_info();
+    let user = ctx.accounts.voter_authority.key;
+    let system_program = ctx.accounts.system_program.to_account_info();
+    let reward_pool = ctx.accounts.reward_pool.to_account_info();
+    let rewards_program_id = ctx.accounts.rewards_program.to_account_info();
 
-        cpi_instructions::initialize_mining(
-            rewards_program_id,
-            reward_pool,
-            mining,
-            user,
-            payer,
-            system_program,
-        )?;
-    }
+    cpi_instructions::initialize_mining(
+        rewards_program_id,
+        reward_pool,
+        mining,
+        user,
+        payer,
+        system_program,
+    )?;
 
     Ok(())
 }

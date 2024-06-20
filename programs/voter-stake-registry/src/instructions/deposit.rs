@@ -5,6 +5,8 @@ use mplx_staking_states::{
     state::{LockupKind, LockupPeriod, Registrar, Voter},
 };
 
+use crate::clock_unix_timestamp;
+
 #[derive(Accounts)]
 pub struct Deposit<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
@@ -61,34 +63,28 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     }
 
     let registrar = &ctx.accounts.registrar.load()?;
-    let curr_ts = registrar.clock_unix_timestamp();
+    let curr_ts = clock_unix_timestamp();
 
-    {
-        let voter = &mut ctx.accounts.voter.load_mut()?;
-        let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
-        require!(
-            d_entry.lockup.kind == LockupKind::None
-                && d_entry.lockup.period == LockupPeriod::None
-                && d_entry.is_used,
-            VsrError::DepositingIsForbidded,
-        );
+    let voter = &mut ctx.accounts.voter.load_mut()?;
+    let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
+    require!(
+        d_entry.lockup.kind == LockupKind::None
+            && d_entry.lockup.period == LockupPeriod::None
+            && d_entry.is_used,
+        VsrError::DepositingIsForbidded,
+    );
 
-        // Get the exchange rate entry associated with this deposit.
-        let mint_idx = registrar.voting_mint_config_index(ctx.accounts.deposit_token.mint)?;
-        require_eq!(
-            mint_idx,
-            d_entry.voting_mint_config_idx as usize,
-            VsrError::InvalidMint
-        );
+    // Get the exchange rate entry associated with this deposit.
+    let mint_idx = registrar.voting_mint_config_index(ctx.accounts.deposit_token.mint)?;
+    require_eq!(
+        mint_idx,
+        d_entry.voting_mint_config_idx as usize,
+        VsrError::InvalidMint
+    );
 
-        // Deposit tokens into the vault and increase the lockup amount too.
-        token::transfer(ctx.accounts.transfer_ctx(), amount)?;
-        d_entry.amount_deposited_native =
-            d_entry.amount_deposited_native.checked_add(amount).unwrap();
-    }
-
-    let voter = &ctx.accounts.voter.load()?;
-    let d_entry = voter.active_deposit(deposit_entry_index)?;
+    // Deposit tokens into the vault and increase the lockup amount too.
+    token::transfer(ctx.accounts.transfer_ctx(), amount)?;
+    d_entry.amount_deposited_native = d_entry.amount_deposited_native.checked_add(amount).unwrap();
 
     msg!(
         "Deposited amount {} at deposit index {} with lockup kind {:?} with lockup period {:?} and {} seconds left. It's used now: {:?}",

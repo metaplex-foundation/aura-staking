@@ -2,7 +2,6 @@ use crate::error::*;
 use crate::state::voting_mint_config::VotingMintConfig;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
-use std::convert::TryInto;
 
 /// Instance of a voting rights distributor.
 #[account(zero_copy)]
@@ -16,27 +15,14 @@ pub struct Registrar {
     /// Storage for voting mints and their configuration.
     /// The length should be adjusted for one's use case.
     pub voting_mints: [VotingMintConfig; 2],
-
-    /// Debug only: time offset, to allow tests to move forward in time.
-    pub time_offset: i64,
     pub bump: u8,
 }
-const_assert!(std::mem::size_of::<Registrar>() == 7 + 4 * 32 + 2 * 96 + 8 + 1);
+const_assert!(std::mem::size_of::<Registrar>() == 7 + 4 * 32 + 2 * 96 + 1);
 const_assert!(std::mem::size_of::<Registrar>() % 8 == 0);
 
 pub const REGISTRAR_DISCRIMINATOR: [u8; 8] = [193, 202, 205, 51, 78, 168, 150, 128];
 
 impl Registrar {
-    pub fn clock_unix_timestamp(&self) -> u64 {
-        Clock::get()
-            .unwrap()
-            .unix_timestamp
-            .checked_add(self.time_offset)
-            .unwrap()
-            .try_into()
-            .unwrap()
-    }
-
     pub fn voting_mint_config_index(&self, mint: Pubkey) -> Result<usize> {
         self.voting_mints
             .iter()

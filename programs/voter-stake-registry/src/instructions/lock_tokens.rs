@@ -4,6 +4,7 @@ use mplx_staking_states::state::LockupKind;
 use mplx_staking_states::state::Registrar;
 use mplx_staking_states::state::Voter;
 
+use crate::clock_unix_timestamp;
 use crate::cpi_instructions;
 
 #[derive(Accounts)]
@@ -32,6 +33,7 @@ pub struct LockTokens<'info> {
     pub deposit_mining: UncheckedAccount<'info>,
 
     /// CHECK: Rewards Program account
+    #[account(executable)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 
@@ -50,7 +52,7 @@ pub fn lock_tokens(
 ) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
-    let curr_ts = registrar.clock_unix_timestamp();
+    let curr_ts = clock_unix_timestamp();
 
     let source = voter.active_deposit_mut(source_deposit_entry_index)?;
     let source_mint_idx = source.voting_mint_config_idx;

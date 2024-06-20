@@ -8,6 +8,8 @@ use mplx_staking_states::error::VsrError;
 use mplx_staking_states::state::{Registrar, Voter};
 use mplx_staking_states::voter_seeds;
 
+use crate::clock_unix_timestamp;
+
 // Remaining accounts must be all the token token accounts owned by voter, he wants to close,
 // they should be writable so that they can be closed and sol required for rent
 // can then be sent back to the sol_destination
@@ -42,8 +44,7 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
     ctx: Context<'key, 'accounts, 'remaining, 'info, CloseVoter<'info>>,
 ) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
-    let curr_ts = registrar.clock_unix_timestamp();
-
+    let curr_ts = clock_unix_timestamp();
     {
         let voter = ctx.accounts.voter.load()?;
 
@@ -104,9 +105,8 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
         }
     }
 
-    // zero out voter account to prevent reinit attacks
-    // appease rust borrow checker
     {
+        // zero out voter account to prevent reinit attacks
         let mut voter = ctx.accounts.voter.load_mut()?;
         let voter_dereffed = voter.deref_mut();
         let voter_bytes = bytes_of_mut(voter_dereffed);
