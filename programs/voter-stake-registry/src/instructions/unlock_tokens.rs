@@ -23,7 +23,6 @@ pub struct UnlockTokens<'info> {
 }
 
 pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
-    let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
     let curr_ts = clock_unix_timestamp();
 
