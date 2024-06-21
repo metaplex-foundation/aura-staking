@@ -4,6 +4,8 @@ use mplx_staking_states::state::Registrar;
 use mplx_staking_states::state::Voter;
 use mplx_staking_states::state::COOLDOWN_SECS;
 
+use crate::clock_unix_timestamp;
+
 #[derive(Accounts)]
 pub struct UnlockTokens<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
@@ -23,7 +25,7 @@ pub struct UnlockTokens<'info> {
 pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
-    let curr_ts = registrar.clock_unix_timestamp();
+    let curr_ts = clock_unix_timestamp();
 
     let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
 

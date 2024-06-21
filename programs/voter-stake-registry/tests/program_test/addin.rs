@@ -342,7 +342,6 @@ impl AddinCookie {
                 system_program: solana_sdk::system_program::id(),
                 token_program: spl_token::id(),
                 associated_token_program: spl_associated_token_account::id(),
-                rent: solana_program::sysvar::rent::id(),
             },
             None,
         );

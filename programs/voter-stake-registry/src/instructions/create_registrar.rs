@@ -58,6 +58,7 @@ pub struct CreateRegistrar<'info> {
     pub token_program: Program<'info, Token>,
 
     /// CHECK: Rewards Program account
+    #[account(executable)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 
@@ -74,29 +75,26 @@ pub fn create_registrar(
     fill_authority: Pubkey,
     distribution_authority: Pubkey,
 ) -> Result<()> {
-    {
-        let registrar = &mut ctx.accounts.registrar.load_init()?;
-        require_eq!(registrar_bump, *ctx.bumps.get("registrar").unwrap());
-        registrar.bump = registrar_bump;
-        registrar.governance_program_id = ctx.accounts.governance_program_id.key();
-        registrar.realm = ctx.accounts.realm.key();
-        registrar.realm_governing_token_mint = ctx.accounts.realm_governing_token_mint.key();
-        registrar.realm_authority = ctx.accounts.realm_authority.key();
-        registrar.time_offset = 0;
+    let registrar = &mut ctx.accounts.registrar.load_init()?;
+    require_eq!(registrar_bump, *ctx.bumps.get("registrar").unwrap());
+    registrar.bump = registrar_bump;
+    registrar.governance_program_id = ctx.accounts.governance_program_id.key();
+    registrar.realm = ctx.accounts.realm.key();
+    registrar.realm_governing_token_mint = ctx.accounts.realm_governing_token_mint.key();
+    registrar.realm_authority = ctx.accounts.realm_authority.key();
 
-        // Verify that "realm_authority" is the expected authority on "realm"
-        // and that the mint matches one of the realm mints too.
-        let realm = realm::get_realm_data_for_governing_token_mint(
-            &registrar.governance_program_id,
-            &ctx.accounts.realm.to_account_info(),
-            &registrar.realm_governing_token_mint,
-        )?;
-        require_keys_eq!(
-            realm.authority.unwrap(),
-            ctx.accounts.realm_authority.key(),
-            VsrError::InvalidRealmAuthority
-        );
-    }
+    // Verify that "realm_authority" is the expected authority on "realm"
+    // and that the mint matches one of the realm mints too.
+    let realm = realm::get_realm_data_for_governing_token_mint(
+        &registrar.governance_program_id,
+        &ctx.accounts.realm.to_account_info(),
+        &registrar.realm_governing_token_mint,
+    )?;
+    require_keys_eq!(
+        realm.authority.unwrap(),
+        ctx.accounts.realm_authority.key(),
+        VsrError::InvalidRealmAuthority
+    );
 
     // we should initiate the rewards pool to proceed with
     // staking and rewards logic

@@ -1,3 +1,4 @@
+use crate::clock_unix_timestamp;
 use crate::cpi_instructions::withdraw_mining;
 use crate::voter::{load_token_owner_record, VoterWeightRecord};
 use anchor_lang::prelude::*;
@@ -66,6 +67,7 @@ pub struct Withdraw<'info> {
     pub deposit_mining: UncheckedAccount<'info>,
 
     /// CHECK: Rewards Program account
+    #[account(executable)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 
@@ -93,100 +95,99 @@ pub fn withdraw(
     realm_governing_mint_pubkey: Pubkey,
     realm_pubkey: Pubkey,
 ) -> Result<()> {
+    // we need that block to free all references borrowed from registart/voter/etc,
+    // otherwise later, during transfer we would pass references that are already borrowed
     {
-        // Transfer the tokens to withdraw.
-        let voter = &mut ctx.accounts.voter.load()?;
+        let voter = ctx.accounts.voter.load()?;
         let voter_seeds = voter_seeds!(voter);
         token::transfer(
             ctx.accounts.transfer_ctx().with_signer(&[voter_seeds]),
             amount,
         )?;
     }
+
+    // Load the accounts.
+    let registrar = &ctx.accounts.registrar.load()?;
+    let voter = &mut ctx.accounts.voter.load_mut()?;
+
+    // Get the exchange rate for the token being withdrawn.
+    let mint_idx = registrar.voting_mint_config_index(ctx.accounts.destination.mint)?;
+
+    // Governance may forbid withdraws, for example when engaged in a vote.
+    // Not applicable for tokens that don't contribute to voting power.
+    if registrar.voting_mints[mint_idx].grants_vote_weight() {
+        let token_owner_record = load_token_owner_record(
+            &voter.voter_authority,
+            &ctx.accounts.token_owner_record.to_account_info(),
+            registrar,
+        )?;
+        token_owner_record.assert_can_withdraw_governing_tokens()?;
+    }
+
+    // Get the deposit being withdrawn from.
+    let curr_ts = clock_unix_timestamp();
+    let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
+
+    // check whether funds are cooled down
+    if deposit_entry.lockup.kind == LockupKind::Constant {
+        require!(
+            deposit_entry.lockup.cooldown_requested,
+            VsrError::UnlockMustBeCalledFirst
+        );
+        require!(
+            curr_ts >= deposit_entry.lockup.cooldown_ends_at,
+            VsrError::InvalidTimestampArguments
+        );
+    }
+
+    require_gte!(
+        deposit_entry.amount_unlocked(curr_ts),
+        amount,
+        VsrError::InsufficientUnlockedTokens
+    );
+    require_eq!(
+        mint_idx,
+        deposit_entry.voting_mint_config_idx as usize,
+        VsrError::InvalidMint
+    );
+
+    // Bookkeeping for withdrawn funds.
+    require_gte!(
+        deposit_entry.amount_deposited_native,
+        amount,
+        VsrError::InternalProgramError
+    );
+
+    deposit_entry.amount_deposited_native = deposit_entry
+        .amount_deposited_native
+        .checked_sub(amount)
+        .unwrap();
+
+    // if deposit doesn't have tokens after withdrawal
+    // then is shouldn't be used
+    if deposit_entry.amount_deposited_native == 0
+        && deposit_entry.lockup.kind != LockupKind::None
+        && deposit_entry.lockup.period != LockupPeriod::None
     {
-        // Load the accounts.
-        let registrar = &ctx.accounts.registrar.load()?;
-        let voter = &mut ctx.accounts.voter.load_mut()?;
+        *deposit_entry = DepositEntry::default();
+        deposit_entry.is_used = false;
+    }
 
-        // Get the exchange rate for the token being withdrawn.
-        let mint_idx = registrar.voting_mint_config_index(ctx.accounts.destination.mint)?;
+    msg!(
+        "Withdrew amount {} at deposit index {} with lockup kind {:?} and {} seconds left",
+        amount,
+        deposit_entry_index,
+        deposit_entry.lockup.kind,
+        deposit_entry.lockup.seconds_left(curr_ts),
+    );
 
-        // Governance may forbid withdraws, for example when engaged in a vote.
-        // Not applicable for tokens that don't contribute to voting power.
-        if registrar.voting_mints[mint_idx].grants_vote_weight() {
-            let token_owner_record = load_token_owner_record(
-                &voter.voter_authority,
-                &ctx.accounts.token_owner_record.to_account_info(),
-                registrar,
-            )?;
-            token_owner_record.assert_can_withdraw_governing_tokens()?;
-        }
-
-        // Get the deposit being withdrawn from.
-        let curr_ts = registrar.clock_unix_timestamp();
-        let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
-
-        // check whether funds are cooled down
-        if deposit_entry.lockup.kind == LockupKind::Constant {
-            require!(
-                deposit_entry.lockup.cooldown_requested,
-                VsrError::UnlockMustBeCalledFirst
-            );
-            require!(
-                curr_ts >= deposit_entry.lockup.cooldown_ends_at,
-                VsrError::InvalidTimestampArguments
-            );
-        }
-
-        require_gte!(
-            deposit_entry.amount_unlocked(curr_ts),
-            amount,
-            VsrError::InsufficientUnlockedTokens
-        );
-        require_eq!(
-            mint_idx,
-            deposit_entry.voting_mint_config_idx as usize,
-            VsrError::InvalidMint
-        );
-
-        // Bookkeeping for withdrawn funds.
-        require_gte!(
-            deposit_entry.amount_deposited_native,
-            amount,
-            VsrError::InternalProgramError
-        );
-
-        deposit_entry.amount_deposited_native = deposit_entry
-            .amount_deposited_native
-            .checked_sub(amount)
-            .unwrap();
-
-        // if deposit doesn't have tokens after withdrawal
-        // then is shouldn't be used
-        if deposit_entry.amount_deposited_native == 0
-            && deposit_entry.lockup.kind != LockupKind::None
-            && deposit_entry.lockup.period != LockupPeriod::None
-        {
-            *deposit_entry = DepositEntry::default();
-            deposit_entry.is_used = false;
-        }
-
-        msg!(
-            "Withdrew amount {} at deposit index {} with lockup kind {:?} and {} seconds left",
-            amount,
-            deposit_entry_index,
-            deposit_entry.lockup.kind,
-            deposit_entry.lockup.seconds_left(curr_ts),
-        );
-
-        if deposit_entry.lockup.kind == LockupKind::None
-            && deposit_entry.lockup.period == LockupPeriod::None
-        {
-            return Ok(());
-        }
+    if deposit_entry.lockup.kind == LockupKind::None
+        && deposit_entry.lockup.period == LockupPeriod::None
+    {
+        return Ok(());
     }
 
     // Update the voter weight record
-    let voter = &ctx.accounts.voter.load()?;
     let record = &mut ctx.accounts.voter_weight_record;
     record.voter_weight = voter.weight()?;
     record.voter_weight_expiry = Some(Clock::get()?.slot);

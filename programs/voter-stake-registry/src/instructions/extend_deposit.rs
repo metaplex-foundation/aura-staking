@@ -6,6 +6,7 @@ use mplx_staking_states::state::LockupPeriod;
 use mplx_staking_states::state::Registrar;
 use mplx_staking_states::state::Voter;
 
+use crate::clock_unix_timestamp;
 use crate::cpi_instructions::extend_deposit;
 
 #[derive(Accounts)]
@@ -87,7 +88,7 @@ pub fn restake_deposit(
         VsrError::RestakeDepositIsNotAllowed
     );
     let start_ts = d_entry.lockup.start_ts;
-    let curr_ts = registrar.clock_unix_timestamp();
+    let curr_ts = clock_unix_timestamp();
     let amount = d_entry.amount_deposited_native;
     let old_lockup_period = if d_entry.lockup.expired(curr_ts) {
         LockupPeriod::Flex
