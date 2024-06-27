@@ -1,18 +1,10 @@
-pub use claim::*;
-pub use close_deposit_entry::*;
-pub use close_voter::*;
-pub use configure_voting_mint::*;
-pub use create_deposit_entry::*;
-pub use create_registrar::*;
-pub use create_voter::*;
-pub use deposit::*;
-pub use extend_deposit::*;
-pub use lock_tokens::*;
-pub use log_voter_info::*;
 use solana_program::{clock::Clock, sysvar::Sysvar};
-pub use unlock_tokens::*;
-pub use update_voter_weight_record::*;
-pub use withdraw::*;
+pub use {
+    claim::*, close_deposit_entry::*, close_voter::*, configure_voting_mint::*,
+    create_deposit_entry::*, create_registrar::*, create_voter::*, deposit::*, extend_deposit::*,
+    lock_tokens::*, log_voter_info::*, unlock_tokens::*, update_voter_weight_record::*,
+    withdraw::*,
+};
 
 mod claim;
 mod close_deposit_entry;

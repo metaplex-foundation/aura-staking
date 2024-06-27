@@ -1,13 +1,12 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::LockupKind;
-use mplx_staking_states::state::LockupPeriod;
-use mplx_staking_states::state::Registrar;
-use mplx_staking_states::state::Voter;
-
-use crate::clock_unix_timestamp;
-use crate::cpi_instructions::extend_deposit;
+use {
+    crate::{clock_unix_timestamp, cpi_instructions::extend_deposit},
+    anchor_lang::prelude::*,
+    anchor_spl::token::{self, Token, TokenAccount, Transfer},
+    mplx_staking_states::{
+        error::VsrError,
+        state::{LockupKind, LockupPeriod, Registrar, Voter},
+    },
+};
 
 #[derive(Accounts)]
 pub struct RestakeDeposit<'info> {
@@ -43,7 +42,8 @@ pub struct RestakeDeposit<'info> {
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
@@ -65,8 +65,8 @@ impl<'info> RestakeDeposit<'info> {
 
 /// Prolongs the deposit
 ///
-/// The deposit will be restaked with the same lockup period as it was previously in case it's not expired.
-/// If the deposit has expired, it can be restaked with any LockupPeriod.
+/// The deposit will be restaked with the same lockup period as it was previously in case it's not
+/// expired. If the deposit has expired, it can be restaked with any LockupPeriod.
 /// The deposit entry must have been initialized with create_deposit_entry.
 ///
 /// `deposit_entry_index`: Index of the deposit entry.

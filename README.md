@@ -37,6 +37,7 @@ Users can:
 * Run rust based tests - `cargo test-bpf`
 * To install the typescript client, do - `yarn add @blockworks-foundation/voter-stake-registry-client`
 * usage
+* Run `cargo +nightly fmt` before pushing your changes
 
 ## Node/Typescript
 * Built and developed using - node (`v16.13.1`)

@@ -1,13 +1,16 @@
-use anchor_lang::prelude::borsh;
-use anchor_lang::Key;
-use anchor_lang::{prelude::Pubkey, AnchorDeserialize, AnchorSerialize};
-use mplx_staking_states::state::LockupPeriod;
-use solana_program::{
-    account_info::AccountInfo,
-    entrypoint::ProgramResult,
-    instruction::{AccountMeta, Instruction},
-    program::{invoke, invoke_signed},
-    system_program,
+use {
+    anchor_lang::{
+        prelude::{borsh, Pubkey},
+        AnchorDeserialize, AnchorSerialize, Key,
+    },
+    mplx_staking_states::state::LockupPeriod,
+    solana_program::{
+        account_info::AccountInfo,
+        entrypoint::ProgramResult,
+        instruction::{AccountMeta, Instruction},
+        program::{invoke, invoke_signed},
+        system_program,
+    },
 };
 
 pub const REWARD_CONTRACT_ID: Pubkey =

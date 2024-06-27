@@ -1,16 +1,14 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use anchor_lang::Key;
-
-use mplx_staking_states::state::Voter;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::{
-    instruction::Instruction,
-    signature::{Keypair, Signer},
+use {
+    crate::*,
+    anchor_lang::Key,
+    mplx_staking_states::state::Voter,
+    solana_sdk::{
+        instruction::Instruction,
+        pubkey::Pubkey,
+        signature::{Keypair, Signer},
+    },
+    std::{cell::RefCell, rc::Rc},
 };
-
-use crate::*;
 
 #[derive(Clone)]
 pub struct AddinCookie {

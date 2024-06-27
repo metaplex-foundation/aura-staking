@@ -1,8 +1,10 @@
-use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
-use program_test::*;
-use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
+use {
+    anchor_spl::token::TokenAccount,
+    mplx_staking_states::state::{LockupKind, LockupPeriod},
+    program_test::*,
+    solana_program_test::*,
+    solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError},
+};
 mod program_test;
 #[tokio::test]
 async fn test_voting() -> Result<(), TransportError> {
