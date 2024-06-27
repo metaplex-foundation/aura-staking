@@ -192,7 +192,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
 
     context
         .rewards
-        .distribute_rewards(&rewards_pool, reward_mint, &distribution_authority)
+        .distribute_rewards(&rewards_pool, &distribution_authority)
         .await?;
 
     context
