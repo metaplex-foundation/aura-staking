@@ -70,22 +70,10 @@ impl RewardsCookie {
     pub async fn distribute_rewards(
         &self,
         reward_pool: &Pubkey,
-        reward_mint: &Pubkey,
         distribute_authority: &Keypair,
     ) -> std::result::Result<(), BanksClientError> {
-        let (reward_vault, _bump) = Pubkey::find_program_address(
-            &[
-                "vault".as_bytes(),
-                &reward_pool.to_bytes(),
-                &reward_mint.to_bytes(),
-            ],
-            &self.program_id,
-        );
-
         let accounts = vec![
             AccountMeta::new(*reward_pool, false),
-            AccountMeta::new_readonly(*reward_mint, false),
-            AccountMeta::new(reward_vault, false),
             AccountMeta::new_readonly(distribute_authority.pubkey(), true),
         ];
 
