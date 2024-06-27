@@ -1,10 +1,11 @@
-use anchor_lang::prelude::*;
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::Registrar;
-use mplx_staking_states::state::Voter;
-use mplx_staking_states::state::COOLDOWN_SECS;
-
-use crate::clock_unix_timestamp;
+use {
+    crate::clock_unix_timestamp,
+    anchor_lang::prelude::*,
+    mplx_staking_states::{
+        error::VsrError,
+        state::{Registrar, Voter, COOLDOWN_SECS},
+    },
+};
 
 #[derive(Accounts)]
 pub struct UnlockTokens<'info> {

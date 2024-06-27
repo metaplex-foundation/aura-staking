@@ -1,11 +1,12 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount};
-use mplx_staking_states::{
-    error::VsrError,
-    state::{LockupKind, LockupPeriod, Registrar, Voter},
+use {
+    crate::clock_unix_timestamp,
+    anchor_lang::prelude::*,
+    anchor_spl::token::{self, Token, TokenAccount},
+    mplx_staking_states::{
+        error::VsrError,
+        state::{LockupKind, LockupPeriod, Registrar, Voter},
+    },
 };
-
-use crate::clock_unix_timestamp;
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {

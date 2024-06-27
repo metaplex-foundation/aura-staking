@@ -1,7 +1,9 @@
-use anchor_lang::prelude::*;
-use mplx_staking_states::{
-    error::VsrError,
-    state::{DepositEntry, Voter},
+use {
+    anchor_lang::prelude::*,
+    mplx_staking_states::{
+        error::VsrError,
+        state::{DepositEntry, Voter},
+    },
 };
 
 #[derive(Accounts)]

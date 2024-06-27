@@ -1,12 +1,12 @@
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::Registrar;
-use mplx_staking_states::state::Voter;
-use std::mem::size_of;
-
-use crate::cpi_instructions;
-use crate::voter::VoterWeightRecord;
+use {
+    crate::{cpi_instructions, voter::VoterWeightRecord},
+    anchor_lang::{prelude::*, solana_program::sysvar::instructions as tx_instructions},
+    mplx_staking_states::{
+        error::VsrError,
+        state::{Registrar, Voter},
+    },
+    std::mem::size_of,
+};
 
 #[derive(Accounts)]
 pub struct CreateVoter<'info> {
@@ -51,12 +51,14 @@ pub struct CreateVoter<'info> {
     pub instructions: UncheckedAccount<'info>,
 
     /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority], reward_program)
+    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
+    /// reward_program)
     #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 

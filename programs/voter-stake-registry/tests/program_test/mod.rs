@@ -1,23 +1,21 @@
-use log::*;
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::{str::FromStr, sync::Arc, sync::RwLock};
-
-use solana_program::{program_option::COption, program_pack::Pack};
-use solana_program_test::*;
-use solana_sdk::{
-    pubkey::Pubkey,
-    signature::{Keypair, Signer},
+use {
+    self::rewards::RewardsCookie,
+    log::*,
+    solana_program::{program_option::COption, program_pack::Pack},
+    solana_program_test::*,
+    solana_sdk::{
+        pubkey::Pubkey,
+        signature::{Keypair, Signer},
+    },
+    spl_token::{state::*, *},
+    std::{
+        cell::RefCell,
+        rc::Rc,
+        str::FromStr,
+        sync::{Arc, RwLock},
+    },
 };
-use spl_token::{state::*, *};
-
-pub use addin::*;
-pub use cookies::*;
-pub use governance::*;
-pub use solana::*;
-pub use utils::*;
-
-use self::rewards::RewardsCookie;
+pub use {addin::*, cookies::*, governance::*, solana::*, utils::*};
 
 pub mod addin;
 pub mod cookies;

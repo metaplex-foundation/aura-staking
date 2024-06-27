@@ -1,5 +1,4 @@
-use crate::error::*;
-use anchor_lang::prelude::*;
+use {crate::error::*, anchor_lang::prelude::*};
 
 /// Seconds in one day.
 pub const SECS_PER_DAY: u64 = 86_400;

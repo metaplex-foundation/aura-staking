@@ -1,11 +1,15 @@
-use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{Mint, Token, TokenAccount};
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{DepositEntry, Lockup, LockupKind, Voter};
-use mplx_staking_states::state::{LockupPeriod, Registrar};
-
-use crate::clock_unix_timestamp;
+use {
+    crate::clock_unix_timestamp,
+    anchor_lang::prelude::*,
+    anchor_spl::{
+        associated_token::AssociatedToken,
+        token::{Mint, Token, TokenAccount},
+    },
+    mplx_staking_states::{
+        error::VsrError,
+        state::{DepositEntry, Lockup, LockupKind, LockupPeriod, Registrar, Voter},
+    },
+};
 
 #[derive(Accounts)]
 pub struct CreateDepositEntry<'info> {
@@ -47,8 +51,8 @@ pub struct CreateDepositEntry<'info> {
 ///
 /// - `deposit_entry_index`: deposit entry to use
 /// - `kind`: Type of lockup to use.
-/// - `start_ts`: Start timestamp in seconds, defaults to current clock.
-///    The lockup will end after `start + LockupPeriod::to_ts + COOLDOWNS_SECS.
+/// - `start_ts`: Start timestamp in seconds, defaults to current clock. The lockup will end after
+///   `start + LockupPeriod::to_ts + COOLDOWNS_SECS.
 ///
 ///    Note that tokens will already be locked before start_ts, it only defines
 ///    the vesting start time and the anchor for the periods computation.

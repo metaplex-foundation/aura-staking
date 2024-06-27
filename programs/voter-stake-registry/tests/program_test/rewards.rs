@@ -1,20 +1,19 @@
-use std::rc::Rc;
-
-use anchor_lang::prelude::*;
-use anchor_lang::AnchorDeserialize;
-use mplx_staking_states::state::LockupPeriod;
-use solana_program_test::*;
-use solana_sdk::program_pack::IsInitialized;
-use solana_sdk::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-    signature::Keypair,
-    signer::Signer,
-    system_program,
+use {
+    crate::SolanaCookie,
+    anchor_lang::{prelude::*, AnchorDeserialize},
+    mplx_staking_states::state::LockupPeriod,
+    solana_program_test::*,
+    solana_sdk::{
+        instruction::{AccountMeta, Instruction},
+        program_pack::IsInitialized,
+        pubkey::Pubkey,
+        signature::Keypair,
+        signer::Signer,
+        system_program,
+    },
+    std::rc::Rc,
+    voter_stake_registry::cpi_instructions::RewardsInstruction,
 };
-use voter_stake_registry::cpi_instructions::RewardsInstruction;
-
-use crate::SolanaCookie;
 
 pub struct RewardsCookie {
     pub solana: Rc<SolanaCookie>,
