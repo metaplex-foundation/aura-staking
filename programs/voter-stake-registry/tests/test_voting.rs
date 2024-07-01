@@ -55,10 +55,6 @@ async fn test_voting() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            2.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
             None,
             None,
         )
@@ -70,10 +66,6 @@ async fn test_voting() -> Result<(), TransportError> {
             payer,
             1,
             &context.mints[1],
-            0,
-            0.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
             None,
             Some(&[context.mints[0].pubkey.unwrap()]),
         )
@@ -286,7 +278,7 @@ async fn test_voting() -> Result<(), TransportError> {
             &context.rewards.program_id,
         )
         .await
-        .unwrap();
+        .expect_err("could not withdraw");
 
     realm
         .relinquish_vote(

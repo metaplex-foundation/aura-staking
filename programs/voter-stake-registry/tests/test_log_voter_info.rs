@@ -72,10 +72,6 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            1.0,
-            365 * 24 * 60 * 60,
             None,
             None,
         )

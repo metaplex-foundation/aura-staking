@@ -16,8 +16,9 @@ pub struct Registrar {
     /// The length should be adjusted for one's use case.
     pub voting_mints: [VotingMintConfig; 2],
     pub bump: u8,
+    pub padding: [u8; 7],
 }
-const_assert!(std::mem::size_of::<Registrar>() == 7 + 4 * 32 + 2 * 96 + 1);
+const_assert!(std::mem::size_of::<Registrar>() == 4 * 32 + 2 * 64 + 1 + 7);
 const_assert!(std::mem::size_of::<Registrar>() % 8 == 0);
 
 pub const REGISTRAR_DISCRIMINATOR: [u8; 8] = [193, 202, 205, 51, 78, 168, 150, 128];
@@ -43,10 +44,10 @@ impl Registrar {
                     .ok_or_else(|| error!(VsrError::VotingMintNotFound))?;
                 let mint = Account::<Mint>::try_from(mint_account)?;
                 sum = sum
-                    .checked_add(voting_mint_config.baseline_vote_weight(mint.supply)?)
+                    .checked_add(mint.supply)
                     .ok_or_else(|| error!(VsrError::VoterWeightOverflow))?;
                 sum = sum
-                    .checked_add(voting_mint_config.max_extra_lockup_vote_weight(mint.supply)?)
+                    .checked_add(mint.supply)
                     .ok_or_else(|| error!(VsrError::VoterWeightOverflow))?;
                 Ok(sum)
             })

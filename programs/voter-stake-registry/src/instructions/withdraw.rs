@@ -115,14 +115,13 @@ pub fn withdraw(
 
     // Governance may forbid withdraws, for example when engaged in a vote.
     // Not applicable for tokens that don't contribute to voting power.
-    if registrar.voting_mints[mint_idx].grants_vote_weight() {
-        let token_owner_record = load_token_owner_record(
-            &voter.voter_authority,
-            &ctx.accounts.token_owner_record.to_account_info(),
-            registrar,
-        )?;
-        token_owner_record.assert_can_withdraw_governing_tokens()?;
-    }
+    let token_owner_record = load_token_owner_record(
+        &voter.voter_authority,
+        &ctx.accounts.token_owner_record.to_account_info(),
+        registrar,
+    )?;
+    token_owner_record.assert_can_withdraw_governing_tokens()?;
+    
 
     // Get the deposit being withdrawn from.
     let curr_ts = clock_unix_timestamp();

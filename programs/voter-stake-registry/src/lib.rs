@@ -70,19 +70,11 @@ pub mod voter_stake_registry {
     pub fn configure_voting_mint(
         ctx: Context<ConfigureVotingMint>,
         idx: u16,
-        digit_shift: i8,
-        baseline_vote_weight_scaled_factor: u64,
-        max_extra_lockup_vote_weight_scaled_factor: u64,
-        lockup_saturation_secs: u64,
         grant_authority: Option<Pubkey>,
     ) -> Result<()> {
         instructions::configure_voting_mint(
             ctx,
             idx,
-            digit_shift,
-            baseline_vote_weight_scaled_factor,
-            max_extra_lockup_vote_weight_scaled_factor,
-            lockup_saturation_secs,
             grant_authority,
         )
     }

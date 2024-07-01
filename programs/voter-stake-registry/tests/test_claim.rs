@@ -51,10 +51,6 @@ async fn successeful_claim() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            10,
-            0.0,
-            0.0,
-            1,
             None,
             None,
         )
@@ -67,10 +63,6 @@ async fn successeful_claim() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
             None,
             None,
         )

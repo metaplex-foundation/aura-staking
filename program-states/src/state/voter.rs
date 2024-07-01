@@ -1,6 +1,5 @@
 use crate::error::*;
 use crate::state::deposit_entry::DepositEntry;
-use crate::state::registrar::Registrar;
 use anchor_lang::prelude::*;
 
 /// User account for minting voting rights.
@@ -28,15 +27,11 @@ impl Voter {
     }
 
     /// The vote weight available to the voter when ignoring any lockup effects
-    pub fn weight_baseline(&self, registrar: &Registrar) -> Result<u64> {
-        self.deposits
+    pub fn weight_baseline(&self) -> u64 {
+            self.deposits
             .iter()
             .filter(|d| d.is_used)
-            .try_fold(0_u64, |sum, d| {
-                registrar.voting_mints[d.voting_mint_config_idx as usize]
-                    .baseline_vote_weight(d.amount_deposited_native)
-                    .map(|vp| sum.checked_add(vp).unwrap())
-            })
+            .fold(0, |acc, d| acc + d.amount_deposited_native)
     }
 
     /// The extra lockup vote weight that the user is guaranteed to have at `at_ts`, assuming
