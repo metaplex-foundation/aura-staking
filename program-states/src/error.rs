@@ -3,138 +3,87 @@ use anchor_lang::prelude::*;
 #[error_code]
 pub enum VsrError {
     // 6000 / 0x1770
-    #[msg("Exchange rate must be greater than zero")]
-    InvalidRate,
-    // 6001 / 0x1771
-    #[msg("")]
-    RatesFull,
-    // 6002 / 0x1772
     #[msg("")]
     VotingMintNotFound,
-    // 6003 / 0x1773
-    #[msg("")]
-    DepositEntryNotFound,
-    // 6004 / 0x1774
-    #[msg("")]
-    DepositEntryFull,
-    // 6005 / 0x1775
+    // 6001 / 0x1771
     #[msg("")]
     VotingTokenNonZero,
-    // 6006 / 0x1776
+    // 6002 / 0x1772
     #[msg("")]
     OutOfBoundsDepositEntryIndex,
-    // 6007 / 0x1777
+    // 6003 / 0x1773
     #[msg("")]
     UnusedDepositEntryIndex,
-    // 6008 / 0x1778
+    // 6004 / 0x1774
     #[msg("")]
     InsufficientUnlockedTokens,
-    // 6009 / 0x1779
-    #[msg("")]
-    UnableToConvert,
-    // 6010 / 0x177a
+    // 6005 / 0x1775
     #[msg("")]
     InvalidLockupPeriod,
-    // 6011 / 0x177b
-    #[msg("")]
-    InvalidEndTs,
-    // 6012 / 0x177c
-    #[msg("")]
-    InvalidDays,
-    // 6013 / 0x177d
+    // 6006 / 0x1776
     #[msg("")]
     VotingMintConfigIndexAlreadyInUse,
-    // 6014 / 0x177e
+    // 6007 / 0x1777
     #[msg("")]
     OutOfBoundsVotingMintConfigIndex,
-    // 6015 / 0x177f
-    #[msg("Exchange rate decimals cannot be larger than registrar decimals")]
-    InvalidDecimals,
-    // 6016 / 0x1780
-    #[msg("")]
-    InvalidToDepositAndWithdrawInOneSlot,
-    // 6017 / 0x1781
-    #[msg("")]
-    ShouldBeTheFirstIxInATx,
-    // 6018 / 0x1782
+    // 6008 / 0x1778
     #[msg("")]
     ForbiddenCpi,
-    // 6019 / 0x1783
+    // 6009 / 0x1779
     #[msg("")]
     InvalidMint,
-    // 6020 / 0x1784
-    #[msg("")]
-    DebugInstruction,
-    // 6021 / 0x1785
-    #[msg("")]
-    ClawbackNotAllowedOnDeposit,
-    // 6022 / 0x1786
+    // 6010 / 0x177a
     #[msg("")]
     DepositStillLocked,
-    // 6023 / 0x1787
+    // 6011 / 0x177b
     #[msg("")]
     InvalidAuthority,
-    // 6024 / 0x1788
+    // 6012 / 0x177c
     #[msg("")]
     InvalidTokenOwnerRecord,
-    // 6025 / 0x1789
+    // 6013 / 0x177d
     #[msg("")]
     InvalidRealmAuthority,
-    // 6026 / 0x178a
+    // 6014 / 0x177e
     #[msg("")]
     VoterWeightOverflow,
-    // 6027 / 0x178b
+    // 6015 / 0x177f
     #[msg("")]
     LockupSaturationMustBePositive,
-    // 6028 / 0x178c
+    // 6016 / 0x1780
     #[msg("")]
     VotingMintConfiguredWithDifferentIndex,
-    // 6029 / 0x178d
+    // 6017 / 0x1781
     #[msg("")]
     InternalProgramError,
-    // 6030 / 0x178e
-    #[msg("")]
-    InsufficientLockedTokens,
-    // 6031 / 0x178f
-    #[msg("")]
-    MustKeepTokensLocked,
-    // 6032 / 0x1790
+    // 6018 / 0x1782
     #[msg("")]
     InvalidLockupKind,
-    // 6033 / 0x1791
-    #[msg("")]
-    InvalidChangeToClawbackDepositEntry,
-    // 6034 / 0x1792
-    #[msg("")]
-    InternalErrorBadLockupVoteWeight,
-    // 6035 / 0x1793
-    #[msg("")]
-    DepositStartTooFarInFuture,
-    // 6036 / 0x1794
+    // 6019 / 0x1783
     #[msg("")]
     VaultTokenNonZero,
-    // 6037 / 0x1795
+    // 6020 / 0x1784
     #[msg("")]
     InvalidTimestampArguments,
-    // 6038 / 0x1796
+    // 6021 / 0x1785
     #[msg("")]
     UnlockMustBeCalledFirst,
-    // 6039 / 0x1797
+    // 6022 / 0x1786
     #[msg("")]
     UnlockAlreadyRequested,
-    // 6040 / 0x1798
+    // 6023 / 0x1787
     #[msg("")]
     RestakeDepositIsNotAllowed,
-    // 6041 / 0x1799
+    // 6024 / 0x1788
     #[msg("To deposit additional tokens, extend the deposit")]
     DepositingIsForbidded,
-    // 6042 / 0x179a
+    // 6025 / 0x1789
     #[msg("Cpi call must return data, but data is absent")]
     CpiReturnDataIsAbsent,
-    // 6043 / 0x179b
+    // 6026 / 0x178a
     #[msg("The source for the transfer only can be a deposit on DAO")]
     LockingIsForbidded,
-    // 6044 / 0x179c
+    // 6027 / 0x178b
     #[msg("Locking up tokens is only allowed for freshly-deposited deposit entry")]
     DepositEntryIsOld,
 }
