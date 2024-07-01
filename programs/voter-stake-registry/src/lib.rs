@@ -164,8 +164,8 @@ pub mod voter_stake_registry {
         )
     }
 
-    pub fn restake_deposit(
-        ctx: Context<RestakeDeposit>,
+    pub fn extend_stake(
+        ctx: Context<ExtendStake>,
         deposit_entry_index: u8,
         new_lockup_period: LockupPeriod,
         registrar_bump: u8,
@@ -173,7 +173,7 @@ pub mod voter_stake_registry {
         realm_pubkey: Pubkey,
         additional_amount: u64,
     ) -> Result<()> {
-        instructions::restake_deposit(
+        instructions::extend_stake(
             ctx,
             deposit_entry_index,
             new_lockup_period,

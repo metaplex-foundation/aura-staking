@@ -73,7 +73,7 @@ pub enum VsrError {
     UnlockAlreadyRequested,
     // 6023 / 0x1787
     #[msg("")]
-    RestakeDepositIsNotAllowed,
+    ExtendDepositIsNotAllowed,
     // 6024 / 0x1788
     #[msg("To deposit additional tokens, extend the deposit")]
     DepositingIsForbidded,
