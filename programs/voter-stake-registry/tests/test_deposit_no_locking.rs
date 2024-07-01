@@ -153,9 +153,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             reference_account,
             0,
             amount,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
         )
     };
     let deposit = |deposit_id: u8, amount: u64| {

@@ -132,9 +132,6 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             reference_account,
             d_entry_index,
             amount,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
     };
     let deposit = |amount: u64, d_entry_index: u8| {
@@ -214,7 +211,15 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
 
     // request unlock
     addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 1)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
+            1,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await
         .unwrap();
     withdraw(10_000, 1)
@@ -309,9 +314,6 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             reference_account,
             0,
             amount,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
     };
     let deposit = |amount: u64, d_entry_index: u8| {

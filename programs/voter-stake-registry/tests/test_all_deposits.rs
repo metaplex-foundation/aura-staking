@@ -148,7 +148,15 @@ async fn test_all_deposits() -> Result<(), TransportError> {
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 0)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
+            0,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await
         .unwrap();
 
@@ -164,9 +172,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             voter_mngo,
             0,
             1000,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();

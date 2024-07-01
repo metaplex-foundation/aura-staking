@@ -175,7 +175,15 @@ async fn test_basic() -> Result<(), TransportError> {
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 1)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
+            1,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await
         .unwrap();
 
@@ -194,9 +202,6 @@ async fn test_basic() -> Result<(), TransportError> {
             reference_account,
             1,
             10000,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await?;
 
