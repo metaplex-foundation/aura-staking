@@ -63,15 +63,12 @@ impl DepositEntry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::LockupKind::Constant;
-    use crate::state::{LockupPeriod, VotingMintConfig};
+    use crate::state::{LockupKind::Constant, LockupPeriod};
 
     #[test]
     pub fn far_future_lockup_start_test() -> Result<()> {
         // Check that voting power stays correct even if the lockup is very far in the
         // future, or at least more than lockup_saturation_secs in the future.
-        let day: i64 = 86_400;
-        let saturation: i64 = 5 * day;
         let lockup_start = 10_000_000_000; // arbitrary point
         let period = LockupPeriod::Flex;
         let delegate = Pubkey::new_unique();
@@ -91,18 +88,8 @@ mod tests {
             voting_mint_config_idx: 0,
             _reserved1: [0; 6],
         };
-        let voting_mint_config = VotingMintConfig {
-            mint: Pubkey::default(),
-            grant_authority: Pubkey::default(),
-            baseline_vote_weight_scaled_factor: 1_000_000_000, // 1x
-            max_extra_lockup_vote_weight_scaled_factor: 1_000_000_000, // 1x
-            lockup_saturation_secs: saturation as u64,
-            digit_shift: 0,
-            padding: [0; 7],
-        };
 
-        let baseline_vote_weight =
-            voting_mint_config.baseline_vote_weight(deposit.amount_deposited_native)?;
+        let baseline_vote_weight = deposit.amount_deposited_native;
         assert_eq!(baseline_vote_weight, 20_000);
 
         // The timestamp 100_000 is very far before the lockup_start timestamp

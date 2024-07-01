@@ -87,10 +87,6 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            1.0,
-            2 * 24 * 60 * 60,
             None,
             None,
         )
@@ -280,10 +276,6 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            1.0,
-            2 * 24 * 60 * 60,
             None,
             None,
         )
