@@ -402,7 +402,7 @@ impl AddinCookie {
         let vault = voter.vault_address(voting_mint);
 
         let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::RestakeDeposit {
+            &voter_stake_registry::instruction::ExtendStake {
                 deposit_entry_index,
                 new_lockup_period,
                 registrar_bump: registrar.registrar_bump,
@@ -413,7 +413,7 @@ impl AddinCookie {
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::RestakeDeposit {
+            &voter_stake_registry::accounts::ExtendStake {
                 registrar: registrar.address,
                 voter: voter.address,
                 vault,

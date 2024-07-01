@@ -6,7 +6,7 @@ use mplx_staking_states::error::VsrError;
 use mplx_staking_states::state::{LockupKind, LockupPeriod, Registrar, Voter};
 
 #[derive(Accounts)]
-pub struct RestakeDeposit<'info> {
+pub struct ExtendStake<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
 
     // checking the PDA address it just an extra precaution,
@@ -48,7 +48,7 @@ pub struct RestakeDeposit<'info> {
     pub rewards_program: UncheckedAccount<'info>,
 }
 
-impl<'info> RestakeDeposit<'info> {
+impl<'info> ExtendStake<'info> {
     pub fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         let program = self.token_program.to_account_info();
         let accounts = Transfer {
@@ -62,13 +62,13 @@ impl<'info> RestakeDeposit<'info> {
 
 /// Prolongs the deposit
 ///
-/// The deposit will be restaked with the same lockup period as it was previously in case it's not
-/// expired. If the deposit has expired, it can be restaked with any LockupPeriod.
+/// The stake will be extended with the same lockup period as it was previously in case it's not expired.
+/// If the deposit has expired, it can be extended with any LockupPeriod.
 /// The deposit entry must have been initialized with create_deposit_entry.
 ///
 /// `deposit_entry_index`: Index of the deposit entry.
-pub fn restake_deposit(
-    ctx: Context<RestakeDeposit>,
+pub fn extend_stake(
+    ctx: Context<ExtendStake>,
     deposit_entry_index: u8,
     new_lockup_period: LockupPeriod,
     registrar_bump: u8,
@@ -82,7 +82,7 @@ pub fn restake_deposit(
     let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
     require!(
         d_entry.lockup.period != LockupPeriod::None && d_entry.lockup.kind != LockupKind::None,
-        VsrError::RestakeDepositIsNotAllowed
+        VsrError::ExtendDepositIsNotAllowed
     );
     let start_ts = d_entry.lockup.start_ts;
     let curr_ts = clock_unix_timestamp();
@@ -98,7 +98,7 @@ pub fn restake_deposit(
     if old_lockup_period != LockupPeriod::Flex {
         require!(
             new_lockup_period == d_entry.lockup.period,
-            VsrError::RestakeDepositIsNotAllowed
+            VsrError::ExtendDepositIsNotAllowed
         );
     }
 
@@ -151,7 +151,7 @@ pub fn restake_deposit(
         .ok_or(VsrError::InvalidTimestampArguments)?;
 
     msg!(
-        "Restaked deposit with amount {} at deposit index {} with lockup kind {:?} with lockup period {:?} and {} seconds left. It's used now: {:?}",
+        "Stake has been extended with amount {} at deposit index {} with lockup kind {:?} with lockup period {:?} and {} seconds left. It's used now: {:?}",
         amount,
         deposit_entry_index,
         d_entry.lockup.kind,

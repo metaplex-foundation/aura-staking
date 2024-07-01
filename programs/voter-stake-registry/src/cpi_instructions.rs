@@ -103,7 +103,7 @@ pub enum RewardsInstruction {
     /// [R] Token program
     Claim,
 
-    /// Restakes deposit
+    /// Extends stake
     ///
     /// Accounts:
     /// [W] Reward pool account
@@ -111,7 +111,7 @@ pub enum RewardsInstruction {
     /// [R] Mint of rewards account
     /// [R] Mining owner
     /// [RS] Deposit authority
-    RestakeDeposit {
+    ExtendStake {
         /// Lockup period before restaking. Actually it's only needed
         /// for Flex to AnyPeriod edge case
         old_lockup_period: LockupPeriod,
@@ -121,7 +121,7 @@ pub enum RewardsInstruction {
         deposit_start_ts: u64,
         /// Amount of tokens to be restaked, this
         /// number cannot be decreased. It reflects the number of staked tokens
-        /// before the restake function call
+        /// before the extend_stake function call
         base_amount: u64,
         /// In case user wants to increase it's staked number of tokens,
         /// the addition amount might be provided
@@ -257,7 +257,7 @@ pub fn deposit_mining<'a>(
     )
 }
 
-/// Restake deposit
+/// Extend deposit
 #[allow(clippy::too_many_arguments)]
 pub fn extend_deposit<'a>(
     program_id: AccountInfo<'a>,
@@ -280,7 +280,7 @@ pub fn extend_deposit<'a>(
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
-        &RewardsInstruction::RestakeDeposit {
+        &RewardsInstruction::ExtendStake {
             old_lockup_period,
             new_lockup_period,
             deposit_start_ts,

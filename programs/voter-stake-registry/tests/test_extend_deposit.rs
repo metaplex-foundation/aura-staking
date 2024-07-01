@@ -10,7 +10,7 @@ use solana_sdk::transport::TransportError;
 mod program_test;
 
 #[tokio::test]
-async fn restake_from_flex() -> Result<(), TransportError> {
+async fn extend_from_flex() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -179,7 +179,7 @@ async fn restake_from_flex() -> Result<(), TransportError> {
 }
 
 #[tokio::test]
-async fn restake_from_three_months_deposit() -> Result<(), TransportError> {
+async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -518,7 +518,7 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
 }
 
 #[tokio::test]
-async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
+async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -683,7 +683,7 @@ async fn restake_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
 }
 
 #[tokio::test]
-async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
+async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -840,7 +840,7 @@ async fn restake_from_three_month_to_one_year() -> Result<(), TransportError> {
             &context.rewards.program_id,
         )
         .await
-        .expect_err("Impossible to restake from existing deposit (not flex) to another period");
+        .expect_err("Impossible to extend stake from existing stake (not flex) to another period");
 
     Ok(())
 }
