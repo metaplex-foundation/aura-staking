@@ -148,7 +148,15 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 1)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
+            1,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await
         .expect_err("fails because it's too early to unlock is invalid");
     context
@@ -161,9 +169,6 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             reference_account,
             1,
             10000,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await
         .expect_err("fails because it's impossible to withdraw without unlock");
@@ -317,7 +322,15 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
     // unlock is possible
     context
         .addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 1)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
+            1,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await
         .unwrap();
 
@@ -332,9 +345,6 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             reference_account,
             1,
             10000,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await
         .expect_err("fails because cooldown is ongoing");
@@ -486,7 +496,15 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 1)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            voter_authority,
+            1,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await
         .unwrap();
 
@@ -507,9 +525,6 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             reference_account,
             1,
             10000,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();

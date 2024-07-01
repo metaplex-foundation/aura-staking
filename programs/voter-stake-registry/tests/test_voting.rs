@@ -165,9 +165,6 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             1,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
         )
         .await
         .expect_err("could not withdraw");
@@ -256,14 +253,11 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             1,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
         )
         .await
         .expect_err("could not withdraw");
 
-    // but can withdraw USDC
+    // also, can't withdraw USDC
     addin
         .withdraw(
             &registrar,
@@ -273,9 +267,6 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_usdc,
             1,
             1,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
         )
         .await
         .expect_err("could not withdraw");
@@ -301,9 +292,6 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             750,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();

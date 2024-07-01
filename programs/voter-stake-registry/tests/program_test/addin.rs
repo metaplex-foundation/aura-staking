@@ -134,14 +134,13 @@ impl AddinCookie {
         realm_governing_mint_pubkey: Pubkey,
         realm_pubkey: Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Stake {
-                source_deposit_entry_index,
-                target_deposit_entry_index,
-                amount,
-                realm_governing_mint_pubkey,
-                realm_pubkey,
-            });
+        let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Stake {
+            source_deposit_entry_index,
+            target_deposit_entry_index,
+            amount,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
+        });
 
         let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
             &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
@@ -401,16 +400,15 @@ impl AddinCookie {
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::ExtendStake {
+        let data =
+            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::ExtendStake {
                 deposit_entry_index,
                 new_lockup_period,
                 registrar_bump: registrar.registrar_bump,
                 realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
                 realm_pubkey: registrar.realm_pubkey,
                 additional_amount,
-            },
-        );
+            });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &voter_stake_registry::accounts::ExtendStake {
@@ -444,10 +442,16 @@ impl AddinCookie {
         voter: &VoterCookie,
         authority: &Keypair,
         deposit_entry_index: u8,
+        reward_pool: &Pubkey,
+        deposit_mining: &Pubkey,
+        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::UnlockTokens {
                 deposit_entry_index,
+                realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
+                realm_pubkey: registrar.realm_pubkey,
+                registrar_bump: registrar.registrar_bump,
             });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
@@ -455,6 +459,9 @@ impl AddinCookie {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: authority.pubkey(),
+                reward_pool: *reward_pool,
+                deposit_mining: *deposit_mining,
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -480,9 +487,6 @@ impl AddinCookie {
         token_address: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
-        reward_pool: &Pubkey,
-        deposit_mining: &Pubkey,
-        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
@@ -490,9 +494,6 @@ impl AddinCookie {
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Withdraw {
                 deposit_entry_index,
                 amount,
-                realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
-                registrar_bump: registrar.registrar_bump,
-                realm_pubkey: registrar.realm_pubkey,
             });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
@@ -505,9 +506,6 @@ impl AddinCookie {
                 destination: token_address,
                 voter_authority: authority.pubkey(),
                 token_program: spl_token::id(),
-                reward_pool: *reward_pool,
-                deposit_mining: *deposit_mining,
-                rewards_program: *rewards_program,
             },
             None,
         );

@@ -28,7 +28,7 @@ impl Voter {
 
     /// The vote weight available to the voter when ignoring any lockup effects
     pub fn weight_baseline(&self) -> u64 {
-            self.deposits
+        self.deposits
             .iter()
             .filter(|d| d.is_used)
             .fold(0, |acc, d| acc + d.amount_deposited_native)

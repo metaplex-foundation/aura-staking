@@ -72,11 +72,7 @@ pub mod voter_stake_registry {
         idx: u16,
         grant_authority: Option<Pubkey>,
     ) -> Result<()> {
-        instructions::configure_voting_mint(
-            ctx,
-            idx,
-            grant_authority,
-        )
+        instructions::configure_voting_mint(ctx, idx, grant_authority)
     }
 
     pub fn create_voter(
@@ -101,22 +97,8 @@ pub mod voter_stake_registry {
         instructions::deposit(ctx, deposit_entry_index, amount)
     }
 
-    pub fn withdraw(
-        ctx: Context<Withdraw>,
-        deposit_entry_index: u8,
-        amount: u64,
-        registrar_bump: u8,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
-    ) -> Result<()> {
-        instructions::withdraw(
-            ctx,
-            deposit_entry_index,
-            amount,
-            registrar_bump,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
-        )
+    pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+        instructions::withdraw(ctx, deposit_entry_index, amount)
     }
 
     pub fn close_deposit_entry(
@@ -130,8 +112,20 @@ pub mod voter_stake_registry {
         instructions::update_voter_weight_record(ctx)
     }
 
-    pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
-        instructions::unlock_tokens(ctx, deposit_entry_index)
+    pub fn unlock_tokens(
+        ctx: Context<UnlockTokens>,
+        deposit_entry_index: u8,
+        registrar_bump: u8,
+        realm_governing_mint_pubkey: Pubkey,
+        realm_pubkey: Pubkey,
+    ) -> Result<()> {
+        instructions::unlock_tokens(
+            ctx,
+            deposit_entry_index,
+            registrar_bump,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
+        )
     }
 
     pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
