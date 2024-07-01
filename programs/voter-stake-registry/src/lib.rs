@@ -146,15 +146,15 @@ pub mod voter_stake_registry {
         instructions::log_voter_info(ctx, deposit_entry_begin, deposit_entry_count)
     }
 
-    pub fn lock_tokens(
-        ctx: Context<LockTokens>,
+    pub fn stake(
+        ctx: Context<Stake>,
         source_deposit_entry_index: u8,
         target_deposit_entry_index: u8,
         amount: u64,
         realm_governing_mint_pubkey: Pubkey,
         realm_pubkey: Pubkey,
     ) -> Result<()> {
-        instructions::lock_tokens(
+        instructions::stake(
             ctx,
             source_deposit_entry_index,
             target_deposit_entry_index,

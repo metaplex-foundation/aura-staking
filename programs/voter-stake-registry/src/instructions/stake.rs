@@ -4,7 +4,7 @@ use mplx_staking_states::error::VsrError;
 use mplx_staking_states::state::{LockupKind, Registrar, Voter};
 
 #[derive(Accounts)]
-pub struct LockTokens<'info> {
+pub struct Stake<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
 
     // checking the PDA address it just an extra precaution,
@@ -37,11 +37,11 @@ pub struct LockTokens<'info> {
 
 /// Transfers unlocked tokens from the source deposit entry to the target deposit entry.
 ///
-/// Transfers token from one DepositEntry that is not LockupKind::None to another that is
-/// LockupKind::Constant. In terms of business logic that means we want to deposit some tokens on
-/// DAO, then we want to lock them up in order to receice rewards
-pub fn lock_tokens(
-    ctx: Context<LockTokens>,
+/// Transfers token from one DepositEntry that is not LockupKind::None to another that is LockupKind::Constant.
+/// In terms of business logic that means we want to deposit some tokens on DAO,
+/// then we want to lock them up in order to receice rewards
+pub fn stake(
+    ctx: Context<Stake>,
     source_deposit_entry_index: u8,
     target_deposit_entry_index: u8,
     amount: u64,

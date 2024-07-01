@@ -142,7 +142,7 @@ async fn test_basic() -> Result<(), TransportError> {
 
     context
         .addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
             deposit_authority,

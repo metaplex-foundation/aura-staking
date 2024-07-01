@@ -132,7 +132,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
         .await?;
     context
         .addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
             voter_authority,
@@ -293,7 +293,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
         .await?;
     context
         .addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
             voter_authority,
@@ -464,7 +464,7 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         .await?;
     context
         .addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
             voter_authority,
