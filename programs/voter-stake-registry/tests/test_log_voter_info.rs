@@ -137,7 +137,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         .await
         .unwrap();
     addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
             voter_authority,

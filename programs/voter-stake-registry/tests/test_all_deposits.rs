@@ -117,7 +117,7 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             .await
             .unwrap();
         addin
-            .lock_tokens(
+            .stake(
                 &registrar,
                 &voter,
                 voter_authority,

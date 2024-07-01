@@ -184,7 +184,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
         .unwrap();
     deposit(10_000, 0).await.unwrap();
     addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
             voter_authority,
@@ -355,7 +355,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
         .unwrap();
     deposit(10000, 0).await.unwrap();
     addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
             voter_authority,
