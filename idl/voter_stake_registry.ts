@@ -367,6 +367,10 @@ export type VoterStakeRegistry = {
           "type": {
             "defined": "LockupPeriod"
           }
+        },
+        {
+          "name": "delegate",
+          "type": "publicKey"
         }
       ]
     },
@@ -868,7 +872,7 @@ export type VoterStakeRegistry = {
   ],
   "accounts": [
     {
-      "name": "registrar",
+      "name": "Registrar",
       "docs": [
         "Instance of a voting rights distributor."
       ],
@@ -921,7 +925,7 @@ export type VoterStakeRegistry = {
       }
     },
     {
-      "name": "voter",
+      "name": "Voter",
       "docs": [
         "User account for minting voting rights."
       ],
@@ -970,63 +974,6 @@ export type VoterStakeRegistry = {
   ],
   "types": [
     {
-      "name": "VestingInfo",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "rate",
-            "docs": [
-              "Amount of tokens vested each period"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "nextTimestamp",
-            "docs": [
-              "Time of the next upcoming vesting"
-            ],
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockingInfo",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "amount",
-            "docs": [
-              "Amount of locked tokens"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "endTimestamp",
-            "docs": [
-              "Time at which the lockup fully ends (None for Constant lockup)"
-            ],
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "vesting",
-            "docs": [
-              "Information about vesting, if any"
-            ],
-            "type": {
-              "option": {
-                "defined": "VestingInfo"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "DepositEntry",
       "docs": [
         "Bookkeeping for a single deposit for a given mint and lockup schedule."
@@ -1036,9 +983,6 @@ export type VoterStakeRegistry = {
         "fields": [
           {
             "name": "lockup",
-            "docs": [
-              "Locked state."
-            ],
             "type": {
               "defined": "Lockup"
             }
@@ -1147,6 +1091,46 @@ export type VoterStakeRegistry = {
       }
     },
     {
+      "name": "LockupKind",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Constant"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LockupPeriod",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "ThreeMonths"
+          },
+          {
+            "name": "SixMonths"
+          },
+          {
+            "name": "OneYear"
+          },
+          {
+            "name": "Flex"
+          },
+          {
+            "name": "Test"
+          }
+        ]
+      }
+    },
+    {
       "name": "VotingMintConfig",
       "docs": [
         "Exchange rate for an asset that can be used to mint voting rights.",
@@ -1220,235 +1204,64 @@ export type VoterStakeRegistry = {
       }
     },
     {
-      "name": "RewardsInstruction",
+      "name": "LockingInfo",
       "type": {
-        "kind": "enum",
-        "variants": [
+        "kind": "struct",
+        "fields": [
           {
-            "name": "InitializePool",
-            "fields": [
-              {
-                "name": "deposit_authority",
-                "docs": [
-                  "Account responsible for charging mining owners"
-                ],
-                "type": "publicKey"
-              },
-              {
-                "name": "fill_authority",
-                "docs": [
-                  "Account can fill the reward vault"
-                ],
-                "type": "publicKey"
-              },
-              {
-                "name": "distribution_authority",
-                "docs": [
-                  "Account can distribute rewards for stakers"
-                ],
-                "type": "publicKey"
+            "name": "amount",
+            "docs": [
+              "Amount of locked tokens"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "endTimestamp",
+            "docs": [
+              "Time at which the lockup fully ends (None for Constant lockup)"
+            ],
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "vesting",
+            "docs": [
+              "Information about vesting, if any"
+            ],
+            "type": {
+              "option": {
+                "defined": "VestingInfo"
               }
-            ]
-          },
-          {
-            "name": "FillVault",
-            "fields": [
-              {
-                "name": "amount",
-                "docs": [
-                  "Amount to fill"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "distribution_ends_at",
-                "docs": [
-                  "Rewards distribution ends at given date"
-                ],
-                "type": "u64"
-              }
-            ]
-          },
-          {
-            "name": "InitializeMining",
-            "fields": [
-              {
-                "name": "mining_owner",
-                "docs": [
-                  "Represent the end-user, owner of the mining"
-                ],
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "DepositMining",
-            "fields": [
-              {
-                "name": "amount",
-                "docs": [
-                  "Amount to deposit"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "lockup_period",
-                "docs": [
-                  "Lockup Period"
-                ],
-                "type": {
-                  "defined": "LockupPeriod"
-                }
-              },
-              {
-                "name": "owner",
-                "docs": [
-                  "Specifies the owner of the Mining Account"
-                ],
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "WithdrawMining",
-            "fields": [
-              {
-                "name": "amount",
-                "docs": [
-                  "Amount to withdraw"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "owner",
-                "docs": [
-                  "Specifies the owner of the Mining Account"
-                ],
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "Claim"
-          },
-          {
-            "name": "RestakeDeposit",
-            "fields": [
-              {
-                "name": "old_lockup_period",
-                "docs": [
-                  "Lockup period before restaking. Actually it's only needed",
-                  "for Flex to AnyPeriod edge case"
-                ],
-                "type": {
-                  "defined": "LockupPeriod"
-                }
-              },
-              {
-                "name": "new_lockup_period",
-                "docs": [
-                  "Requested lockup period for restaking"
-                ],
-                "type": {
-                  "defined": "LockupPeriod"
-                }
-              },
-              {
-                "name": "deposit_start_ts",
-                "docs": [
-                  "Deposit start_ts"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "base_amount",
-                "docs": [
-                  "Amount of tokens to be restaked, this",
-                  "number cannot be decreased. It reflects the number of staked tokens",
-                  "before the restake function call"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "additional_amount",
-                "docs": [
-                  "In case user wants to increase it's staked number of tokens,",
-                  "the addition amount might be provided"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "mining_owner",
-                "docs": [
-                  "The wallet who owns the mining account"
-                ],
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "DistributeRewards"
+            }
           }
         ]
       }
     },
     {
-      "name": "LockupPeriod",
+      "name": "VestingInfo",
       "type": {
-        "kind": "enum",
-        "variants": [
+        "kind": "struct",
+        "fields": [
           {
-            "name": "None"
+            "name": "rate",
+            "docs": [
+              "Amount of tokens vested each period"
+            ],
+            "type": "u64"
           },
           {
-            "name": "ThreeMonths"
-          },
-          {
-            "name": "SixMonths"
-          },
-          {
-            "name": "OneYear"
-          },
-          {
-            "name": "Flex"
-          },
-          {
-            "name": "Test"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockupKind",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Constant"
+            "name": "nextTimestamp",
+            "docs": [
+              "Time of the next upcoming vesting"
+            ],
+            "type": "u64"
           }
         ]
       }
     }
   ],
   "events": [
-    {
-      "name": "VoterInfo",
-      "fields": [
-        {
-          "name": "votingPower",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "votingPowerBaseline",
-          "type": "u64",
-          "index": false
-        }
-      ]
-    },
     {
       "name": "DepositEntryInfo",
       "fields": [
@@ -1487,231 +1300,161 @@ export type VoterStakeRegistry = {
           "index": false
         }
       ]
+    },
+    {
+      "name": "VoterInfo",
+      "fields": [
+        {
+          "name": "votingPower",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "votingPowerBaseline",
+          "type": "u64",
+          "index": false
+        }
+      ]
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidRate",
-      "msg": "Exchange rate must be greater than zero"
-    },
-    {
-      "code": 6001,
-      "name": "RatesFull",
-      "msg": ""
-    },
-    {
-      "code": 6002,
       "name": "VotingMintNotFound",
       "msg": ""
     },
     {
-      "code": 6003,
-      "name": "DepositEntryNotFound",
-      "msg": ""
-    },
-    {
-      "code": 6004,
-      "name": "DepositEntryFull",
-      "msg": ""
-    },
-    {
-      "code": 6005,
+      "code": 6001,
       "name": "VotingTokenNonZero",
       "msg": ""
     },
     {
-      "code": 6006,
+      "code": 6002,
       "name": "OutOfBoundsDepositEntryIndex",
       "msg": ""
     },
     {
-      "code": 6007,
+      "code": 6003,
       "name": "UnusedDepositEntryIndex",
       "msg": ""
     },
     {
-      "code": 6008,
+      "code": 6004,
       "name": "InsufficientUnlockedTokens",
       "msg": ""
     },
     {
-      "code": 6009,
-      "name": "UnableToConvert",
-      "msg": ""
-    },
-    {
-      "code": 6010,
+      "code": 6005,
       "name": "InvalidLockupPeriod",
       "msg": ""
     },
     {
-      "code": 6011,
-      "name": "InvalidEndTs",
-      "msg": ""
-    },
-    {
-      "code": 6012,
-      "name": "InvalidDays",
-      "msg": ""
-    },
-    {
-      "code": 6013,
+      "code": 6006,
       "name": "VotingMintConfigIndexAlreadyInUse",
       "msg": ""
     },
     {
-      "code": 6014,
+      "code": 6007,
       "name": "OutOfBoundsVotingMintConfigIndex",
       "msg": ""
     },
     {
-      "code": 6015,
-      "name": "InvalidDecimals",
-      "msg": "Exchange rate decimals cannot be larger than registrar decimals"
-    },
-    {
-      "code": 6016,
-      "name": "InvalidToDepositAndWithdrawInOneSlot",
-      "msg": ""
-    },
-    {
-      "code": 6017,
-      "name": "ShouldBeTheFirstIxInATx",
-      "msg": ""
-    },
-    {
-      "code": 6018,
+      "code": 6008,
       "name": "ForbiddenCpi",
       "msg": ""
     },
     {
-      "code": 6019,
+      "code": 6009,
       "name": "InvalidMint",
       "msg": ""
     },
     {
-      "code": 6020,
-      "name": "DebugInstruction",
-      "msg": ""
-    },
-    {
-      "code": 6021,
-      "name": "ClawbackNotAllowedOnDeposit",
-      "msg": ""
-    },
-    {
-      "code": 6022,
+      "code": 6010,
       "name": "DepositStillLocked",
       "msg": ""
     },
     {
-      "code": 6023,
+      "code": 6011,
       "name": "InvalidAuthority",
       "msg": ""
     },
     {
-      "code": 6024,
+      "code": 6012,
       "name": "InvalidTokenOwnerRecord",
       "msg": ""
     },
     {
-      "code": 6025,
+      "code": 6013,
       "name": "InvalidRealmAuthority",
       "msg": ""
     },
     {
-      "code": 6026,
+      "code": 6014,
       "name": "VoterWeightOverflow",
       "msg": ""
     },
     {
-      "code": 6027,
+      "code": 6015,
       "name": "LockupSaturationMustBePositive",
       "msg": ""
     },
     {
-      "code": 6028,
+      "code": 6016,
       "name": "VotingMintConfiguredWithDifferentIndex",
       "msg": ""
     },
     {
-      "code": 6029,
+      "code": 6017,
       "name": "InternalProgramError",
       "msg": ""
     },
     {
-      "code": 6030,
-      "name": "InsufficientLockedTokens",
-      "msg": ""
-    },
-    {
-      "code": 6031,
-      "name": "MustKeepTokensLocked",
-      "msg": ""
-    },
-    {
-      "code": 6032,
+      "code": 6018,
       "name": "InvalidLockupKind",
       "msg": ""
     },
     {
-      "code": 6033,
-      "name": "InvalidChangeToClawbackDepositEntry",
-      "msg": ""
-    },
-    {
-      "code": 6034,
-      "name": "InternalErrorBadLockupVoteWeight",
-      "msg": ""
-    },
-    {
-      "code": 6035,
-      "name": "DepositStartTooFarInFuture",
-      "msg": ""
-    },
-    {
-      "code": 6036,
+      "code": 6019,
       "name": "VaultTokenNonZero",
       "msg": ""
     },
     {
-      "code": 6037,
+      "code": 6020,
       "name": "InvalidTimestampArguments",
       "msg": ""
     },
     {
-      "code": 6038,
+      "code": 6021,
       "name": "UnlockMustBeCalledFirst",
       "msg": ""
     },
     {
-      "code": 6039,
+      "code": 6022,
       "name": "UnlockAlreadyRequested",
       "msg": ""
     },
     {
-      "code": 6040,
+      "code": 6023,
       "name": "RestakeDepositIsNotAllowed",
       "msg": ""
     },
     {
-      "code": 6041,
+      "code": 6024,
       "name": "DepositingIsForbidded",
       "msg": "To deposit additional tokens, extend the deposit"
     },
     {
-      "code": 6042,
+      "code": 6025,
       "name": "CpiReturnDataIsAbsent",
       "msg": "Cpi call must return data, but data is absent"
     },
     {
-      "code": 6043,
+      "code": 6026,
       "name": "LockingIsForbidded",
       "msg": "The source for the transfer only can be a deposit on DAO"
     },
     {
-      "code": 6044,
+      "code": 6027,
       "name": "DepositEntryIsOld",
       "msg": "Locking up tokens is only allowed for freshly-deposited deposit entry"
     }
@@ -2087,6 +1830,10 @@ export const IDL: VoterStakeRegistry = {
           "type": {
             "defined": "LockupPeriod"
           }
+        },
+        {
+          "name": "delegate",
+          "type": "publicKey"
         }
       ]
     },
@@ -2588,7 +2335,7 @@ export const IDL: VoterStakeRegistry = {
   ],
   "accounts": [
     {
-      "name": "registrar",
+      "name": "Registrar",
       "docs": [
         "Instance of a voting rights distributor."
       ],
@@ -2641,7 +2388,7 @@ export const IDL: VoterStakeRegistry = {
       }
     },
     {
-      "name": "voter",
+      "name": "Voter",
       "docs": [
         "User account for minting voting rights."
       ],
@@ -2690,63 +2437,6 @@ export const IDL: VoterStakeRegistry = {
   ],
   "types": [
     {
-      "name": "VestingInfo",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "rate",
-            "docs": [
-              "Amount of tokens vested each period"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "nextTimestamp",
-            "docs": [
-              "Time of the next upcoming vesting"
-            ],
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockingInfo",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "amount",
-            "docs": [
-              "Amount of locked tokens"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "endTimestamp",
-            "docs": [
-              "Time at which the lockup fully ends (None for Constant lockup)"
-            ],
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "vesting",
-            "docs": [
-              "Information about vesting, if any"
-            ],
-            "type": {
-              "option": {
-                "defined": "VestingInfo"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "DepositEntry",
       "docs": [
         "Bookkeeping for a single deposit for a given mint and lockup schedule."
@@ -2756,9 +2446,6 @@ export const IDL: VoterStakeRegistry = {
         "fields": [
           {
             "name": "lockup",
-            "docs": [
-              "Locked state."
-            ],
             "type": {
               "defined": "Lockup"
             }
@@ -2867,6 +2554,46 @@ export const IDL: VoterStakeRegistry = {
       }
     },
     {
+      "name": "LockupKind",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Constant"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LockupPeriod",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "ThreeMonths"
+          },
+          {
+            "name": "SixMonths"
+          },
+          {
+            "name": "OneYear"
+          },
+          {
+            "name": "Flex"
+          },
+          {
+            "name": "Test"
+          }
+        ]
+      }
+    },
+    {
       "name": "VotingMintConfig",
       "docs": [
         "Exchange rate for an asset that can be used to mint voting rights.",
@@ -2940,235 +2667,64 @@ export const IDL: VoterStakeRegistry = {
       }
     },
     {
-      "name": "RewardsInstruction",
+      "name": "LockingInfo",
       "type": {
-        "kind": "enum",
-        "variants": [
+        "kind": "struct",
+        "fields": [
           {
-            "name": "InitializePool",
-            "fields": [
-              {
-                "name": "deposit_authority",
-                "docs": [
-                  "Account responsible for charging mining owners"
-                ],
-                "type": "publicKey"
-              },
-              {
-                "name": "fill_authority",
-                "docs": [
-                  "Account can fill the reward vault"
-                ],
-                "type": "publicKey"
-              },
-              {
-                "name": "distribution_authority",
-                "docs": [
-                  "Account can distribute rewards for stakers"
-                ],
-                "type": "publicKey"
+            "name": "amount",
+            "docs": [
+              "Amount of locked tokens"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "endTimestamp",
+            "docs": [
+              "Time at which the lockup fully ends (None for Constant lockup)"
+            ],
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "vesting",
+            "docs": [
+              "Information about vesting, if any"
+            ],
+            "type": {
+              "option": {
+                "defined": "VestingInfo"
               }
-            ]
-          },
-          {
-            "name": "FillVault",
-            "fields": [
-              {
-                "name": "amount",
-                "docs": [
-                  "Amount to fill"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "distribution_ends_at",
-                "docs": [
-                  "Rewards distribution ends at given date"
-                ],
-                "type": "u64"
-              }
-            ]
-          },
-          {
-            "name": "InitializeMining",
-            "fields": [
-              {
-                "name": "mining_owner",
-                "docs": [
-                  "Represent the end-user, owner of the mining"
-                ],
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "DepositMining",
-            "fields": [
-              {
-                "name": "amount",
-                "docs": [
-                  "Amount to deposit"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "lockup_period",
-                "docs": [
-                  "Lockup Period"
-                ],
-                "type": {
-                  "defined": "LockupPeriod"
-                }
-              },
-              {
-                "name": "owner",
-                "docs": [
-                  "Specifies the owner of the Mining Account"
-                ],
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "WithdrawMining",
-            "fields": [
-              {
-                "name": "amount",
-                "docs": [
-                  "Amount to withdraw"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "owner",
-                "docs": [
-                  "Specifies the owner of the Mining Account"
-                ],
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "Claim"
-          },
-          {
-            "name": "RestakeDeposit",
-            "fields": [
-              {
-                "name": "old_lockup_period",
-                "docs": [
-                  "Lockup period before restaking. Actually it's only needed",
-                  "for Flex to AnyPeriod edge case"
-                ],
-                "type": {
-                  "defined": "LockupPeriod"
-                }
-              },
-              {
-                "name": "new_lockup_period",
-                "docs": [
-                  "Requested lockup period for restaking"
-                ],
-                "type": {
-                  "defined": "LockupPeriod"
-                }
-              },
-              {
-                "name": "deposit_start_ts",
-                "docs": [
-                  "Deposit start_ts"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "base_amount",
-                "docs": [
-                  "Amount of tokens to be restaked, this",
-                  "number cannot be decreased. It reflects the number of staked tokens",
-                  "before the restake function call"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "additional_amount",
-                "docs": [
-                  "In case user wants to increase it's staked number of tokens,",
-                  "the addition amount might be provided"
-                ],
-                "type": "u64"
-              },
-              {
-                "name": "mining_owner",
-                "docs": [
-                  "The wallet who owns the mining account"
-                ],
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "DistributeRewards"
+            }
           }
         ]
       }
     },
     {
-      "name": "LockupPeriod",
+      "name": "VestingInfo",
       "type": {
-        "kind": "enum",
-        "variants": [
+        "kind": "struct",
+        "fields": [
           {
-            "name": "None"
+            "name": "rate",
+            "docs": [
+              "Amount of tokens vested each period"
+            ],
+            "type": "u64"
           },
           {
-            "name": "ThreeMonths"
-          },
-          {
-            "name": "SixMonths"
-          },
-          {
-            "name": "OneYear"
-          },
-          {
-            "name": "Flex"
-          },
-          {
-            "name": "Test"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockupKind",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Constant"
+            "name": "nextTimestamp",
+            "docs": [
+              "Time of the next upcoming vesting"
+            ],
+            "type": "u64"
           }
         ]
       }
     }
   ],
   "events": [
-    {
-      "name": "VoterInfo",
-      "fields": [
-        {
-          "name": "votingPower",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "votingPowerBaseline",
-          "type": "u64",
-          "index": false
-        }
-      ]
-    },
     {
       "name": "DepositEntryInfo",
       "fields": [
@@ -3207,231 +2763,161 @@ export const IDL: VoterStakeRegistry = {
           "index": false
         }
       ]
+    },
+    {
+      "name": "VoterInfo",
+      "fields": [
+        {
+          "name": "votingPower",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "votingPowerBaseline",
+          "type": "u64",
+          "index": false
+        }
+      ]
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidRate",
-      "msg": "Exchange rate must be greater than zero"
-    },
-    {
-      "code": 6001,
-      "name": "RatesFull",
-      "msg": ""
-    },
-    {
-      "code": 6002,
       "name": "VotingMintNotFound",
       "msg": ""
     },
     {
-      "code": 6003,
-      "name": "DepositEntryNotFound",
-      "msg": ""
-    },
-    {
-      "code": 6004,
-      "name": "DepositEntryFull",
-      "msg": ""
-    },
-    {
-      "code": 6005,
+      "code": 6001,
       "name": "VotingTokenNonZero",
       "msg": ""
     },
     {
-      "code": 6006,
+      "code": 6002,
       "name": "OutOfBoundsDepositEntryIndex",
       "msg": ""
     },
     {
-      "code": 6007,
+      "code": 6003,
       "name": "UnusedDepositEntryIndex",
       "msg": ""
     },
     {
-      "code": 6008,
+      "code": 6004,
       "name": "InsufficientUnlockedTokens",
       "msg": ""
     },
     {
-      "code": 6009,
-      "name": "UnableToConvert",
-      "msg": ""
-    },
-    {
-      "code": 6010,
+      "code": 6005,
       "name": "InvalidLockupPeriod",
       "msg": ""
     },
     {
-      "code": 6011,
-      "name": "InvalidEndTs",
-      "msg": ""
-    },
-    {
-      "code": 6012,
-      "name": "InvalidDays",
-      "msg": ""
-    },
-    {
-      "code": 6013,
+      "code": 6006,
       "name": "VotingMintConfigIndexAlreadyInUse",
       "msg": ""
     },
     {
-      "code": 6014,
+      "code": 6007,
       "name": "OutOfBoundsVotingMintConfigIndex",
       "msg": ""
     },
     {
-      "code": 6015,
-      "name": "InvalidDecimals",
-      "msg": "Exchange rate decimals cannot be larger than registrar decimals"
-    },
-    {
-      "code": 6016,
-      "name": "InvalidToDepositAndWithdrawInOneSlot",
-      "msg": ""
-    },
-    {
-      "code": 6017,
-      "name": "ShouldBeTheFirstIxInATx",
-      "msg": ""
-    },
-    {
-      "code": 6018,
+      "code": 6008,
       "name": "ForbiddenCpi",
       "msg": ""
     },
     {
-      "code": 6019,
+      "code": 6009,
       "name": "InvalidMint",
       "msg": ""
     },
     {
-      "code": 6020,
-      "name": "DebugInstruction",
-      "msg": ""
-    },
-    {
-      "code": 6021,
-      "name": "ClawbackNotAllowedOnDeposit",
-      "msg": ""
-    },
-    {
-      "code": 6022,
+      "code": 6010,
       "name": "DepositStillLocked",
       "msg": ""
     },
     {
-      "code": 6023,
+      "code": 6011,
       "name": "InvalidAuthority",
       "msg": ""
     },
     {
-      "code": 6024,
+      "code": 6012,
       "name": "InvalidTokenOwnerRecord",
       "msg": ""
     },
     {
-      "code": 6025,
+      "code": 6013,
       "name": "InvalidRealmAuthority",
       "msg": ""
     },
     {
-      "code": 6026,
+      "code": 6014,
       "name": "VoterWeightOverflow",
       "msg": ""
     },
     {
-      "code": 6027,
+      "code": 6015,
       "name": "LockupSaturationMustBePositive",
       "msg": ""
     },
     {
-      "code": 6028,
+      "code": 6016,
       "name": "VotingMintConfiguredWithDifferentIndex",
       "msg": ""
     },
     {
-      "code": 6029,
+      "code": 6017,
       "name": "InternalProgramError",
       "msg": ""
     },
     {
-      "code": 6030,
-      "name": "InsufficientLockedTokens",
-      "msg": ""
-    },
-    {
-      "code": 6031,
-      "name": "MustKeepTokensLocked",
-      "msg": ""
-    },
-    {
-      "code": 6032,
+      "code": 6018,
       "name": "InvalidLockupKind",
       "msg": ""
     },
     {
-      "code": 6033,
-      "name": "InvalidChangeToClawbackDepositEntry",
-      "msg": ""
-    },
-    {
-      "code": 6034,
-      "name": "InternalErrorBadLockupVoteWeight",
-      "msg": ""
-    },
-    {
-      "code": 6035,
-      "name": "DepositStartTooFarInFuture",
-      "msg": ""
-    },
-    {
-      "code": 6036,
+      "code": 6019,
       "name": "VaultTokenNonZero",
       "msg": ""
     },
     {
-      "code": 6037,
+      "code": 6020,
       "name": "InvalidTimestampArguments",
       "msg": ""
     },
     {
-      "code": 6038,
+      "code": 6021,
       "name": "UnlockMustBeCalledFirst",
       "msg": ""
     },
     {
-      "code": 6039,
+      "code": 6022,
       "name": "UnlockAlreadyRequested",
       "msg": ""
     },
     {
-      "code": 6040,
+      "code": 6023,
       "name": "RestakeDepositIsNotAllowed",
       "msg": ""
     },
     {
-      "code": 6041,
+      "code": 6024,
       "name": "DepositingIsForbidded",
       "msg": "To deposit additional tokens, extend the deposit"
     },
     {
-      "code": 6042,
+      "code": 6025,
       "name": "CpiReturnDataIsAbsent",
       "msg": "Cpi call must return data, but data is absent"
     },
     {
-      "code": 6043,
+      "code": 6026,
       "name": "LockingIsForbidded",
       "msg": "The source for the transfer only can be a deposit on DAO"
     },
     {
-      "code": 6044,
+      "code": 6027,
       "name": "DepositEntryIsOld",
       "msg": "Locking up tokens is only allowed for freshly-deposited deposit entry"
     }
