@@ -449,9 +449,6 @@ impl AddinCookie {
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::UnlockTokens {
                 deposit_entry_index,
-                realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
-                realm_pubkey: registrar.realm_pubkey,
-                registrar_bump: registrar.registrar_bump,
             });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(

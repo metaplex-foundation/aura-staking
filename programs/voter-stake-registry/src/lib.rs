@@ -112,20 +112,8 @@ pub mod voter_stake_registry {
         instructions::update_voter_weight_record(ctx)
     }
 
-    pub fn unlock_tokens(
-        ctx: Context<UnlockTokens>,
-        deposit_entry_index: u8,
-        registrar_bump: u8,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
-    ) -> Result<()> {
-        instructions::unlock_tokens(
-            ctx,
-            deposit_entry_index,
-            registrar_bump,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
-        )
+    pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
+        instructions::unlock_tokens(ctx, deposit_entry_index)
     }
 
     pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
