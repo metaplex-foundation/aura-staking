@@ -146,7 +146,6 @@ async fn test_basic() -> Result<(), TransportError> {
             &registrar,
             &voter,
             deposit_authority,
-            &deposit_mining,
             &context.rewards.program_id,
             0,
             1,
@@ -224,7 +223,13 @@ async fn test_basic() -> Result<(), TransportError> {
         .await?;
     context
         .addin
-        .close_voter(&registrar, &voter, &mngo_voting_mint, voter_authority)
+        .close_voter(
+            &registrar,
+            &voter,
+            &mngo_voting_mint,
+            voter_authority,
+            &context.rewards.program_id,
+        )
         .await?;
     let lamports_after = context
         .solana

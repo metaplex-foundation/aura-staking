@@ -125,7 +125,6 @@ impl AddinCookie {
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
         voter_authority: &Keypair,
-        deposit_mining: &Pubkey,
         rewards_program: &Pubkey,
         // params
         source_deposit_entry_index: u8,
@@ -143,13 +142,16 @@ impl AddinCookie {
             rewards_program,
         );
 
+        let deposit_mining =
+            find_deposit_mining_addr(&voter_authority.pubkey(), &reward_pool, rewards_program);
+
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &voter_stake_registry::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter_authority.pubkey(),
                 reward_pool,
-                deposit_mining: *deposit_mining,
+                deposit_mining,
                 rewards_program: *rewards_program,
             },
             None,
@@ -520,8 +522,17 @@ impl AddinCookie {
         voter: &VoterCookie,
         voting_mint: &VotingMintConfigCookie,
         voter_authority: &Keypair,
+        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
+
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+            rewards_program,
+        );
+
+        let deposit_mining =
+            find_deposit_mining_addr(&voter_authority.pubkey(), &reward_pool, rewards_program);
 
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::CloseVoter {});
@@ -531,8 +542,11 @@ impl AddinCookie {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter_authority.pubkey(),
+                deposit_mining,
+                reward_pool,
                 sol_destination: voter_authority.pubkey(),
                 token_program: spl_token::id(),
+                rewards_program: *rewards_program,
             },
             None,
         );
