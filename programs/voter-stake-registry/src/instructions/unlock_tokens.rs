@@ -35,13 +35,7 @@ pub struct UnlockTokens<'info> {
     pub rewards_program: UncheckedAccount<'info>,
 }
 
-pub fn unlock_tokens(
-    ctx: Context<UnlockTokens>,
-    deposit_entry_index: u8,
-    registrar_bump: u8,
-    realm_governing_mint_pubkey: Pubkey,
-    realm_pubkey: Pubkey,
-) -> Result<()> {
+pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
     let voter = &mut ctx.accounts.voter.load_mut()?;
     let curr_ts = clock_unix_timestamp();
 
@@ -65,14 +59,17 @@ pub fn unlock_tokens(
     let rewards_program = &ctx.accounts.rewards_program;
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
-    let pool_deposit_authority = &ctx.accounts.registrar;
+
     let owner = &ctx.accounts.voter_authority;
+    let registrar = &ctx.accounts.registrar.load()?;
+    let realm_pubkey = registrar.realm;
     let signers_seeds = &[
-        &realm_pubkey.key().to_bytes(),
+        registrar.realm.as_ref(),
         b"registrar".as_ref(),
-        &realm_governing_mint_pubkey.key().to_bytes(),
-        &[registrar_bump][..],
+        &registrar.realm_governing_token_mint.as_ref(),
+        &[registrar.bump][..],
     ];
+    let pool_deposit_authority = &ctx.accounts.registrar;
 
     withdraw_mining(
         rewards_program.to_account_info(),
