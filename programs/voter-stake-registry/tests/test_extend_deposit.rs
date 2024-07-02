@@ -763,7 +763,6 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
-    let reference_account = context.users[1].token_accounts[0];
     let delegate = Keypair::new();
     context
         .addin

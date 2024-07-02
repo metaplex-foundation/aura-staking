@@ -62,7 +62,6 @@ pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Res
 
     let owner = &ctx.accounts.voter_authority;
     let registrar = &ctx.accounts.registrar.load()?;
-    let realm_pubkey = registrar.realm;
     let signers_seeds = &[
         registrar.realm.as_ref(),
         b"registrar".as_ref(),
