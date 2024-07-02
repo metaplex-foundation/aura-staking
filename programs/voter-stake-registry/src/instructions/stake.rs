@@ -45,8 +45,6 @@ pub fn stake(
     source_deposit_entry_index: u8,
     target_deposit_entry_index: u8,
     amount: u64,
-    realm_governing_mint_pubkey: Pubkey,
-    realm_pubkey: Pubkey,
 ) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
@@ -87,9 +85,9 @@ pub fn stake(
     let mining = &ctx.accounts.deposit_mining;
     let pool_deposit_authority = &ctx.accounts.registrar.to_account_info();
     let signers_seeds = &[
-        &realm_pubkey.key().to_bytes(),
+        &registrar.realm.key().to_bytes(),
         b"registrar".as_ref(),
-        &realm_governing_mint_pubkey.key().to_bytes(),
+        &registrar.realm_governing_token_mint.key().to_bytes(),
         &[registrar.bump][..],
     ];
     let owner = &ctx.accounts.voter_authority.key();

@@ -146,8 +146,6 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             0,
             1,
             12000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
 

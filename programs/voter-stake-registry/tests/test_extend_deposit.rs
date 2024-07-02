@@ -140,8 +140,6 @@ async fn extend_from_flex() -> Result<(), TransportError> {
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
@@ -309,8 +307,6 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
@@ -479,8 +475,6 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
@@ -648,8 +642,6 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
     advance_clock_by_ts(
@@ -813,8 +805,6 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
     advance_clock_by_ts(

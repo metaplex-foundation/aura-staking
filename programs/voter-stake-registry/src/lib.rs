@@ -133,16 +133,12 @@ pub mod voter_stake_registry {
         source_deposit_entry_index: u8,
         target_deposit_entry_index: u8,
         amount: u64,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
     ) -> Result<()> {
         instructions::stake(
             ctx,
             source_deposit_entry_index,
             target_deposit_entry_index,
             amount,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
         )
     }
 

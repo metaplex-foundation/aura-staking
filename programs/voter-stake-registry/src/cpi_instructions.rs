@@ -138,6 +138,8 @@ pub enum RewardsInstruction {
     /// [W] Vault for rewards account
     /// [RS] Distribute rewards authority
     DistributeRewards,
+
+    CloseMining,
 }
 
 /// This function initializes pool. Some sort of a "root"
@@ -373,6 +375,35 @@ pub fn claim<'a>(
             token_program,
             program_id,
         ],
+        &[signers_seeds],
+    )
+}
+
+/// Rewards deposit mining
+#[allow(clippy::too_many_arguments)]
+pub fn close_mining<'a>(
+    program_id: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    mining_owner: AccountInfo<'a>,
+    target_account: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new(mining.key(), false),
+        AccountMeta::new_readonly(mining_owner.key(), true),
+        AccountMeta::new(target_account.key(), false),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(reward_pool.key(), false),
+    ];
+
+    let ix =
+        Instruction::new_with_borsh(program_id.key(), &RewardsInstruction::CloseMining, accounts);
+
+    invoke_signed(
+        &ix,
+        &[reward_pool, mining, deposit_authority, program_id],
         &[signers_seeds],
     )
 }

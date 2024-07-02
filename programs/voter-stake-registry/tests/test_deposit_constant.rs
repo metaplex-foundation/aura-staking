@@ -190,8 +190,6 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
 
@@ -366,8 +364,6 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
 

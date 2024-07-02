@@ -126,8 +126,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
                 0,
                 i,
                 1000,
-                mngo_voting_mint.mint.pubkey.unwrap(),
-                realm.realm,
             )
             .await?;
     }

@@ -141,8 +141,6 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
 
@@ -307,8 +305,6 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
 
@@ -483,8 +479,6 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
     let secs_per_day = 24 * 60 * 60;
