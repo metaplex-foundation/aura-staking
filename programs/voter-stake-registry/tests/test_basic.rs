@@ -151,8 +151,6 @@ async fn test_basic() -> Result<(), TransportError> {
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
 

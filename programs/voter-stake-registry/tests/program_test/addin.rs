@@ -131,15 +131,11 @@ impl AddinCookie {
         source_deposit_entry_index: u8,
         target_deposit_entry_index: u8,
         amount: u64,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Stake {
             source_deposit_entry_index,
             target_deposit_entry_index,
             amount,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
         });
 
         let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
