@@ -146,7 +146,6 @@ async fn successeful_claim() -> Result<(), TransportError> {
             &registrar,
             &voter,
             deposit_authority,
-            &deposit_mining,
             &context.rewards.program_id,
             0,
             1,

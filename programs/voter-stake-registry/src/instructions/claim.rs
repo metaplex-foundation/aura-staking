@@ -27,7 +27,6 @@ pub struct Claim<'info> {
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
-    #[account(mut)]
     pub mining_owner: Signer<'info>,
 
     /// CHECK: Registrar plays the role of deposit_authority on the Rewards Contract,

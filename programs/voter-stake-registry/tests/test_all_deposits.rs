@@ -121,7 +121,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
                 &registrar,
                 &voter,
                 voter_authority,
-                &deposit_mining,
                 &context.rewards.program_id,
                 0,
                 i,

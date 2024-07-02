@@ -29,11 +29,24 @@ pub struct CloseVoter<'info> {
     // also, it's an owner of the mining_account
     pub voter_authority: Signer<'info>,
 
+    /// CHECK: mining PDA will be checked in the rewards contract
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
+    #[account(mut)]
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    /// PDA(["reward_pool", deposit_authority[aka registrar in our case]], rewards_program)
+    pub reward_pool: UncheckedAccount<'info>,
+
     #[account(mut)]
     /// CHECK: Destination may be any address.
     pub sol_destination: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token>,
+
+    /// CHECK: Rewards Program account
+    #[account(executable)]
+    pub rewards_program: UncheckedAccount<'info>,
 }
 
 /// Closes the voter account, transfers all funds from token accounts and closes vaults.
@@ -112,15 +125,27 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
         voter_bytes.fill(0);
     }
 
-    // cpi_instructions::close_mining(
-    //     program_id,
-    //     mining,
-    //     mining_owner,
-    //     target_account,
-    //     deposit_authority,
-    //     reward_pool,
-    //     signers_seeds,
-    // );
+    let reward_pool = &ctx.accounts.reward_pool;
+    let mining = &ctx.accounts.deposit_mining;
+    let mining_owner = &ctx.accounts.voter_authority;
+    let deposit_authority = &ctx.accounts.registrar.to_account_info();
+    let target_account = &ctx.accounts.sol_destination.to_account_info();
+    let signers_seeds = &[
+        &registrar.realm.key().to_bytes(),
+        b"registrar".as_ref(),
+        &registrar.realm_governing_token_mint.key().to_bytes(),
+        &[registrar.bump][..],
+    ];
+
+    cpi_instructions::close_mining(
+        ctx.accounts.rewards_program.to_account_info(),
+        mining.to_account_info(),
+        mining_owner.to_account_info(),
+        target_account.to_account_info(),
+        deposit_authority.to_account_info(),
+        reward_pool.to_account_info(),
+        signers_seeds,
+    )?;
 
     Ok(())
 }

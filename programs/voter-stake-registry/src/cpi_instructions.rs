@@ -403,7 +403,14 @@ pub fn close_mining<'a>(
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, deposit_authority, program_id],
+        &[
+            mining,
+            mining_owner,
+            target_account,
+            deposit_authority,
+            reward_pool,
+            program_id,
+        ],
         &[signers_seeds],
     )
 }
