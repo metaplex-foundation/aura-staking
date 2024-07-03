@@ -1,5 +1,4 @@
-use crate::borsh::BorshDeserialize;
-use crate::cpi_instructions;
+use crate::{borsh::BorshDeserialize, cpi_instructions};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 use mplx_staking_states::error::VsrError;

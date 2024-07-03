@@ -1,10 +1,14 @@
-use crate::clock_unix_timestamp;
-use crate::voter::{load_token_owner_record, VoterWeightRecord};
+use crate::{
+    clock_unix_timestamp,
+    voter::{load_token_owner_record, VoterWeightRecord},
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{DepositEntry, LockupKind, LockupPeriod, Registrar, Voter};
-use mplx_staking_states::voter_seeds;
+use mplx_staking_states::{
+    error::VsrError,
+    state::{DepositEntry, LockupKind, LockupPeriod, Registrar, Voter},
+    voter_seeds,
+};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {

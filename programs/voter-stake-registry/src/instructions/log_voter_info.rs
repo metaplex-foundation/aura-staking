@@ -1,5 +1,4 @@
-use crate::clock_unix_timestamp;
-use crate::events::*;
+use crate::{clock_unix_timestamp, events::*};
 use anchor_lang::prelude::*;
 use mplx_staking_states::state::{LockupKind, Registrar, Voter};
 

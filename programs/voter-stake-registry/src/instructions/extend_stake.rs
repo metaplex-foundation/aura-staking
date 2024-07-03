@@ -1,9 +1,10 @@
-use crate::clock_unix_timestamp;
-use crate::cpi_instructions::extend_deposit;
+use crate::{clock_unix_timestamp, cpi_instructions::extend_deposit};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{LockupKind, LockupPeriod, Registrar, Voter};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod, Registrar, Voter},
+};
 
 #[derive(Accounts)]
 pub struct ExtendStake<'info> {
@@ -62,8 +63,8 @@ impl<'info> ExtendStake<'info> {
 
 /// Prolongs the deposit
 ///
-/// The stake will be extended with the same lockup period as it was previously in case it's not expired.
-/// If the deposit has expired, it can be extended with any LockupPeriod.
+/// The stake will be extended with the same lockup period as it was previously in case it's not
+/// expired. If the deposit has expired, it can be extended with any LockupPeriod.
 /// The deposit entry must have been initialized with create_deposit_entry.
 ///
 /// `deposit_entry_index`: Index of the deposit entry.

@@ -1,7 +1,9 @@
 use crate::{clock_unix_timestamp, cpi_instructions};
 use anchor_lang::prelude::*;
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{LockupKind, Registrar, Voter};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, Registrar, Voter},
+};
 
 #[derive(Accounts)]
 pub struct Stake<'info> {
@@ -37,9 +39,9 @@ pub struct Stake<'info> {
 
 /// Transfers unlocked tokens from the source deposit entry to the target deposit entry.
 ///
-/// Transfers token from one DepositEntry that is not LockupKind::None to another that is LockupKind::Constant.
-/// In terms of business logic that means we want to deposit some tokens on DAO,
-/// then we want to lock them up in order to receice rewards
+/// Transfers token from one DepositEntry that is not LockupKind::None to another that is
+/// LockupKind::Constant. In terms of business logic that means we want to deposit some tokens on
+/// DAO, then we want to lock them up in order to receice rewards
 pub fn stake(
     ctx: Context<Stake>,
     source_deposit_entry_index: u8,
