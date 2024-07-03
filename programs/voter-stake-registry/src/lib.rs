@@ -1,8 +1,6 @@
-use {
-    anchor_lang::prelude::*,
-    instructions::*,
-    mplx_staking_states::state::lockup::{LockupKind, LockupPeriod},
-};
+use anchor_lang::prelude::*;
+use instructions::*;
+use mplx_staking_states::state::lockup::{LockupKind, LockupPeriod};
 
 pub mod cpi_instructions;
 pub mod events;

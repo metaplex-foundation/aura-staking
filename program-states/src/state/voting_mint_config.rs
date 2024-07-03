@@ -1,4 +1,6 @@
-use {crate::error::*, anchor_lang::prelude::*, std::convert::TryFrom};
+use crate::error::*;
+use anchor_lang::prelude::*;
+use std::convert::TryFrom;
 
 const SCALED_FACTOR_BASE: u64 = 1_000_000_000;
 
