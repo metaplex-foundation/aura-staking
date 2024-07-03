@@ -1,5 +1,3 @@
-use std::borrow::BorrowMut;
-
 use bytemuck::{bytes_of, Contiguous};
 use solana_program::program_error::ProgramError;
 use solana_program_test::{BanksClientError, ProgramTestContext};
@@ -9,6 +7,7 @@ use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
 use solana_sdk::system_instruction;
 use solana_sdk::transaction::Transaction;
+use std::borrow::BorrowMut;
 
 #[allow(dead_code)]
 pub fn gen_signer_seeds<'a>(nonce: &'a u64, acc_pk: &'a Pubkey) -> [&'a [u8]; 2] {

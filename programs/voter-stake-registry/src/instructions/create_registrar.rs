@@ -1,12 +1,10 @@
+use crate::cpi_instructions;
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
-use anchor_spl::token::Token;
+use anchor_spl::token::{Mint, Token};
 use mplx_staking_states::error::VsrError;
 use mplx_staking_states::state::Registrar;
 use spl_governance::state::realm;
 use std::mem::size_of;
-
-use crate::cpi_instructions;
 
 #[derive(Accounts)]
 pub struct CreateRegistrar<'info> {

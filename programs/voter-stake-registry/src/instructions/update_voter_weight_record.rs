@@ -1,7 +1,6 @@
+use crate::voter::VoterWeightRecord;
 use anchor_lang::prelude::*;
 use mplx_staking_states::state::{Registrar, Voter};
-
-use crate::voter::VoterWeightRecord;
 
 #[derive(Accounts)]
 pub struct UpdateVoterWeightRecord<'info> {

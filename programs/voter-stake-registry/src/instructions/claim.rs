@@ -1,11 +1,10 @@
-use std::borrow::Borrow;
-
 use crate::borsh::BorshDeserialize;
 use crate::cpi_instructions;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 use mplx_staking_states::error::VsrError;
 use solana_program::program::get_return_data;
+use std::borrow::Borrow;
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
@@ -23,7 +22,8 @@ pub struct Claim<'info> {
     pub vault: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 

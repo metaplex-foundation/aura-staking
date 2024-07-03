@@ -22,10 +22,9 @@ declare_id!("9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8");
 ///
 /// - Create a SPL governance realm.
 /// - Create a governance registry account.
-/// - Add exchange rates for any tokens one wants to deposit. For example,
-///   if one wants to vote with tokens A and B, where token B has twice the
-///   voting power of token A, then the exchange rate of B would be 2 and the
-///   exchange rate of A would be 1.
+/// - Add exchange rates for any tokens one wants to deposit. For example, if one wants to vote with
+///   tokens A and B, where token B has twice the voting power of token A, then the exchange rate of
+///   B would be 2 and the exchange rate of A would be 1.
 /// - Create a voter account.
 /// - Deposit tokens into this program, with an optional lockup period.
 /// - Vote.

@@ -1,11 +1,7 @@
+use crate::{clock_unix_timestamp, cpi_instructions};
 use anchor_lang::prelude::*;
 use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::LockupKind;
-use mplx_staking_states::state::Registrar;
-use mplx_staking_states::state::Voter;
-
-use crate::clock_unix_timestamp;
-use crate::cpi_instructions;
+use mplx_staking_states::state::{LockupKind, Registrar, Voter};
 
 #[derive(Accounts)]
 pub struct LockTokens<'info> {
@@ -23,12 +19,14 @@ pub struct LockTokens<'info> {
     pub voter_authority: Signer<'info>,
 
     /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority], reward_program)
+    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
+    /// reward_program)
     #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
@@ -39,9 +37,9 @@ pub struct LockTokens<'info> {
 
 /// Transfers unlocked tokens from the source deposit entry to the target deposit entry.
 ///
-/// Transfers token from one DepositEntry that is not LockupKind::None to another that is LockupKind::Constant.
-/// In terms of business logic that means we want to deposit some tokens on DAO,
-/// then we want to lock them up in order to receice rewards
+/// Transfers token from one DepositEntry that is not LockupKind::None to another that is
+/// LockupKind::Constant. In terms of business logic that means we want to deposit some tokens on
+/// DAO, then we want to lock them up in order to receice rewards
 pub fn lock_tokens(
     ctx: Context<LockTokens>,
     source_deposit_entry_index: u8,

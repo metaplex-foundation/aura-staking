@@ -1,9 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
-use mplx_staking_states::{
-    error::VsrError,
-    state::{Registrar, VotingMintConfig},
-};
+use mplx_staking_states::error::VsrError;
+use mplx_staking_states::state::{Registrar, VotingMintConfig};
 
 // Remaining accounts must be all the token mints that have registered
 // as voting mints, including the newly registered one.
@@ -25,10 +23,11 @@ pub struct ConfigureVotingMint<'info> {
 ///
 /// * `idx`: index of the rate to be set
 /// * `digit_shift`: how many digits to shift the native token amount, see below
-/// * `baseline_vote_weight_scaled_factor`: vote weight factor for all funds in vault, in 1/1e9 units
+/// * `baseline_vote_weight_scaled_factor`: vote weight factor for all funds in vault, in 1/1e9
+///   units
 /// * `max_extra_lockup_vote_weight_scaled_factor`: max extra weight for lockups, in 1/1e9 units
-/// * `lockup_saturation_secs`: lockup duration at which the full vote weight
-///   bonus is given to locked up deposits
+/// * `lockup_saturation_secs`: lockup duration at which the full vote weight bonus is given to
+///   locked up deposits
 ///
 /// This instruction can be called several times for the same mint and index to
 /// change the voting mint configuration.
@@ -49,8 +48,8 @@ pub struct ConfigureVotingMint<'info> {
 /// do your own checking too.
 ///
 /// If you use a single mint, prefer digit_shift=0 and baseline_vote_weight_scaled_factor +
-/// max_extra_lockup_vote_weight_scaled_factor <= 1e9. That way you won't have issues with overflow no
-/// matter the size of the mint's supply.
+/// max_extra_lockup_vote_weight_scaled_factor <= 1e9. That way you won't have issues with overflow
+/// no matter the size of the mint's supply.
 ///
 /// Digit shifting is particularly useful when using several voting token mints
 /// that have a different number of decimals. It can be used to align them to
@@ -58,8 +57,10 @@ pub struct ConfigureVotingMint<'info> {
 ///
 /// Example: If you have token A with 6 decimals and token B with 9 decimals, you
 /// could set up:
-///    * A with digit_shift=0,  baseline_vote_weight_scaled_factor=2e9, max_extra_lockup_vote_weight_scaled_factor=0
-///    * B with digit_shift=-3, baseline_vote_weight_scaled_factor=1e9, max_extra_lockup_vote_weight_scaled_factor=1e9
+///    * A with digit_shift=0,  baseline_vote_weight_scaled_factor=2e9,
+///      max_extra_lockup_vote_weight_scaled_factor=0
+///    * B with digit_shift=-3, baseline_vote_weight_scaled_factor=1e9,
+///      max_extra_lockup_vote_weight_scaled_factor=1e9
 ///
 /// That would make 1.0 decimaled tokens of A as valuable as 2.0 decimaled tokens
 /// of B when unlocked. B tokens could be locked up to double their vote weight. As
@@ -67,10 +68,11 @@ pub struct ConfigureVotingMint<'info> {
 ///
 /// Note that in this example, you need 1000 native B tokens before receiving 1
 /// unit of vote weight. If the supplies were significantly lower, you could use
-///    * A with digit_shift=3, baseline_vote_weight_scaled_factor=2e9, max_extra_lockup_vote_weight_scaled_factor=0
-///    * B with digit_shift=0, baseline_vote_weight_scaled_factor=1e9, max_extra_lockup_vote_weight_scaled_factor=1e9
+///    * A with digit_shift=3, baseline_vote_weight_scaled_factor=2e9,
+///      max_extra_lockup_vote_weight_scaled_factor=0
+///    * B with digit_shift=0, baseline_vote_weight_scaled_factor=1e9,
+///      max_extra_lockup_vote_weight_scaled_factor=1e9
 /// to not lose precision on B tokens.
-///
 pub fn configure_voting_mint(
     ctx: Context<ConfigureVotingMint>,
     idx: u16,

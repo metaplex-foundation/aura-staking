@@ -1,8 +1,8 @@
-use anchor_lang::prelude::*;
-use mplx_staking_states::{error::VsrError, state::Registrar};
-use spl_governance::state::token_owner_record;
-
 use crate::vote_weight_record;
+use anchor_lang::prelude::*;
+use mplx_staking_states::error::VsrError;
+use mplx_staking_states::state::Registrar;
+use spl_governance::state::token_owner_record;
 
 pub fn load_token_owner_record(
     voter_authority: &Pubkey,

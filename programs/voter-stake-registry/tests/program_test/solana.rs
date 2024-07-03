@@ -1,18 +1,17 @@
-use std::cell::RefCell;
-use std::sync::{Arc, RwLock};
-
 use anchor_lang::AccountDeserialize;
 use anchor_spl::token::TokenAccount;
-use solana_program::{program_pack::Pack, rent::*, system_instruction};
+use solana_program::program_pack::Pack;
+use solana_program::rent::*;
+use solana_program::system_instruction;
 use solana_program_test::*;
-use solana_sdk::{
-    account::ReadableAccount,
-    instruction::Instruction,
-    pubkey::Pubkey,
-    signature::{Keypair, Signer},
-    transaction::Transaction,
-};
+use solana_sdk::account::ReadableAccount;
+use solana_sdk::instruction::Instruction;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::{Keypair, Signer};
+use solana_sdk::transaction::Transaction;
 use spl_token::*;
+use std::cell::RefCell;
+use std::sync::{Arc, RwLock};
 
 pub struct SolanaCookie {
     pub context: RefCell<ProgramTestContext>,
