@@ -1,10 +1,7 @@
-use {
-    crate::{
-        error::*,
-        state::{deposit_entry::DepositEntry, registrar::Registrar},
-    },
-    anchor_lang::prelude::*,
-};
+use crate::error::*;
+use crate::state::deposit_entry::DepositEntry;
+use crate::state::registrar::Registrar;
+use anchor_lang::prelude::*;
 
 /// User account for minting voting rights.
 #[account(zero_copy)]

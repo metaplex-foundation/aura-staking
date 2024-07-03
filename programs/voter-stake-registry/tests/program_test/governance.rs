@@ -1,13 +1,9 @@
-use {
-    crate::*,
-    solana_program::instruction::Instruction,
-    solana_sdk::{
-        pubkey::Pubkey,
-        signature::{Keypair, Signer},
-    },
-    spl_governance::state::{proposal, vote_record},
-    std::rc::Rc,
-};
+use crate::*;
+use solana_program::instruction::Instruction;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::{Keypair, Signer};
+use spl_governance::state::{proposal, vote_record};
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct GovernanceCookie {

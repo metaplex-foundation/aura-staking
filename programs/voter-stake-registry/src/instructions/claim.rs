@@ -1,11 +1,10 @@
-use {
-    crate::{borsh::BorshDeserialize, cpi_instructions},
-    anchor_lang::prelude::*,
-    anchor_spl::token::{Token, TokenAccount},
-    mplx_staking_states::error::VsrError,
-    solana_program::program::get_return_data,
-    std::borrow::Borrow,
-};
+use crate::borsh::BorshDeserialize;
+use crate::cpi_instructions;
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Token, TokenAccount};
+use mplx_staking_states::error::VsrError;
+use solana_program::program::get_return_data;
+use std::borrow::Borrow;
 
 #[derive(Accounts)]
 pub struct Claim<'info> {

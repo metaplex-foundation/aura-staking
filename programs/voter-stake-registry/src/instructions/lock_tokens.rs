@@ -1,11 +1,7 @@
-use {
-    crate::{clock_unix_timestamp, cpi_instructions},
-    anchor_lang::prelude::*,
-    mplx_staking_states::{
-        error::VsrError,
-        state::{LockupKind, Registrar, Voter},
-    },
-};
+use crate::{clock_unix_timestamp, cpi_instructions};
+use anchor_lang::prelude::*;
+use mplx_staking_states::error::VsrError;
+use mplx_staking_states::state::{LockupKind, Registrar, Voter};
 
 #[derive(Accounts)]
 pub struct LockTokens<'info> {

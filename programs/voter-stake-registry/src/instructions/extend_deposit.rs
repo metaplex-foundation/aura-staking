@@ -1,12 +1,9 @@
-use {
-    crate::{clock_unix_timestamp, cpi_instructions::extend_deposit},
-    anchor_lang::prelude::*,
-    anchor_spl::token::{self, Token, TokenAccount, Transfer},
-    mplx_staking_states::{
-        error::VsrError,
-        state::{LockupKind, LockupPeriod, Registrar, Voter},
-    },
-};
+use crate::clock_unix_timestamp;
+use crate::cpi_instructions::extend_deposit;
+use anchor_lang::prelude::*;
+use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use mplx_staking_states::error::VsrError;
+use mplx_staking_states::state::{LockupKind, LockupPeriod, Registrar, Voter};
 
 #[derive(Accounts)]
 pub struct RestakeDeposit<'info> {

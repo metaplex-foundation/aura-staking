@@ -1,8 +1,7 @@
-use {
-    crate::{clock_unix_timestamp, events::*},
-    anchor_lang::prelude::*,
-    mplx_staking_states::state::{LockupKind, Registrar, Voter},
-};
+use crate::clock_unix_timestamp;
+use crate::events::*;
+use anchor_lang::prelude::*;
+use mplx_staking_states::state::{LockupKind, Registrar, Voter};
 
 #[derive(Accounts)]
 pub struct LogVoterInfo<'info> {

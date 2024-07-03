@@ -1,7 +1,5 @@
-use {
-    crate::state::lockup::{Lockup, LockupKind},
-    anchor_lang::prelude::*,
-};
+use crate::state::lockup::{Lockup, LockupKind};
+use anchor_lang::prelude::*;
 
 /// Bookkeeping for a single deposit for a given mint and lockup schedule.
 #[zero_copy]
@@ -64,10 +62,9 @@ impl DepositEntry {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::*,
-        crate::state::{LockupKind::Constant, LockupPeriod, VotingMintConfig},
-    };
+    use super::*;
+    use crate::state::LockupKind::Constant;
+    use crate::state::{LockupPeriod, VotingMintConfig};
 
     #[test]
     pub fn far_future_lockup_start_test() -> Result<()> {
