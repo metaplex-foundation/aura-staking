@@ -1,9 +1,9 @@
-use crate::cpi_instructions;
-use crate::voter::VoterWeightRecord;
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{Registrar, Voter};
+use crate::{cpi_instructions, voter::VoterWeightRecord};
+use anchor_lang::{prelude::*, solana_program::sysvar::instructions as tx_instructions};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{Registrar, Voter},
+};
 use std::mem::size_of;
 
 #[derive(Accounts)]

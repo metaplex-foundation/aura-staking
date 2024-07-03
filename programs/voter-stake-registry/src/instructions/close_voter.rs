@@ -1,12 +1,13 @@
-use std::ops::DerefMut;
-
 use crate::clock_unix_timestamp;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount, Transfer};
 use bytemuck::bytes_of_mut;
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{Registrar, Voter};
-use mplx_staking_states::voter_seeds;
+use mplx_staking_states::{
+    error::VsrError,
+    state::{Registrar, Voter},
+    voter_seeds,
+};
+use std::ops::DerefMut;
 
 // Remaining accounts must be all the token token accounts owned by voter, he wants to close,
 // they should be writable so that they can be closed and sol required for rent
@@ -30,7 +31,8 @@ pub struct CloseVoter<'info> {
     pub voter_authority: Signer<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 

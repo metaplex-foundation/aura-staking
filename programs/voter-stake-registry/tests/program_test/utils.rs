@@ -1,12 +1,10 @@
 use bytemuck::{bytes_of, Contiguous};
 use solana_program::program_error::ProgramError;
 use solana_program_test::{BanksClientError, ProgramTestContext};
-use solana_sdk::program_pack::Pack;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
-use solana_sdk::system_instruction;
-use solana_sdk::transaction::Transaction;
+use solana_sdk::{
+    program_pack::Pack, pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
+    transaction::Transaction,
+};
 use std::borrow::BorrowMut;
 
 #[allow(dead_code)]

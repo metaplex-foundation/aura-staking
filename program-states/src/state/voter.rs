@@ -1,5 +1,4 @@
-use crate::error::*;
-use crate::state::deposit_entry::DepositEntry;
+use crate::{error::*, state::deposit_entry::DepositEntry};
 use anchor_lang::prelude::*;
 
 /// User account for minting voting rights.

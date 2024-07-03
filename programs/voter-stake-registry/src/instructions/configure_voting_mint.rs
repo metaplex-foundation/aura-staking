@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{Registrar, VotingMintConfig};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{Registrar, VotingMintConfig},
+};
 
 // Remaining accounts must be all the token mints that have registered
 // as voting mints, including the newly registered one.
