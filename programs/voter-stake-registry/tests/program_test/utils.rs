@@ -42,6 +42,7 @@ pub fn clone_keypair(keypair: &Keypair) -> Keypair {
     Keypair::from_base58_string(&keypair.to_base58_string())
 }
 
+#[allow(dead_code)]
 pub async fn create_mint(
     context: &mut ProgramTestContext,
     mint: &Keypair,
@@ -91,6 +92,7 @@ pub fn find_deposit_mining_addr(
     deposit_mining
 }
 
+#[allow(dead_code)]
 pub async fn advance_clock_by_ts(context: &mut ProgramTestContext, ts: i64) {
     let old_clock = context
         .banks_client

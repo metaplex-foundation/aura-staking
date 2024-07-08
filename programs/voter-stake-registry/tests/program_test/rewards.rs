@@ -19,6 +19,7 @@ pub struct RewardsCookie {
 }
 
 impl RewardsCookie {
+    #[allow(dead_code)]
     pub async fn fill_vault(
         &self,
         reward_pool: &Pubkey,
@@ -64,6 +65,7 @@ impl RewardsCookie {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub async fn distribute_rewards(
         &self,
         reward_pool: &Pubkey,
@@ -90,6 +92,7 @@ impl RewardsCookie {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn initialize_mining<'a>(
         &self,
         reward_pool: &Pubkey,
@@ -130,6 +133,7 @@ impl RewardsCookie {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn deposit_mining<'a>(
         &self,
         reward_pool: &Pubkey,
