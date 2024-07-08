@@ -63,7 +63,7 @@ pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Res
     let signers_seeds = &[
         registrar.realm.as_ref(),
         b"registrar".as_ref(),
-        &registrar.realm_governing_token_mint.as_ref(),
+        (registrar.realm_governing_token_mint.as_ref()),
         &[registrar.bump][..],
     ];
     let pool_deposit_authority = &ctx.accounts.registrar;
