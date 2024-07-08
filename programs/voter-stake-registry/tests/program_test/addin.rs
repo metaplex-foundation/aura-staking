@@ -29,6 +29,14 @@ pub struct VotingMintConfigCookie {
     pub mint: MintCookie,
 }
 
+impl VotingMintConfigCookie {
+    #[allow(dead_code)]
+    pub async fn vault_balance(&self, solana: &SolanaCookie, voter: &VoterCookie) -> u64 {
+        let vault = voter.vault_address(self);
+        solana.get_account::<TokenAccount>(vault).await.amount
+    }
+}
+
 pub struct VoterCookie {
     pub address: Pubkey,
     pub authority: Pubkey,
@@ -120,6 +128,8 @@ impl AddinCookie {
         (registrar_cookie, reward_pool)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn stake(
         &self,
         // accounts
@@ -383,6 +393,7 @@ impl AddinCookie {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn extend_deposit(
         &self,
         registrar: &RegistrarCookie,
@@ -435,6 +446,8 @@ impl AddinCookie {
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn unlock_tokens(
         &self,
         registrar: &RegistrarCookie,
@@ -474,6 +487,7 @@ impl AddinCookie {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn withdraw(
         &self,
         registrar: &RegistrarCookie,
@@ -517,6 +531,8 @@ impl AddinCookie {
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn close_voter(
         &self,
         registrar: &RegistrarCookie,
@@ -564,6 +580,8 @@ impl AddinCookie {
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub fn update_voter_weight_record_instruction(
         &self,
         registrar: &RegistrarCookie,
@@ -590,6 +608,8 @@ impl AddinCookie {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn update_voter_weight_record(
         &self,
         registrar: &RegistrarCookie,
@@ -607,6 +627,8 @@ impl AddinCookie {
             .await)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn close_deposit_entry(
         &self,
         voter: &VoterCookie,
@@ -638,6 +660,8 @@ impl AddinCookie {
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn log_voter_info(
         &self,
         registrar: &RegistrarCookie,
@@ -670,6 +694,8 @@ impl AddinCookie {
             .unwrap();
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn set_time_offset(
         &self,
         _registrar: &RegistrarCookie,
@@ -688,12 +714,13 @@ impl AddinCookie {
             .await
             .unwrap();
 
-        let mut new_clock = old_clock.clone();
+        let mut new_clock = old_clock;
         new_clock.unix_timestamp += time_offset - old_offset;
         self.solana.context.borrow_mut().set_sysvar(&new_clock);
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[allow(dead_code)]
     pub async fn claim(
         &self,
         reward_pool: &Pubkey,
@@ -746,14 +773,8 @@ impl AddinCookie {
     }
 }
 
-impl VotingMintConfigCookie {
-    pub async fn vault_balance(&self, solana: &SolanaCookie, voter: &VoterCookie) -> u64 {
-        let vault = voter.vault_address(self);
-        solana.get_account::<TokenAccount>(vault).await.amount
-    }
-}
-
 impl VoterCookie {
+    #[allow(dead_code)]
     pub async fn deposit_amount(&self, solana: &SolanaCookie, deposit_id: u8) -> u64 {
         solana.get_account::<Voter>(self.address).await.deposits[deposit_id as usize]
             .amount_deposited_native
