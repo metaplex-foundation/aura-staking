@@ -6,7 +6,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_VERSION: "1.16.10"
+  SOLANA_VERSION: "1.14.12"
   RUST_TOOLCHAIN: "1.66.1"
 
 defaults:
@@ -19,12 +19,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install Rust nightly
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          override: true
-          profile: minimal
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt, clippy
       - name: Cache dependencies
@@ -41,14 +39,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install Linux dependencies
         run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev
       - name: Install Rust nightly
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          override: true
-          profile: minimal
           toolchain: ${{ env.RUST_TOOLCHAIN }}
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
@@ -58,7 +54,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/solana
-          key: ${{ runner.os }}-${{ env.SOLANA_VERSION }}
+          key: ${{ runner.os }}-${{ env.RUST_TOOLCHAIN }}
       - name: Install Solana
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
