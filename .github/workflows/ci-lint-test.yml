@@ -6,7 +6,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_VERSION: "1.9.5"
+  SOLANA_VERSION: "1.16.10"
   RUST_TOOLCHAIN: stable
 
 defaults:
@@ -69,4 +69,4 @@ jobs:
           solana-keygen new -o "$HOME/.config/solana/id.json" --no-passphrase --silent
 
       - name: Run bpf tests
-        run: cargo test-bpf
+        run: cargo test-sbf
