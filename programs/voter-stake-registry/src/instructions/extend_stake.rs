@@ -33,21 +33,17 @@ pub fn extend_stake(
     );
 
     let target = voter.active_deposit_mut(target_deposit_entry_index)?;
-    let all_available_tokens = source_available_tokens
-        .checked_add(target.amount_unlocked(curr_ts))
-        .ok_or(VsrError::ArithmeticOverflow)?;
     require_gte!(
-        all_available_tokens,
+        source_available_tokens,
         additional_amount,
         VsrError::InsufficientUnlockedTokens
     );
-
     require!(
         target.lockup.period != LockupPeriod::None && target.lockup.kind != LockupKind::None,
         VsrError::ExtendDepositIsNotAllowed
     );
+
     let start_ts = target.lockup.start_ts;
-    let curr_ts = clock_unix_timestamp();
     let target_basic_amount = target.amount_deposited_native;
     let current_lockup_period = if target.lockup.expired(curr_ts) {
         LockupPeriod::Flex
@@ -57,12 +53,10 @@ pub fn extend_stake(
 
     // different type of deposit is only allowed if
     // the current deposit has expired
-    if current_lockup_period != LockupPeriod::Flex {
-        require!(
-            new_lockup_period >= current_lockup_period,
-            VsrError::ExtendDepositIsNotAllowed
-        );
-    }
+    require!(
+        new_lockup_period >= current_lockup_period,
+        VsrError::ExtendDepositIsNotAllowed
+    );
 
     // Check target compatibility
     require_eq!(
