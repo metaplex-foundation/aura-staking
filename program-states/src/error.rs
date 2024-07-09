@@ -86,4 +86,7 @@ pub enum VsrError {
     // 6027 / 0x178b
     #[msg("Locking up tokens is only allowed for freshly-deposited deposit entry")]
     DepositEntryIsOld,
+    // 6028 / 0x178c
+    #[msg("Arithmetic operation has beed overflowed")]
+    ArithmeticOverflow,
 }
