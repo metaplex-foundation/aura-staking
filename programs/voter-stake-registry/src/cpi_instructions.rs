@@ -24,10 +24,10 @@ pub enum RewardsInstruction {
     /// [R] Reward mint account
     /// [W] Vault account
     /// [WS] Payer
-    /// [WS] Deposit authority account
+    /// [RS] Deposit authority account
+    /// [R] Rent sysvar
     /// [R] Token program
     /// [R] System program
-    /// [R] Rent sysvar
     InitializePool {
         /// Account can fill the reward vault
         fill_authority: Pubkey,
@@ -155,11 +155,11 @@ pub fn initialize_pool<'a>(
     reward_vault: AccountInfo<'a>,
     payer: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
     token_program: AccountInfo<'a>,
     system_program: AccountInfo<'a>,
     fill_authority: Pubkey,
     distribution_authority: Pubkey,
-    rent: AccountInfo<'a>,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
@@ -168,9 +168,9 @@ pub fn initialize_pool<'a>(
         AccountMeta::new(reward_vault.key(), false),
         AccountMeta::new(payer.key(), true),
         AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(rent.key(), false),
         AccountMeta::new_readonly(token_program.key(), false),
         AccountMeta::new_readonly(system_program::id(), false),
-        AccountMeta::new_readonly(rent.key(), false),
     ];
 
     let ix = Instruction::new_with_borsh(
@@ -190,9 +190,9 @@ pub fn initialize_pool<'a>(
             reward_vault,
             payer,
             deposit_authority,
+            rent,
             token_program,
             system_program,
-            rent,
             program_id,
         ],
         &[signers_seeds],
