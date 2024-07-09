@@ -144,13 +144,15 @@ impl Lockup {
 }
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(
+    AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord,
+)]
 pub enum LockupPeriod {
     None,
+    Flex,
     ThreeMonths,
     SixMonths,
     OneYear,
-    Flex,
 }
 
 impl Default for LockupPeriod {
