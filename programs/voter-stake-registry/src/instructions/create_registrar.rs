@@ -72,26 +72,36 @@ pub fn create_registrar(
     fill_authority: Pubkey,
     distribution_authority: Pubkey,
 ) -> Result<()> {
-    let registrar = &mut ctx.accounts.registrar.load_init()?;
-    require_eq!(registrar_bump, *ctx.bumps.get("registrar").unwrap());
-    registrar.bump = registrar_bump;
-    registrar.governance_program_id = ctx.accounts.governance_program_id.key();
-    registrar.realm = ctx.accounts.realm.key();
-    registrar.realm_governing_token_mint = ctx.accounts.realm_governing_token_mint.key();
-    registrar.realm_authority = ctx.accounts.realm_authority.key();
+    let signers_seeds = {
+        let registrar = &mut ctx.accounts.registrar.load_init()?;
+        require_eq!(registrar_bump, *ctx.bumps.get("registrar").unwrap());
+        registrar.bump = registrar_bump;
+        registrar.governance_program_id = ctx.accounts.governance_program_id.key();
+        registrar.realm = ctx.accounts.realm.key();
+        registrar.realm_governing_token_mint = ctx.accounts.realm_governing_token_mint.key();
+        registrar.realm_authority = ctx.accounts.realm_authority.key();
 
-    // Verify that "realm_authority" is the expected authority on "realm"
-    // and that the mint matches one of the realm mints too.
-    let realm = realm::get_realm_data_for_governing_token_mint(
-        &registrar.governance_program_id,
-        &ctx.accounts.realm.to_account_info(),
-        &registrar.realm_governing_token_mint,
-    )?;
-    require_keys_eq!(
-        realm.authority.unwrap(),
-        ctx.accounts.realm_authority.key(),
-        VsrError::InvalidRealmAuthority
-    );
+        // Verify that "realm_authority" is the expected authority on "realm"
+        // and that the mint matches one of the realm mints too.
+        let realm = realm::get_realm_data_for_governing_token_mint(
+            &registrar.governance_program_id,
+            &ctx.accounts.realm.to_account_info(),
+            &registrar.realm_governing_token_mint,
+        )?;
+
+        require_keys_eq!(
+            realm.authority.unwrap(),
+            ctx.accounts.realm_authority.key(),
+            VsrError::InvalidRealmAuthority
+        );
+
+        &[
+            &ctx.accounts.realm.key().to_bytes(),
+            b"registrar".as_ref(),
+            &ctx.accounts.realm_governing_token_mint.key().to_bytes(),
+            &[registrar_bump][..],
+        ]
+    };
 
     // we should initiate the rewards pool to proceed with
     // staking and rewards logic
@@ -103,7 +113,7 @@ pub fn create_registrar(
     let rent = ctx.accounts.rent.to_account_info();
     let token_program = ctx.accounts.token_program.to_account_info();
     let system_program = ctx.accounts.system_program.to_account_info();
-    let deposit_authority = ctx.accounts.registrar.key();
+    let deposit_authority = ctx.accounts.registrar.to_account_info();
 
     cpi_instructions::initialize_pool(
         rewards_program_id,
@@ -111,12 +121,13 @@ pub fn create_registrar(
         reward_mint,
         reward_vault,
         payer,
-        rent,
+        deposit_authority,
         token_program,
         system_program,
-        deposit_authority,
         fill_authority,
         distribution_authority,
+        rent,
+        signers_seeds,
     )?;
 
     Ok(())
