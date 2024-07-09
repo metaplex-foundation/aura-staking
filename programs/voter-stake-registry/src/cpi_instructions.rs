@@ -24,12 +24,11 @@ pub enum RewardsInstruction {
     /// [R] Reward mint account
     /// [W] Vault account
     /// [WS] Payer
-    /// [R] Rent sysvar
+    /// [WS] Deposit authority account
     /// [R] Token program
     /// [R] System program
+    /// [R] Rent sysvar
     InitializePool {
-        /// Account responsible for charging mining owners
-        deposit_authority: Pubkey,
         /// Account can fill the reward vault
         fill_authority: Pubkey,
         /// Account can distribute rewards for stakers
@@ -155,45 +154,48 @@ pub fn initialize_pool<'a>(
     reward_mint: AccountInfo<'a>,
     reward_vault: AccountInfo<'a>,
     payer: AccountInfo<'a>,
-    rent: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
     token_program: AccountInfo<'a>,
     system_program: AccountInfo<'a>,
-    deposit_authority: Pubkey,
     fill_authority: Pubkey,
     distribution_authority: Pubkey,
+    rent: AccountInfo<'a>,
+    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new_readonly(reward_mint.key(), false),
         AccountMeta::new(reward_vault.key(), false),
         AccountMeta::new(payer.key(), true),
-        AccountMeta::new_readonly(rent.key(), false),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
         AccountMeta::new_readonly(token_program.key(), false),
         AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(rent.key(), false),
     ];
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
         &RewardsInstruction::InitializePool {
-            deposit_authority,
             fill_authority,
             distribution_authority,
         },
         accounts,
     );
 
-    invoke(
+    invoke_signed(
         &ix,
         &[
             reward_pool,
             reward_mint,
             reward_vault,
             payer,
-            rent,
+            deposit_authority,
             token_program,
             system_program,
+            rent,
             program_id,
         ],
+        &[signers_seeds],
     )
 }
 
