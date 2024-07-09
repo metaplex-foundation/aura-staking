@@ -383,42 +383,42 @@ impl AddinCookie {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn extend_deposit(
+    pub async fn extend_stake(
         &self,
+        // accounts
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-        voting_mint: &VotingMintConfigCookie,
-        deposit_authority: &Keypair,
-        token_address: Pubkey,
-        deposit_entry_index: u8,
+        voter_authority: &Keypair,
+        rewards_program: &Pubkey,
+        // params
+        source_deposit_entry_index: u8,
+        target_deposit_entry_index: u8,
         new_lockup_period: LockupPeriod,
         additional_amount: u64,
-        reward_pool: &Pubkey,
-        deposit_mining: &Pubkey,
-        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(voting_mint);
-
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::ExtendStake {
-                deposit_entry_index,
+                source_deposit_entry_index,
+                target_deposit_entry_index,
                 new_lockup_period,
-                registrar_bump: registrar.registrar_bump,
-                realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
-                realm_pubkey: registrar.realm_pubkey,
                 additional_amount,
             });
 
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+            rewards_program,
+        );
+
+        let deposit_mining =
+            find_deposit_mining_addr(&voter_authority.pubkey(), &reward_pool, rewards_program);
+
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::ExtendStake {
+            &voter_stake_registry::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
-                vault,
-                deposit_token: token_address,
-                deposit_authority: deposit_authority.pubkey(),
-                token_program: spl_token::id(),
-                reward_pool: *reward_pool,
-                deposit_mining: *deposit_mining,
+                voter_authority: voter_authority.pubkey(),
+                reward_pool,
+                deposit_mining,
                 rewards_program: *rewards_program,
             },
             None,
@@ -431,7 +431,7 @@ impl AddinCookie {
         }];
 
         self.solana
-            .process_transaction(&instructions, Some(&[deposit_authority]))
+            .process_transaction(&instructions, Some(&[voter_authority]))
             .await
     }
 
