@@ -76,6 +76,7 @@ pub fn extend_stake(
     target.lockup.end_ts = curr_ts
         .checked_add(new_lockup_period.to_secs())
         .ok_or(VsrError::InvalidTimestampArguments)?;
+    target.lockup.period = new_lockup_period;
 
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;
