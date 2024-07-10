@@ -91,9 +91,8 @@ pub mod voter_stake_registry {
         deposit_entry_index: u8,
         kind: LockupKind,
         period: LockupPeriod,
-        delegate: Pubkey,
     ) -> Result<()> {
-        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period, delegate)
+        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period)
     }
 
     pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
@@ -190,6 +189,7 @@ pub struct Stake<'info> {
     has_one = registrar)]
     pub voter: AccountLoader<'info, Voter>,
     pub voter_authority: Signer<'info>,
+    pub delegate: AccountLoader<'info, Voter>,
 
     /// CHECK: Reward Pool PDA will be checked in the rewards contract
     /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],

@@ -53,10 +53,12 @@ pub fn stake(
         .amount_deposited_native
         .checked_add(amount)
         .ok_or(VsrError::ArithmeticOverflow)?;
+    target.delegate = ctx.accounts.delegate.key();
 
-    let reward_pool = &ctx.accounts.reward_pool;
-    let mining = &ctx.accounts.deposit_mining;
-    let pool_deposit_authority = &ctx.accounts.registrar.to_account_info();
+    let reward_pool = ctx.accounts.reward_pool.to_account_info();
+    let mining = ctx.accounts.deposit_mining.to_account_info();
+    let deposit_authority = ctx.accounts.registrar.to_account_info();
+    let delegate = ctx.accounts.delegate.to_account_info();
     let signers_seeds = &[
         &registrar.realm.key().to_bytes(),
         b"registrar".as_ref(),
@@ -67,9 +69,10 @@ pub fn stake(
 
     cpi_instructions::deposit_mining(
         ctx.accounts.rewards_program.to_account_info(),
-        reward_pool.to_account_info(),
-        mining.to_account_info(),
-        pool_deposit_authority.to_account_info(),
+        reward_pool,
+        mining,
+        deposit_authority,
+        delegate,
         amount,
         target.lockup.period,
         owner,

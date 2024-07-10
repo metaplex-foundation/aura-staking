@@ -237,6 +237,7 @@ pub fn deposit_mining<'a>(
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
+    delegate: AccountInfo<'a>,
     amount: u64,
     lockup_period: LockupPeriod,
     owner: &Pubkey,
@@ -246,6 +247,7 @@ pub fn deposit_mining<'a>(
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new(delegate.key(), false),
     ];
 
     let ix = Instruction::new_with_borsh(
@@ -267,11 +269,12 @@ pub fn deposit_mining<'a>(
 
 /// Extend deposit
 #[allow(clippy::too_many_arguments)]
-pub fn extend_deposit<'a>(
+pub fn extend_stake<'a>(
     program_id: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
+    delegate: AccountInfo<'a>,
     old_lockup_period: LockupPeriod,
     new_lockup_period: LockupPeriod,
     deposit_start_ts: u64,
@@ -284,6 +287,7 @@ pub fn extend_deposit<'a>(
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new(delegate.key(), false),
     ];
 
     let ix = Instruction::new_with_borsh(
@@ -301,7 +305,7 @@ pub fn extend_deposit<'a>(
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, deposit_authority, program_id],
+        &[reward_pool, mining, deposit_authority, delegate, program_id],
         &[signers_seeds],
     )?;
 
