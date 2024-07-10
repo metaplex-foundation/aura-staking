@@ -31,6 +31,10 @@ pub fn extend_stake(
         source.lockup.kind == LockupKind::None,
         VsrError::LockingIsForbidded
     );
+    source.amount_deposited_native = source
+        .amount_deposited_native
+        .checked_sub(additional_amount)
+        .ok_or(VsrError::ArithmeticOverflow)?;
 
     let target = voter.active_deposit_mut(target_deposit_entry_index)?;
     require_gte!(
