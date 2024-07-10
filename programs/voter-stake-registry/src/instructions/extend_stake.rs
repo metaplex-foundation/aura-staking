@@ -77,10 +77,12 @@ pub fn extend_stake(
         .checked_add(new_lockup_period.to_secs())
         .ok_or(VsrError::InvalidTimestampArguments)?;
     target.lockup.period = new_lockup_period;
+    target.delegate = ctx.accounts.delegate.key();
 
-    let reward_pool = &ctx.accounts.reward_pool;
-    let mining = &ctx.accounts.deposit_mining;
-    let pool_deposit_authority = &ctx.accounts.registrar.to_account_info();
+    let reward_pool = ctx.accounts.reward_pool.to_account_info();
+    let mining = ctx.accounts.deposit_mining.to_account_info();
+    let deposit_authority = ctx.accounts.registrar.to_account_info();
+    let delegate = ctx.accounts.delegate.to_account_info();
     let signers_seeds = &[
         &registrar.realm.key().to_bytes(),
         b"registrar".as_ref(),
@@ -89,11 +91,12 @@ pub fn extend_stake(
     ];
     let mining_owner = &ctx.accounts.voter_authority.key();
 
-    cpi_instructions::extend_deposit(
+    cpi_instructions::extend_stake(
         ctx.accounts.rewards_program.to_account_info(),
-        reward_pool.to_account_info(),
+        reward_pool,
         mining.to_account_info(),
-        pool_deposit_authority.to_account_info(),
+        deposit_authority,
+        delegate,
         current_lockup_period,
         new_lockup_period,
         start_ts,
