@@ -615,7 +615,7 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
             voter_authority,
             reference_account,
             0,
-            10000,
+            10500,
         )
         .await?;
     context
