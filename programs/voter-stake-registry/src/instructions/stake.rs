@@ -1,41 +1,6 @@
-use crate::{clock_unix_timestamp, cpi_instructions};
+use crate::{clock_unix_timestamp, cpi_instructions, Stake};
 use anchor_lang::prelude::*;
-use mplx_staking_states::{
-    error::VsrError,
-    state::{LockupKind, Registrar, Voter},
-};
-
-#[derive(Accounts)]
-pub struct Stake<'info> {
-    pub registrar: AccountLoader<'info, Registrar>,
-
-    // checking the PDA address it just an extra precaution,
-    // the other constraints must be exhaustive
-    #[account(
-        mut,
-        seeds = [registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
-        bump = voter.load()?.voter_bump,
-        has_one = voter_authority,
-        has_one = registrar)]
-    pub voter: AccountLoader<'info, Voter>,
-    pub voter_authority: Signer<'info>,
-
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
-    /// reward_program)
-    #[account(mut)]
-    pub reward_pool: UncheckedAccount<'info>,
-
-    /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
-    /// reward_program)
-    #[account(mut)]
-    pub deposit_mining: UncheckedAccount<'info>,
-
-    /// CHECK: Rewards Program account
-    #[account(executable)]
-    pub rewards_program: UncheckedAccount<'info>,
-}
+use mplx_staking_states::{error::VsrError, state::LockupKind};
 
 /// Transfers unlocked tokens from the source deposit entry to the target deposit entry.
 ///
@@ -65,7 +30,10 @@ pub fn stake(
         amount,
         VsrError::InsufficientUnlockedTokens
     );
-    source.amount_deposited_native = source.amount_deposited_native.checked_sub(amount).unwrap();
+    source.amount_deposited_native = source
+        .amount_deposited_native
+        .checked_sub(amount)
+        .ok_or(VsrError::ArithmeticOverflow)?;
 
     // Check target compatibility
     let target = voter.active_deposit_mut(target_deposit_entry_index)?;
@@ -81,7 +49,10 @@ pub fn stake(
         VsrError::DepositEntryIsOld
     );
     // Add target amounts
-    target.amount_deposited_native = target.amount_deposited_native.checked_add(amount).unwrap();
+    target.amount_deposited_native = target
+        .amount_deposited_native
+        .checked_add(amount)
+        .ok_or(VsrError::ArithmeticOverflow)?;
 
     let reward_pool = &ctx.accounts.reward_pool;
     let mining = &ctx.accounts.deposit_mining;

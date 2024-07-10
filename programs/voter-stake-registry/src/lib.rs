@@ -1,6 +1,9 @@
 use anchor_lang::prelude::*;
 use instructions::*;
-use mplx_staking_states::state::lockup::{LockupKind, LockupPeriod};
+use mplx_staking_states::state::{
+    lockup::{LockupKind, LockupPeriod},
+    Registrar, Voter,
+};
 
 pub mod cpi_instructions;
 pub mod events;
@@ -143,21 +146,17 @@ pub mod voter_stake_registry {
     }
 
     pub fn extend_stake(
-        ctx: Context<ExtendStake>,
-        deposit_entry_index: u8,
+        ctx: Context<Stake>,
+        source_deposit_entry_index: u8,
+        target_deposit_entry_index: u8,
         new_lockup_period: LockupPeriod,
-        registrar_bump: u8,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
         additional_amount: u64,
     ) -> Result<()> {
         instructions::extend_stake(
             ctx,
-            deposit_entry_index,
+            source_deposit_entry_index,
+            target_deposit_entry_index,
             new_lockup_period,
-            registrar_bump,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
             additional_amount,
         )
     }
@@ -175,4 +174,36 @@ pub mod voter_stake_registry {
             realm_pubkey,
         )
     }
+}
+
+#[derive(Accounts)]
+pub struct Stake<'info> {
+    pub registrar: AccountLoader<'info, Registrar>,
+
+    // checking the PDA address it just an extra precaution,
+    // the other constraints must be exhaustive
+    #[account(
+    mut,
+    seeds = [registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
+    bump = voter.load()?.voter_bump,
+    has_one = voter_authority,
+    has_one = registrar)]
+    pub voter: AccountLoader<'info, Voter>,
+    pub voter_authority: Signer<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
+    /// reward_program)
+    #[account(mut)]
+    pub reward_pool: UncheckedAccount<'info>,
+
+    /// CHECK: mining PDA will be checked in the rewards contract
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
+    #[account(mut)]
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Rewards Program account
+    #[account(executable)]
+    pub rewards_program: UncheckedAccount<'info>,
 }

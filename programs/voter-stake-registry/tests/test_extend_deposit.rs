@@ -148,18 +148,15 @@ async fn extend_from_flex() -> Result<(), TransportError> {
 
     context
         .addin
-        .extend_deposit(
+        .extend_stake(
             &registrar,
             &voter,
-            &mngo_voting_mint,
             voter_authority,
-            reference_account,
+            &context.rewards.program_id,
+            0,
             1,
             LockupPeriod::OneYear,
             0,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await?;
 
@@ -314,18 +311,15 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
 
     context
         .addin
-        .extend_deposit(
+        .extend_stake(
             &registrar,
             &voter,
-            &mngo_voting_mint,
             voter_authority,
-            reference_account,
-            1,
-            LockupPeriod::ThreeMonths,
-            0,
-            &rewards_pool,
-            &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            LockupPeriod::OneYear,
+            0,
         )
         .await?;
 
@@ -458,7 +452,7 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
             voter_authority,
             reference_account,
             0,
-            10000,
+            10500,
         )
         .await?;
     context
@@ -481,18 +475,15 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
 
     context
         .addin
-        .extend_deposit(
+        .extend_stake(
             &registrar,
             &voter,
-            &mngo_voting_mint,
             voter_authority,
-            reference_account,
+            &context.rewards.program_id,
+            0,
             1,
             LockupPeriod::ThreeMonths,
             500,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await?;
 
@@ -624,7 +615,7 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
             voter_authority,
             reference_account,
             0,
-            10000,
+            10500,
         )
         .await?;
     context
@@ -647,18 +638,15 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
 
     context
         .addin
-        .extend_deposit(
+        .extend_stake(
             &registrar,
             &voter,
-            &mngo_voting_mint,
             voter_authority,
-            reference_account,
-            1,
-            LockupPeriod::ThreeMonths,
-            500,
-            &rewards_pool,
-            &deposit_mining,
             &context.rewards.program_id,
+            0,
+            1,
+            LockupPeriod::OneYear,
+            500,
         )
         .await?;
 
@@ -809,18 +797,15 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
 
     context
         .addin
-        .extend_deposit(
+        .extend_stake(
             &registrar,
             &voter,
-            &mngo_voting_mint,
             voter_authority,
-            reference_account,
+            &context.rewards.program_id,
+            0,
             1,
             LockupPeriod::OneYear,
-            500,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
+            50,
         )
         .await
         .expect_err("Impossible to extend stake from existing stake (not flex) to another period");
