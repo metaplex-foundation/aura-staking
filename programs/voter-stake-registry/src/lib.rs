@@ -189,6 +189,7 @@ pub struct Stake<'info> {
     has_one = registrar)]
     pub voter: AccountLoader<'info, Voter>,
     pub voter_authority: Signer<'info>,
+    pub delegate: AccountLoader<'info, Voter>,
 
     /// CHECK: Mining Account that belongs to Rewards Program and some delegate
     /// The address of the mining account on the rewards progra,
