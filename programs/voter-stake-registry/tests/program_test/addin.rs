@@ -694,8 +694,9 @@ impl AddinCookie {
             .unwrap();
     }
 
-    #[allow(clippy::too_many_arguments)]
     #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::await_holding_refcell_ref)]
     pub async fn set_time_offset(
         &self,
         _registrar: &RegistrarCookie,

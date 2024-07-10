@@ -16,7 +16,7 @@ defaults:
 
 jobs:
   lint:
-    name: Lint
+    name: Linter
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +36,7 @@ jobs:
         run: cargo clippy --all-targets --all-features --workspace --exclude rewards -- -D warnings
 
   tests:
-    name: Test
+    name: Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -69,5 +69,5 @@ jobs:
       - name: Switch toolchain
         run: rustup override set 1.66.1 && solana-install init 1.14.12
 
-      - name: Run bpf tests
+      - name: Run tests
         run: cargo test-sbf

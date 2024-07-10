@@ -1,4 +1,3 @@
-use anchor_spl::token::TokenAccount;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
@@ -6,6 +5,7 @@ use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 mod program_test;
 #[tokio::test]
+#[allow(clippy::await_holding_refcell_ref)]
 async fn test_all_deposits() -> Result<(), TransportError> {
     let context = TestContext::new().await;
     let addin = &context.addin;

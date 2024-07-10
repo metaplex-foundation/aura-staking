@@ -23,6 +23,7 @@ pub struct SolanaCookie {
 
 impl SolanaCookie {
     #[allow(dead_code)]
+    #[allow(clippy::await_holding_refcell_ref)]
     pub async fn process_transaction(
         &self,
         instructions: &[Instruction],
@@ -55,6 +56,7 @@ impl SolanaCookie {
             .await
     }
 
+    #[allow(clippy::await_holding_refcell_ref)]
     pub async fn get_clock(&self) -> solana_program::clock::Clock {
         self.context
             .borrow_mut()
@@ -102,6 +104,7 @@ impl SolanaCookie {
     }
 
     #[allow(dead_code)]
+    #[allow(clippy::await_holding_refcell_ref)]
     pub async fn get_account_data(&self, address: Pubkey) -> Vec<u8> {
         self.context
             .borrow_mut()
