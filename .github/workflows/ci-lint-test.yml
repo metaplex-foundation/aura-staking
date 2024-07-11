@@ -7,7 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_VERSION: "1.14.12"
+  SOLANA_VERSION: "1.14.10"
   RUST_TOOLCHAIN: "1.66.1"
 
 defaults:
@@ -75,8 +75,8 @@ jobs:
 
       - name: Switch toolchain
         run: | 
-          rustup override set 1.66.1
-          solana-install init 1.14.12
+          rustup override set ${{ env.RUST_TOOLCHAIN }}
+          solana-install init ${{ env.SOLANA_VERSION }}
 
       - name: Run tests
         run: |
