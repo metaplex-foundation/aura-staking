@@ -38,6 +38,11 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+      # Refer to this doc for more information about test execution:
+      # https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/report-time.html
+      RUST_TEST_TIME_UNIT_IN_MS: "120000,120000"
+      RUST_TEST_TIME_INTEGRATION_IN_MS: "120000,120000"
 
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +72,13 @@ jobs:
           solana-keygen new -o "$HOME/.config/solana/id.json" --no-passphrase --silent
 
       - name: Switch toolchain
-        run: rustup override set 1.66.1 && solana-install init 1.14.12
+        run: | 
+          rustup override set 1.66.1
+          solana-install init 1.14.12
 
       - name: Run tests
-        run: cargo test-sbf
+        run: |
+          export RUST_TEST_TIME_UNIT=${{ env.RUST_TEST_TIME_UNIT_IN_MS }}
+          export RUST_TEST_TIME_INTEGRATION=${{ env.RUST_TEST_TIME_INTEGRATION_IN_MS }}
+          env | grep RUST
+          cargo test-sbf -- -Zunstable-options --ensure-time
