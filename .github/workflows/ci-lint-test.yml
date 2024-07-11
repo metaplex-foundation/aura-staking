@@ -7,7 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_VERSION: "1.14.10"
+  SOLANA_VERSION: "1.14.12"
   RUST_TOOLCHAIN: "1.66.1"
 
 defaults:
@@ -72,6 +72,7 @@ jobs:
           solana --version
           echo "Generating keypair..."
           solana-keygen new -o "$HOME/.config/solana/id.json" --no-passphrase --silent
+          solana config get
 
       - name: Switch toolchain
         run: | 
