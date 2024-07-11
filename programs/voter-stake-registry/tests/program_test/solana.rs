@@ -60,7 +60,9 @@ impl SolanaCookie {
             .await?
         {
             Some(transaction_result) => Ok(transaction_result?),
-            None => Err(BanksClientError::ClientError("invalid blockhash or fee-payer"))
+            None => Err(BanksClientError::ClientError(
+                "invalid blockhash or fee-payer",
+            )),
         }
     }
 
