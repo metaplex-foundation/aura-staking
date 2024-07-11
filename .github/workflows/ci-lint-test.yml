@@ -73,11 +73,6 @@ jobs:
           echo "Generating keypair..."
           solana-keygen new -o "$HOME/.config/solana/id.json" --no-passphrase --silent
 
-      - name: Setup Solana cluster to local
-        run: |
-          solana config set --url http:localhost:8899
-          solana config get
-
       - name: Switch toolchain
         run: | 
           rustup override set ${{ env.RUST_TOOLCHAIN }}

@@ -47,13 +47,21 @@ impl SolanaCookie {
 
         transaction.sign(&all_signers, context.last_blockhash);
 
-        context
+        let mut ctx = tarpc::context::Context::current();
+        ctx.deadline += std::time::Duration::from_secs(120);
+
+        match context
             .banks_client
-            .process_transaction_with_commitment(
+            .process_transaction_with_commitment_and_context(
+                ctx,
                 transaction,
                 solana_sdk::commitment_config::CommitmentLevel::Processed,
             )
-            .await
+            .await?
+        {
+            Some(transaction_result) => Ok(transaction_result?),
+            None => Err(BanksClientError::ClientError("invalid blockhash or fee-payer"))
+        }
     }
 
     #[allow(clippy::await_holding_refcell_ref)]
