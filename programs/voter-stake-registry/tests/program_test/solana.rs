@@ -48,7 +48,7 @@ impl SolanaCookie {
         transaction.sign(&all_signers, context.last_blockhash);
 
         let mut ctx = tarpc::context::Context::current();
-        ctx.deadline += std::time::Duration::from_secs(120);
+        ctx.deadline += std::time::Duration::from_secs(180);
 
         match context
             .banks_client
