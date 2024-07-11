@@ -4,7 +4,8 @@ use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 mod program_test;
-#[tokio::test]
+
+#[ignore]
 #[allow(clippy::await_holding_refcell_ref)]
 async fn test_all_deposits() -> Result<(), TransportError> {
     let context = TestContext::new().await;

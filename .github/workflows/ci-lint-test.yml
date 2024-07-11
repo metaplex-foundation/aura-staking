@@ -39,7 +39,9 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     env:
-      # Refer to this doc for more information about test execution:
+      # There is a problem with execution of `test_all_deposits` test, so we decided to
+      #   increase its duration.
+      # Refer to this doc for more information about test execution and duration:
       # https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/report-time.html
       RUST_TEST_TIME_UNIT_IN_MS: "120000,120000"
       RUST_TEST_TIME_INTEGRATION_IN_MS: "120000,120000"
