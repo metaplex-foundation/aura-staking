@@ -189,7 +189,12 @@ pub struct Stake<'info> {
     has_one = registrar)]
     pub voter: AccountLoader<'info, Voter>,
     pub voter_authority: Signer<'info>,
-    pub delegate: AccountLoader<'info, Voter>,
+
+    /// CHECK: Mining Account that belongs to Rewards Program and some delegate
+    /// The address of the mining account on the rewards progra,
+    /// derived from PDA(["mining", delegate wallet addr, reward_pool], rewards_program)
+    #[account(mut)]
+    pub delegate_mining: UncheckedAccount<'info>,
 
     /// CHECK: Reward Pool PDA will be checked in the rewards contract
     /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
@@ -198,8 +203,7 @@ pub struct Stake<'info> {
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
-    /// reward_program)
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 

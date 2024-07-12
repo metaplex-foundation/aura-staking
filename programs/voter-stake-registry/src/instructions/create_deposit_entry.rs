@@ -80,10 +80,10 @@ pub fn create_deposit_entry(
 
     let start_ts = clock_unix_timestamp();
     *d_entry = DepositEntry::default();
-    d_entry.delegate = ctx.accounts.voter_authority.key();
     d_entry.is_used = true;
     d_entry.voting_mint_config_idx = mint_idx as u8;
     d_entry.amount_deposited_native = 0;
+    d_entry.delegate_mining = *ctx.accounts.voter_authority.key;
     d_entry.lockup = Lockup::new(kind, start_ts, period)?;
 
     Ok(())
