@@ -162,7 +162,6 @@ impl Lockup {
     }
 }
 
-// #[repr(u8)]
 #[derive(BorshDeserialize, BorshSerialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LockupPeriod {
     None,
@@ -200,7 +199,6 @@ impl LockupPeriod {
     }
 }
 
-// #[repr(u8)]
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupKind {
     /// No lockup, tokens can be withdrawn as long as not engaged in a proposal.
