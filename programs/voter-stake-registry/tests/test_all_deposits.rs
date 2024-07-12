@@ -72,7 +72,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         )
         .await;
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -82,7 +81,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -100,7 +98,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         .unwrap();
 
     for i in 1..32 {
-        let delegate = Keypair::new();
         addin
             .create_deposit_entry(
                 &registrar,
@@ -110,7 +107,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
                 i,
                 LockupKind::Constant,
                 LockupPeriod::ThreeMonths,
-                delegate.pubkey(),
             )
             .await
             .unwrap();
@@ -119,6 +115,7 @@ async fn test_all_deposits() -> Result<(), TransportError> {
                 &registrar,
                 &voter,
                 voter_authority,
+                voter_authority.pubkey(),
                 &context.rewards.program_id,
                 0,
                 i,

@@ -149,7 +149,6 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
         .token_account_balance(reference_account)
         .await;
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -159,7 +158,6 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -172,7 +170,6 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -182,6 +179,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             &registrar,
             &voter,
             voter_authority,
+            voter_authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -322,7 +320,6 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
         )
     };
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
@@ -332,7 +329,6 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -345,7 +341,6 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -355,6 +350,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             &registrar,
             &voter,
             voter_authority,
+            voter_authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,

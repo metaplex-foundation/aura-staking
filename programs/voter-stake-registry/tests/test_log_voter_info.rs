@@ -95,7 +95,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         )
         .await;
 
-    let delegate = Keypair::new();
+    
     addin
         .create_deposit_entry(
             &registrar,
@@ -105,7 +105,6 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -118,7 +117,6 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -139,6 +137,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             &registrar,
             &voter,
             voter_authority,
+            voter_authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,

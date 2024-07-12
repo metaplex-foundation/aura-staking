@@ -120,12 +120,14 @@ impl AddinCookie {
         (registrar_cookie, reward_pool)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn stake(
         &self,
         // accounts
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
         voter_authority: &Keypair,
+        delegate: Pubkey,
         rewards_program: &Pubkey,
         // params
         source_deposit_entry_index: u8,
@@ -146,11 +148,14 @@ impl AddinCookie {
         let deposit_mining =
             find_deposit_mining_addr(&voter_authority.pubkey(), &reward_pool, rewards_program);
 
+        let delegate_mining = find_deposit_mining_addr(&delegate, &reward_pool, rewards_program);
+
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &voter_stake_registry::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter_authority.pubkey(),
+                delegate_mining,
                 reward_pool,
                 deposit_mining,
                 rewards_program: *rewards_program,
@@ -301,7 +306,6 @@ impl AddinCookie {
         deposit_entry_index: u8,
         lockup_kind: LockupKind,
         period: LockupPeriod,
-        delegate: Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
@@ -310,7 +314,6 @@ impl AddinCookie {
                 deposit_entry_index,
                 kind: lockup_kind,
                 period,
-                delegate,
             },
         );
 
@@ -389,6 +392,7 @@ impl AddinCookie {
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
         voter_authority: &Keypair,
+        delegate: &Pubkey,
         rewards_program: &Pubkey,
         // params
         source_deposit_entry_index: u8,
@@ -412,11 +416,14 @@ impl AddinCookie {
         let deposit_mining =
             find_deposit_mining_addr(&voter_authority.pubkey(), &reward_pool, rewards_program);
 
+        let delegate_mining = find_deposit_mining_addr(delegate, &reward_pool, rewards_program);
+
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &voter_stake_registry::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter_authority.pubkey(),
+                delegate_mining,
                 reward_pool,
                 deposit_mining,
                 rewards_program: *rewards_program,
@@ -435,6 +442,7 @@ impl AddinCookie {
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn unlock_tokens(
         &self,
         registrar: &RegistrarCookie,
