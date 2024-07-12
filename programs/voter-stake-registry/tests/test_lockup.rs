@@ -93,7 +93,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
-    let delegate = Keypair::new();
+    
     context
         .addin
         .create_deposit_entry(
@@ -104,7 +104,6 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await?;
     context
@@ -117,7 +116,6 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            delegate.pubkey(),
         )
         .await?;
     context
@@ -138,6 +136,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             &registrar,
             &voter,
             voter_authority,
+            voter_authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -257,7 +256,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
-    let delegate = Keypair::new();
+    
     context
         .addin
         .create_deposit_entry(
@@ -268,7 +267,6 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await?;
     context
@@ -281,7 +279,6 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            delegate.pubkey(),
         )
         .await?;
     context
@@ -302,6 +299,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             &registrar,
             &voter,
             voter_authority,
+            voter_authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -430,7 +428,7 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
-    let delegate = Keypair::new();
+    
     context
         .addin
         .create_deposit_entry(
@@ -441,7 +439,6 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await?;
     context
@@ -454,7 +451,6 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            delegate.pubkey(),
         )
         .await?;
     context
@@ -475,6 +471,7 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             &registrar,
             &voter,
             voter_authority,
+            voter_authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
