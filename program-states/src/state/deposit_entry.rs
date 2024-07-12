@@ -10,8 +10,8 @@ use anchor_lang::prelude::*;
 pub struct DepositEntry {
     // Locked state.
     pub lockup: Lockup,
-    /// Delegated staker
-    pub delegate: Pubkey,
+    /// Delegated staker. It's a mining account of a Delegate, on the Rewards program.
+    pub delegate_mining: Pubkey,
     /// Amount in deposited, in native currency. Withdraws of vested tokens
     /// directly reduce this amount.
     ///
@@ -96,10 +96,10 @@ mod tests {
         // future, or at least more than lockup_saturation_secs in the future.
         let lockup_start = 10_000_000_000; // arbitrary point
         let period = LockupPeriod::Flex;
-        let delegate = Pubkey::new_unique();
+        let delegate_mining = Pubkey::new_unique();
         let deposit = DepositEntry {
             amount_deposited_native: 20_000,
-            delegate,
+            delegate_mining,
             lockup: Lockup {
                 start_ts: lockup_start,
                 end_ts: lockup_start + LockupPeriod::Flex.to_secs(), // start + cooldown + period
