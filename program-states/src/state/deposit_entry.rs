@@ -63,7 +63,7 @@ impl DepositEntry {
     /// Returns the weighted stake for the given deposit at the specified timestamp.
     #[inline(always)]
     pub fn weighted_stake(&self, curr_ts: u64) -> u64 {
-        if !self.can_be_staked() {
+        if !self.is_staked() {
             return 0;
         }
 
@@ -73,7 +73,7 @@ impl DepositEntry {
     /// Weighted stake can be calculated only if `DepositEntry` is active,
     ///  and if both `LockupKind` and `LockupPeriod` not `None`.
     #[inline(always)]
-    fn can_be_staked(&self) -> bool {
+    fn is_staked(&self) -> bool {
         self.is_used
             && self.lockup.kind.ne(&LockupKind::None)
             && self.lockup.period.ne(&LockupPeriod::None)
