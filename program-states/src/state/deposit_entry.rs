@@ -1,5 +1,6 @@
 use crate::state::lockup::{Lockup, LockupKind};
 
+use crate::state::LockupPeriod;
 use anchor_lang::prelude::*;
 
 /// Bookkeeping for a single deposit for a given mint and lockup schedule.
@@ -62,17 +63,27 @@ impl DepositEntry {
     /// Returns the weighted stake for the given deposit at the specified timestamp.
     #[inline(always)]
     pub fn weighted_stake(&self, curr_ts: u64) -> u64 {
-        if !self.is_used {
+        if !self.can_be_staked() {
             return 0;
         }
+
         self.lockup.multiplier(curr_ts) * self.amount_deposited_native
+    }
+
+    /// Weighted stake can be calculated only if `DepositEntry` is active,
+    ///  and if both `LockupKind` and `LockupPeriod` not `None`.
+    #[inline(always)]
+    fn can_be_staked(&self) -> bool {
+        self.is_used
+            && self.lockup.kind.ne(&LockupKind::None)
+            && self.lockup.period.ne(&LockupPeriod::None)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::{LockupKind::Constant, LockupPeriod, VotingMintConfig};
+    use crate::state::{LockupKind::Constant, LockupKind::None, LockupPeriod, VotingMintConfig};
 
     #[test]
     pub fn far_future_lockup_start_test() -> Result<()> {
@@ -197,5 +208,60 @@ mod tests {
             deposit.weighted_stake(50),
             amount * LockupPeriod::OneYear.multiplier()
         );
+    }
+
+    #[test]
+    fn test_weighted_stake_is_invalid() {
+        let amount = 20_000;
+
+        let deposit = DepositEntry {
+            amount_deposited_native: amount,
+            lockup: Lockup {
+                start_ts: 0,
+                end_ts: 200,
+                kind: None,
+                period: LockupPeriod::None,
+                cooldown_requested: false,
+                cooldown_ends_at: 0,
+                _reserved1: [0; 5],
+            },
+            is_used: true,
+            voting_mint_config_idx: 0,
+            _reserved1: [0; 6],
+        };
+        assert_eq!(deposit.weighted_stake(50), 0);
+
+        let deposit = DepositEntry {
+            lockup: Lockup {
+                kind: None,
+                period: LockupPeriod::ThreeMonths,
+                ..deposit.lockup
+            },
+            is_used: true,
+            ..deposit
+        };
+        assert_eq!(deposit.weighted_stake(50), 0);
+
+        let deposit = DepositEntry {
+            lockup: Lockup {
+                kind: Constant,
+                period: LockupPeriod::None,
+                ..deposit.lockup
+            },
+            is_used: true,
+            ..deposit
+        };
+        assert_eq!(deposit.weighted_stake(50), 0);
+
+        let deposit = DepositEntry {
+            lockup: Lockup {
+                kind: Constant,
+                period: LockupPeriod::SixMonths,
+                ..deposit.lockup
+            },
+            is_used: false,
+            ..deposit
+        };
+        assert_eq!(deposit.weighted_stake(50), 0);
     }
 }
