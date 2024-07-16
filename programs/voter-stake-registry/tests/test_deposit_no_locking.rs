@@ -1,4 +1,3 @@
-use crate::program_test::utils::assert_custom_on_chain_error::AssertCustomOnChainErr;
 use anchor_spl::token::TokenAccount;
 use mplx_staking_states::{
     error::VsrError,
