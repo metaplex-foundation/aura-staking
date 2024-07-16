@@ -98,4 +98,10 @@ pub enum VsrError {
     // 6031 / 0x178f
     #[msg("Rewards: Invalid mining account")]
     InvalidMining,
+    // 6032 / 0x1790
+    #[msg("Rewards: Updating delegate is sooner than 5 days")]
+    DelegateUpdateIsTooSoon,
+    // 6033 / 0x1791
+    #[msg("Rewards: Cannot change delegate to the same delegate")]
+    SameDelegate,
 }
