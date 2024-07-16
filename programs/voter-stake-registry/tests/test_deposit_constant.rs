@@ -1,8 +1,4 @@
-use anchor_spl::token::TokenAccount;
-use mplx_staking_states::{
-    error::VsrError,
-    state::{LockupKind, LockupPeriod},
-};
+use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};

@@ -23,6 +23,7 @@ pub struct SolanaCookie {
 
 impl SolanaCookie {
     #[allow(dead_code)]
+    #[allow(clippy::await_holding_refcell_ref)]
     pub async fn process_transaction(
         &self,
         instructions: &[Instruction],
@@ -46,15 +47,26 @@ impl SolanaCookie {
 
         transaction.sign(&all_signers, context.last_blockhash);
 
-        context
+        let mut ctx = tarpc::context::Context::current();
+        ctx.deadline += std::time::Duration::from_secs(180);
+
+        match context
             .banks_client
-            .process_transaction_with_commitment(
+            .process_transaction_with_commitment_and_context(
+                ctx,
                 transaction,
                 solana_sdk::commitment_config::CommitmentLevel::Processed,
             )
-            .await
+            .await?
+        {
+            Some(transaction_result) => Ok(transaction_result?),
+            None => Err(BanksClientError::ClientError(
+                "invalid blockhash or fee-payer",
+            )),
+        }
     }
 
+    #[allow(clippy::await_holding_refcell_ref)]
     pub async fn get_clock(&self) -> solana_program::clock::Clock {
         self.context
             .borrow_mut()
@@ -102,6 +114,7 @@ impl SolanaCookie {
     }
 
     #[allow(dead_code)]
+    #[allow(clippy::await_holding_refcell_ref)]
     pub async fn get_account_data(&self, address: Pubkey) -> Vec<u8> {
         self.context
             .borrow_mut()

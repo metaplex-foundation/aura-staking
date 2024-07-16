@@ -1,5 +1,6 @@
 use crate::*;
 use anchor_lang::Key;
+use anchor_spl::token::TokenAccount;
 use mplx_staking_states::state::Voter;
 use solana_sdk::{
     instruction::Instruction,
@@ -694,8 +695,9 @@ impl AddinCookie {
             .unwrap();
     }
 
-    #[allow(clippy::too_many_arguments)]
     #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::await_holding_refcell_ref)]
     pub async fn set_time_offset(
         &self,
         _registrar: &RegistrarCookie,

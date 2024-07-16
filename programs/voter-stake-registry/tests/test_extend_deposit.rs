@@ -1,8 +1,4 @@
-use anchor_spl::token::TokenAccount;
-use mplx_staking_states::{
-    error::VsrError,
-    state::{LockupKind, LockupPeriod},
-};
+use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{
@@ -12,6 +8,7 @@ use solana_sdk::{
 mod program_test;
 
 #[tokio::test]
+#[allow(clippy::await_holding_refcell_ref)]
 async fn extend_from_flex() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
@@ -175,6 +172,7 @@ async fn extend_from_flex() -> Result<(), TransportError> {
 }
 
 #[tokio::test]
+#[allow(clippy::await_holding_refcell_ref)]
 async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
@@ -338,6 +336,7 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
 }
 
 #[tokio::test]
+#[allow(clippy::await_holding_refcell_ref)]
 async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<(), TransportError>
 {
     let context = TestContext::new().await;
@@ -502,6 +501,7 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
 }
 
 #[tokio::test]
+#[allow(clippy::await_holding_refcell_ref)]
 async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
@@ -661,6 +661,7 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
 }
 
 #[tokio::test]
+#[allow(clippy::await_holding_refcell_ref)]
 async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
