@@ -4735,6 +4735,7 @@ dependencies = [
  "spl-governance-addin-api",
  "spl-token",
  "static_assertions",
+ "tarpc",
 ]
 
 [[package]]
