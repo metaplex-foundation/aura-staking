@@ -1,8 +1,12 @@
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod},
+};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
+use AssertCustomOnChainErr;
 
 mod program_test;
 
@@ -153,7 +157,8 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             &context.rewards.program_id,
         )
         .await
-        .expect_err("fails because it's too early to unlock is invalid");
+        .assert_on_chain_err(VsrError::DepositStillLocked);
+
     context
         .addin
         .withdraw(
@@ -166,7 +171,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             10000,
         )
         .await
-        .expect_err("fails because it's impossible to withdraw without unlock");
+        .assert_on_chain_err(VsrError::UnlockMustBeCalledFirst);
 
     Ok(())
 }
@@ -339,7 +344,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             10000,
         )
         .await
-        .expect_err("fails because cooldown is ongoing");
+        .assert_on_chain_err(VsrError::InvalidTimestampArguments);
 
     Ok(())
 }

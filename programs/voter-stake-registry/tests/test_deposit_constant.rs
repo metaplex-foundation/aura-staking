@@ -1,5 +1,8 @@
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod},
+};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
@@ -194,7 +197,9 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
     assert_eq!(after_deposit.voter_weight, after_deposit.vault); // unchanged
     assert_eq!(after_deposit.vault, 10_000);
     assert_eq!(after_deposit.deposit, 10_000);
-    withdraw(1, 1).await.expect_err("all locked up");
+    withdraw(1, 1)
+        .await
+        .assert_on_chain_err(VsrError::UnlockMustBeCalledFirst);
 
     // advance to day 95. Just to be sure withdraw isn't possible without unlocking first
     // even at lockup period + cooldown period (90 + 5 respectively in that case)
@@ -218,7 +223,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
         .unwrap();
     withdraw(10_000, 1)
         .await
-        .expect_err("Cooldown still not passed");
+        .assert_on_chain_err(VsrError::InvalidTimestampArguments);
 
     context.solana.advance_clock_by_slots(2).await; // avoid caching of transactions
                                                     // warp to day 100. (90 days of lockup + fake cooldown (5 days)) + 5 days of true cooldown
@@ -370,7 +375,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
     // withdraw
     withdraw(10_000)
         .await
-        .expect_err("impossible to withdraw without unlocking");
+        .assert_on_chain_err(VsrError::InsufficientUnlockedTokens);
 
     Ok(())
 }

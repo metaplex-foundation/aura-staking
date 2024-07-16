@@ -1,11 +1,16 @@
 use bytemuck::{bytes_of, Contiguous};
-use solana_program::program_error::ProgramError;
+use mplx_staking_states::error::VsrError;
+use solana_program::{instruction::InstructionError, program_error::ProgramError};
 use solana_program_test::{BanksClientError, ProgramTestContext};
 use solana_sdk::{
-    program_pack::Pack, pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
-    transaction::Transaction,
+    program_pack::Pack,
+    pubkey::Pubkey,
+    signature::Keypair,
+    signer::Signer,
+    system_instruction,
+    transaction::{Transaction, TransactionError},
 };
-use std::borrow::BorrowMut;
+use std::{borrow::BorrowMut, fmt::Debug};
 
 #[allow(dead_code)]
 pub fn gen_signer_seeds<'a>(nonce: &'a u64, acc_pk: &'a Pubkey) -> [&'a [u8]; 2] {
@@ -101,4 +106,29 @@ pub async fn advance_clock_by_ts(context: &mut ProgramTestContext, ts: i64) {
     let mut new_clock = old_clock.clone();
     new_clock.unix_timestamp += ts;
     context.borrow_mut().set_sysvar(&new_clock);
+}
+
+pub mod assert_custom_on_chain_error {
+    use super::*;
+    use mplx_staking_states::error::VsrError;
+    use std::fmt::Debug;
+
+    pub trait AssertCustomOnChainErr {
+        fn assert_on_chain_err(self, expected_err: VsrError);
+    }
+
+    impl<T: Debug> AssertCustomOnChainErr for Result<T, BanksClientError> {
+        fn assert_on_chain_err(self, expected_err: VsrError) {
+            assert!(self.is_err());
+            match self.unwrap_err() {
+                BanksClientError::TransactionError(TransactionError::InstructionError(
+                    _,
+                    InstructionError::Custom(code),
+                )) => {
+                    debug_assert_eq!((expected_err as u32) + 6000, code);
+                }
+                _ => unreachable!("BanksClientError has no 'Custom' variant."),
+            }
+        }
+    }
 }

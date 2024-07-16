@@ -4,9 +4,9 @@ use solana_sdk::{
     pubkey::Pubkey,
     signature::{Keypair, Signer},
 };
-use spl_governance::state::realm::GoverningTokenConfigAccountArgs;
-use spl_governance::state::realm_config::GoverningTokenType;
-use spl_governance::state::{proposal, vote_record};
+use spl_governance::state::{
+    proposal, realm::GoverningTokenConfigAccountArgs, realm_config::GoverningTokenType, vote_record,
+};
 use std::rc::Rc;
 
 #[derive(Clone)]

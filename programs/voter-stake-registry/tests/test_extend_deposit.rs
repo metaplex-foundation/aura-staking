@@ -1,5 +1,8 @@
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod},
+};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{
@@ -808,7 +811,7 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
             50,
         )
         .await
-        .expect_err("Impossible to extend stake from existing stake (not flex) to another period");
+        .assert_on_chain_err(VsrError::ArithmeticOverflow);
 
     Ok(())
 }
