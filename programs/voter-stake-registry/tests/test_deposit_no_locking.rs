@@ -1,5 +1,8 @@
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod},
+};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
@@ -222,7 +225,9 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     assert_eq!(after_withdraw1.vault, 12000);
     assert_eq!(after_withdraw1.deposit, 5000);
 
-    withdraw(5001).await.expect_err("withdrew too much");
+    withdraw(5001)
+        .await
+        .assert_on_chain_err(VsrError::InsufficientUnlockedTokens);
 
     withdraw(5000).await.unwrap();
 
@@ -236,11 +241,11 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     addin
         .close_deposit_entry(&voter, voter_authority, 2)
         .await
-        .expect_err("deposit not in use");
+        .assert_on_chain_err(VsrError::UnusedDepositEntryIndex);
     addin
         .close_deposit_entry(&voter, voter_authority, 1)
         .await
-        .expect_err("deposit not empty");
+        .assert_on_chain_err(VsrError::VotingTokenNonZero);
     addin
         .close_deposit_entry(&voter, voter_authority, 0)
         .await
