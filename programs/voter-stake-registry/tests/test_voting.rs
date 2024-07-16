@@ -69,10 +69,10 @@ async fn test_voting() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining_voter = find_deposit_mining_addr(
+    let (deposit_mining_voter, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
     let voter = addin
         .create_voter(
@@ -86,10 +86,10 @@ async fn test_voting() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining_voter2 = find_deposit_mining_addr(
+    let (deposit_mining_voter2, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter2_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
     let voter2 = addin
         .create_voter(
@@ -118,11 +118,12 @@ async fn test_voting() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -169,11 +170,12 @@ async fn test_voting() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter2,
-            voter2_authority,
+            &voter2,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -194,11 +196,12 @@ async fn test_voting() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter2,
-            voter2_authority,
+            &voter2,
             &usdc_voting_mint,
             1,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();

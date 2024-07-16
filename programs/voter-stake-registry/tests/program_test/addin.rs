@@ -31,7 +31,7 @@ pub struct VotingMintConfigCookie {
 
 pub struct VoterCookie {
     pub address: Pubkey,
-    pub authority: Pubkey,
+    pub authority: Keypair,
     pub voter_weight_record: Pubkey,
     pub token_owner_record: Pubkey,
 }
@@ -126,7 +126,6 @@ impl AddinCookie {
         // accounts
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-        voter_authority: &Keypair,
         delegate: Pubkey,
         rewards_program: &Pubkey,
         // params
@@ -145,16 +144,17 @@ impl AddinCookie {
             rewards_program,
         );
 
-        let deposit_mining =
-            find_deposit_mining_addr(&voter_authority.pubkey(), &reward_pool, rewards_program);
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), &reward_pool);
 
-        let delegate_mining = find_deposit_mining_addr(&delegate, &reward_pool, rewards_program);
+        let (delegate_mining, _) =
+            find_deposit_mining_addr(rewards_program, &delegate, &reward_pool);
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &voter_stake_registry::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
-                voter_authority: voter_authority.pubkey(),
+                voter_authority: voter.authority.pubkey(),
                 delegate_mining,
                 reward_pool,
                 deposit_mining,
@@ -170,7 +170,7 @@ impl AddinCookie {
         }];
 
         self.solana
-            .process_transaction(&instructions, Some(&[voter_authority]))
+            .process_transaction(&instructions, Some(&[&voter.authority]))
             .await
     }
 
@@ -284,13 +284,15 @@ impl AddinCookie {
         }];
 
         self.solana
-            .process_transaction(&instructions, Some(&[payer, authority]))
+            .process_transaction(&instructions, Some(&[&payer, &authority]))
             .await
             .unwrap();
 
+        let authority = Keypair::from_bytes(&authority.to_bytes()).unwrap();
+
         VoterCookie {
             address: voter,
-            authority: authority.pubkey(),
+            authority,
             voter_weight_record,
             token_owner_record: token_owner_record.address,
         }
@@ -301,11 +303,12 @@ impl AddinCookie {
         &self,
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-        voter_authority: &Keypair,
+        delegate_voter: &VoterCookie,
         voting_mint: &VotingMintConfigCookie,
         deposit_entry_index: u8,
         lockup_kind: LockupKind,
         period: LockupPeriod,
+        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
@@ -314,6 +317,7 @@ impl AddinCookie {
                 deposit_entry_index,
                 kind: lockup_kind,
                 period,
+                rewards_program: *rewards_program,
             },
         );
 
@@ -322,12 +326,13 @@ impl AddinCookie {
                 vault,
                 registrar: registrar.address,
                 voter: voter.address,
-                voter_authority: voter_authority.pubkey(),
-                payer: voter_authority.pubkey(),
+                voter_authority: voter.authority.pubkey(),
+                payer: voter.authority.pubkey(),
                 deposit_mint: voting_mint.mint.pubkey.unwrap(),
                 system_program: solana_sdk::system_program::id(),
                 token_program: spl_token::id(),
                 associated_token_program: spl_associated_token_account::id(),
+                delegate_voter: delegate_voter.address,
             },
             None,
         );
@@ -339,7 +344,7 @@ impl AddinCookie {
         }];
 
         self.solana
-            .process_transaction(&instructions, Some(&[voter_authority]))
+            .process_transaction(&instructions, Some(&[&voter.authority]))
             .await
     }
 
@@ -413,10 +418,11 @@ impl AddinCookie {
             rewards_program,
         );
 
-        let deposit_mining =
-            find_deposit_mining_addr(&voter_authority.pubkey(), &reward_pool, rewards_program);
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter_authority.pubkey(), &reward_pool);
 
-        let delegate_mining = find_deposit_mining_addr(delegate, &reward_pool, rewards_program);
+        let (delegate_mining, u8) =
+            find_deposit_mining_addr(rewards_program, delegate, &reward_pool);
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &voter_stake_registry::accounts::Stake {
@@ -459,12 +465,13 @@ impl AddinCookie {
             });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::UnlockTokens {
+            &voter_stake_registry::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: authority.pubkey(),
                 reward_pool: *reward_pool,
                 deposit_mining: *deposit_mining,
+                delegate_mining: *deposit_mining,
                 rewards_program: *rewards_program,
             },
             None,
@@ -540,8 +547,8 @@ impl AddinCookie {
             rewards_program,
         );
 
-        let deposit_mining =
-            find_deposit_mining_addr(&voter_authority.pubkey(), &reward_pool, rewards_program);
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter_authority.pubkey(), &reward_pool);
 
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::CloseVoter {});

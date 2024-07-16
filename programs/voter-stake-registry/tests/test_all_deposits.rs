@@ -54,10 +54,10 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = addin
@@ -76,11 +76,12 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -102,11 +103,12 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             .create_deposit_entry(
                 &registrar,
                 &voter,
-                voter_authority,
+                &voter,
                 &mngo_voting_mint,
                 i,
                 LockupKind::Constant,
                 LockupPeriod::ThreeMonths,
+                &context.rewards.program_id,
             )
             .await
             .unwrap();
@@ -114,8 +116,7 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             .stake(
                 &registrar,
                 &voter,
-                voter_authority,
-                voter_authority.pubkey(),
+                voter.authority.pubkey(),
                 &context.rewards.program_id,
                 0,
                 i,
