@@ -5,7 +5,7 @@ use anchor_lang::prelude::*;
 
 /// Bookkeeping for a single deposit for a given mint and lockup schedule.
 #[zero_copy]
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DepositEntry {
     // Locked state.
     pub lockup: Lockup,
@@ -130,7 +130,7 @@ mod tests {
             lockup: Lockup::default(),
             is_used: false,
             voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
+            delegate_mining: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(deposit.weighted_stake(0), 0);
@@ -152,7 +152,7 @@ mod tests {
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
+            delegate_mining: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(deposit.weighted_stake(10), amount);
@@ -174,7 +174,7 @@ mod tests {
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
+            delegate_mining: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(deposit.weighted_stake(150), 0);
@@ -196,7 +196,7 @@ mod tests {
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
+            delegate_mining: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(
@@ -222,7 +222,7 @@ mod tests {
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
+            delegate_mining: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(deposit.weighted_stake(50), 0);

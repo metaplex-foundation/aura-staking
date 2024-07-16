@@ -329,6 +329,7 @@ pub fn withdraw_mining<'a>(
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
+    delegate_mining: AccountInfo<'a>,
     amount: u64,
     owner: &Pubkey,
     signers_seeds: &[&[u8]],
@@ -337,6 +338,7 @@ pub fn withdraw_mining<'a>(
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new(delegate_mining.key(), false),
     ];
 
     let ix = Instruction::new_with_borsh(
@@ -350,7 +352,13 @@ pub fn withdraw_mining<'a>(
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, deposit_authority, program_id],
+        &[
+            reward_pool,
+            mining,
+            deposit_authority,
+            delegate_mining,
+            program_id,
+        ],
         &[signers_seeds],
     )
 }

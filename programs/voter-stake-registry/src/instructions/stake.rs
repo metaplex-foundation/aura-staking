@@ -1,4 +1,6 @@
-use crate::{clock_unix_timestamp, cpi_instructions, Stake};
+use crate::{
+    clock_unix_timestamp, cpi_instructions, find_mining_address, find_reward_pool_address, Stake,
+};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{error::VsrError, state::LockupKind};
 
@@ -48,12 +50,18 @@ pub fn stake(
         target.amount_deposited_native == 0,
         VsrError::DepositEntryIsOld
     );
+    // check whether target delegate mining is the same as delegate mining from passed context
+    require_eq!(
+        target.delegate_mining,
+        *ctx.accounts.delegate_mining.key,
+        VsrError::InvalidDelegateMining
+    );
+
     // Add target amounts
     target.amount_deposited_native = target
         .amount_deposited_native
         .checked_add(amount)
         .ok_or(VsrError::ArithmeticOverflow)?;
-    target.delegate_mining = ctx.accounts.delegate_mining.key();
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();

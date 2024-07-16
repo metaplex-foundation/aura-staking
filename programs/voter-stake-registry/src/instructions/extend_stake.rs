@@ -68,6 +68,13 @@ pub fn extend_stake(
         source_mint_idx,
         VsrError::InvalidMint
     );
+    // check whether target delegate mining is the same as delegate mining from passed context
+    require_eq!(
+        target.delegate_mining,
+        *ctx.accounts.delegate_mining.key,
+        VsrError::InvalidDelegateMining
+    );
+
     target.amount_deposited_native = target
         .amount_deposited_native
         .checked_add(additional_amount)
@@ -77,7 +84,6 @@ pub fn extend_stake(
         .checked_add(new_lockup_period.to_secs())
         .ok_or(VsrError::InvalidTimestampArguments)?;
     target.lockup.period = new_lockup_period;
-    target.delegate_mining = ctx.accounts.delegate_mining.key();
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();

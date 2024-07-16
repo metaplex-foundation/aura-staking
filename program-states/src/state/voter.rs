@@ -15,6 +15,8 @@ const_assert!(std::mem::size_of::<Voter>() == 80 * 32 + 32 + 32 + 1 + 1 + 14);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
 impl Voter {
+    pub const MIN_OWN_WEIGHTED_STAKE: u64 = 15_000_000;
+
     /// The full vote weight available to the voter
     pub fn weight(&self) -> Result<u64> {
         self.deposits
