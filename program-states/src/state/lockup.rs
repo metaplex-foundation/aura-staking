@@ -12,7 +12,7 @@ pub const SECS_PER_MONTH: u64 = 365 * SECS_PER_DAY / 12;
 pub const COOLDOWN_SECS: u64 = 86_400 * 5;
 
 #[zero_copy]
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Lockup {
     /// Start of the lockup.
     pub start_ts: u64,

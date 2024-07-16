@@ -8,6 +8,7 @@ pub use create_voter::*;
 pub use deposit::*;
 pub use extend_stake::*;
 pub use log_voter_info::*;
+use solana_program::pubkey::Pubkey;
 use solana_program::{clock::Clock, sysvar::Sysvar};
 pub use stake::*;
 pub use unlock_tokens::*;
@@ -31,4 +32,28 @@ mod withdraw;
 
 pub fn clock_unix_timestamp() -> u64 {
     Clock::get().unwrap().unix_timestamp as u64
+}
+
+/// Generates mining address
+pub fn find_mining_address(
+    program_id: &Pubkey,
+    mining_owner: &Pubkey,
+    reward_pool: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            "mining".as_bytes(),
+            &mining_owner.to_bytes(),
+            &reward_pool.to_bytes(),
+        ],
+        program_id,
+    )
+}
+
+/// Generates reward pool address
+pub fn find_reward_pool_address(program_id: &Pubkey, registrar: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &["reward_pool".as_bytes(), &registrar.to_bytes()],
+        program_id,
+    )
 }

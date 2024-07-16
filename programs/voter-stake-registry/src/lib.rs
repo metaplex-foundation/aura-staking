@@ -91,8 +91,9 @@ pub mod voter_stake_registry {
         deposit_entry_index: u8,
         kind: LockupKind,
         period: LockupPeriod,
+        rewards_program: Pubkey,
     ) -> Result<()> {
-        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period)
+        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period, rewards_program)
     }
 
     pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
@@ -114,7 +115,7 @@ pub mod voter_stake_registry {
         instructions::update_voter_weight_record(ctx)
     }
 
-    pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
+    pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()> {
         instructions::unlock_tokens(ctx, deposit_entry_index)
     }
 
@@ -182,19 +183,14 @@ pub struct Stake<'info> {
     // checking the PDA address it just an extra precaution,
     // the other constraints must be exhaustive
     #[account(
-    mut,
-    seeds = [registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
-    bump = voter.load()?.voter_bump,
-    has_one = voter_authority,
-    has_one = registrar)]
+        mut,
+        seeds = [registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
+        bump = voter.load()?.voter_bump,
+        has_one = voter_authority,
+        has_one = registrar)
+    ]
     pub voter: AccountLoader<'info, Voter>,
     pub voter_authority: Signer<'info>,
-
-    /// CHECK: Mining Account that belongs to Rewards Program and some delegate
-    /// The address of the mining account on the rewards progra,
-    /// derived from PDA(["mining", delegate wallet addr, reward_pool], rewards_program)
-    #[account(mut)]
-    pub delegate_mining: UncheckedAccount<'info>,
 
     /// CHECK: Mining Account that belongs to Rewards Program and some delegate
     /// The address of the mining account on the rewards progra,
