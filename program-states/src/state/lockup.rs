@@ -141,16 +141,36 @@ impl Lockup {
         );
         Ok(())
     }
+
+    /// Multiplier of the lockup period at the specified timestamp.
+    /// If the lockup has expired, the multiplier will be as for the Flex period.
+    /// If the lockup has not started yet, the multiplier will be zero.
+    /// If the cooldown has been requested, the multiplier will be zero.
+    /// Otherwise, the multiplier will be the one for the lockup period.
+    /// The multiplier is used to calculate the weighted stake.
+    #[inline(always)]
+    pub fn multiplier(&self, curr_ts: u64) -> u64 {
+        if curr_ts < self.start_ts || self.cooldown_requested {
+            return 0;
+        }
+        if self.end_ts > curr_ts {
+            self.period.multiplier()
+        } else {
+            LockupPeriod::Flex.multiplier()
+        }
+    }
 }
 
 #[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(
+    AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord,
+)]
 pub enum LockupPeriod {
     None,
+    Flex,
     ThreeMonths,
     SixMonths,
     OneYear,
-    Flex,
 }
 
 impl Default for LockupPeriod {
@@ -167,6 +187,16 @@ impl LockupPeriod {
             LockupPeriod::OneYear => SECS_PER_MONTH * 12,
             LockupPeriod::Flex => SECS_PER_DAY * 5,
             LockupPeriod::None => 0,
+        }
+    }
+
+    pub fn multiplier(&self) -> u64 {
+        match self {
+            LockupPeriod::None => 0,
+            LockupPeriod::ThreeMonths => 2,
+            LockupPeriod::SixMonths => 4,
+            LockupPeriod::OneYear => 6,
+            LockupPeriod::Flex => 1,
         }
     }
 }
@@ -205,5 +235,37 @@ impl LockupKind {
             LockupKind::None => 0,
             LockupKind::Constant => 3,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lockup_multiplier_not_started() {
+        let lockup = Lockup::new(LockupKind::Constant, 100, LockupPeriod::ThreeMonths).unwrap();
+        assert_eq!(lockup.multiplier(99), 0);
+    }
+
+    #[test]
+    fn test_lockup_multiplier_started() {
+        let lockup = Lockup::new(LockupKind::Constant, 100, LockupPeriod::ThreeMonths).unwrap();
+        assert_eq!(lockup.multiplier(100), 2);
+    }
+
+    #[test]
+    fn test_lockup_multiplier_expired() {
+        let period = LockupPeriod::ThreeMonths;
+        let lockup = Lockup::new(LockupKind::Constant, 100, period).unwrap();
+        assert_eq!(lockup.multiplier(200 + period.to_secs()), 1);
+    }
+
+    #[test]
+    fn test_lockup_multiplier_cooldown() {
+        let lockup = Lockup::new(LockupKind::Constant, 100, LockupPeriod::ThreeMonths).unwrap();
+        let mut lockup = lockup;
+        lockup.cooldown_requested = true;
+        assert_eq!(lockup.multiplier(200), 0);
     }
 }
