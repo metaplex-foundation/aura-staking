@@ -68,10 +68,10 @@ async fn extend_from_flex() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -94,11 +94,12 @@ async fn extend_from_flex() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -106,11 +107,12 @@ async fn extend_from_flex() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -130,8 +132,7 @@ async fn extend_from_flex() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -230,10 +231,10 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -256,11 +257,12 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -268,11 +270,12 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -292,8 +295,7 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -393,10 +395,10 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -419,11 +421,12 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -431,11 +434,12 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -455,8 +459,7 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -555,10 +558,10 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -581,11 +584,12 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -593,11 +597,12 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -617,8 +622,7 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -713,10 +717,10 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -739,11 +743,12 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -751,11 +756,12 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -775,8 +781,7 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -868,12 +873,86 @@ async fn prolongs_with_delegate() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
+    // CREATE DELEGATE
+    let delegate_authority = &context.users[2].key;
+    let delegate_token_account = context.users[2].token_accounts[0];
+
+    let (delegate_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
+        &delegate_authority.pubkey(),
+        &rewards_pool,
+    );
+
+    let delegate_voter = context
+        .addin
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            delegate_authority,
+            payer,
+            &rewards_pool,
+            &delegate_mining,
+            &context.rewards.program_id,
+        )
+        .await;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &delegate_voter,
+            &delegate_voter,
+            &mngo_voting_mint,
+            0,
+            LockupKind::None,
+            LockupPeriod::None,
+            &context.rewards.program_id,
+        )
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &delegate_voter,
+            &delegate_voter,
+            &mngo_voting_mint,
+            1,
+            LockupKind::Constant,
+            LockupPeriod::OneYear,
+            &context.rewards.program_id,
+        )
+        .await?;
+    context
+        .addin
+        .deposit(
+            &registrar,
+            &delegate_voter,
+            &mngo_voting_mint,
+            delegate_authority,
+            delegate_token_account,
+            0,
+            6_000_000,
+        )
+        .await?;
+    context
+        .addin
+        .stake(
+            &registrar,
+            &delegate_voter,
+            delegate_authority.pubkey(),
+            &context.rewards.program_id,
+            0,
+            1,
+            6_000_000,
+        )
+        .await?;
+
+    // CREATE VOTER
     let voter = context
         .addin
         .create_voter(
@@ -894,11 +973,12 @@ async fn prolongs_with_delegate() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -906,11 +986,12 @@ async fn prolongs_with_delegate() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &delegate_voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -930,84 +1011,11 @@ async fn prolongs_with_delegate() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
-            &context.rewards.program_id,
-            0,
-            1,
-            10000,
-        )
-        .await?;
-
-    // CREATE DELEGATE AND RESTAKE WITH IT
-    let delegate_authority = &context.users[2].key;
-    let delegate_token_account = context.users[2].token_accounts[0];
-
-    let delegate_mining = find_deposit_mining_addr(
-        &delegate_authority.pubkey(),
-        &rewards_pool,
-        &context.rewards.program_id,
-    );
-
-    let delegate_voter = context
-        .addin
-        .create_voter(
-            &registrar,
-            &token_owner_record,
-            delegate_authority,
-            payer,
-            &rewards_pool,
-            &delegate_mining,
-            &context.rewards.program_id,
-        )
-        .await;
-    context
-        .addin
-        .create_deposit_entry(
-            &registrar,
-            &delegate_voter,
-            delegate_authority,
-            &mngo_voting_mint,
-            0,
-            LockupKind::None,
-            LockupPeriod::None,
-        )
-        .await?;
-    context
-        .addin
-        .create_deposit_entry(
-            &registrar,
-            &delegate_voter,
-            delegate_authority,
-            &mngo_voting_mint,
-            1,
-            LockupKind::Constant,
-            LockupPeriod::OneYear,
-        )
-        .await?;
-    context
-        .addin
-        .deposit(
-            &registrar,
-            &delegate_voter,
-            &mngo_voting_mint,
-            delegate_authority,
-            delegate_token_account,
-            0,
-            6_000_000,
-        )
-        .await?;
-    context
-        .addin
-        .stake(
-            &registrar,
-            &delegate_voter,
-            delegate_authority,
             delegate_authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
-            6_000_000,
+            10000,
         )
         .await?;
 

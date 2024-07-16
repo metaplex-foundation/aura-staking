@@ -68,10 +68,10 @@ async fn successeful_claim() -> Result<(), TransportError> {
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
     let voter_authority_ata = context
         .rewards
@@ -102,11 +102,12 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -114,11 +115,12 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
+            &context.rewards.program_id,
         )
         .await?;
 
@@ -140,8 +142,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &voter,
-            deposit_authority,
-            deposit_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,

@@ -66,10 +66,10 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -89,10 +89,10 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
     let delegate_authority = &context.users[2].key;
     let delegate_token_account = context.users[2].token_accounts[0];
 
-    let delegate_mining = find_deposit_mining_addr(
+    let (delegate_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &delegate_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let delegate_voter = context
@@ -112,11 +112,12 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &delegate_voter,
-            delegate_authority,
+            &delegate_voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -124,11 +125,12 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &delegate_voter,
-            delegate_authority,
+            &delegate_voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -148,7 +150,6 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &delegate_voter,
-            delegate_authority,
             delegate_authority.pubkey(),
             &context.rewards.program_id,
             0,
@@ -165,11 +166,12 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -177,11 +179,12 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &delegate_voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -201,8 +204,7 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            delegate_authority.pubkey(),
+            delegate_voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,

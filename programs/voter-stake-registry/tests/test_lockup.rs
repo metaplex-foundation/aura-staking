@@ -68,10 +68,10 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -89,17 +89,18 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
-    
+
     context
         .addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -107,11 +108,12 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -131,8 +133,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -230,10 +231,10 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -251,17 +252,18 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
-    
+
     context
         .addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -269,11 +271,12 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -293,8 +296,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -402,10 +404,10 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -423,17 +425,18 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
 
     // test deposit and withdraw
     let reference_account = context.users[1].token_accounts[0];
-    
+
     context
         .addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -441,11 +444,12 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
+            &context.rewards.program_id,
         )
         .await?;
     context
@@ -465,8 +469,7 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
         .stake(
             &registrar,
             &voter,
-            voter_authority,
-            voter_authority.pubkey(),
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,

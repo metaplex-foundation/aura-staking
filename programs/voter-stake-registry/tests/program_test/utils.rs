@@ -71,19 +71,18 @@ pub async fn create_mint(
 }
 
 pub fn find_deposit_mining_addr(
-    user: &Pubkey,
-    rewards_pool: &Pubkey,
-    rewards_program_addr: &Pubkey,
-) -> Pubkey {
-    let (deposit_mining, _bump) = Pubkey::find_program_address(
+    program_id: &Pubkey,
+    mining_owner: &Pubkey,
+    reward_pool: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
         &[
             "mining".as_bytes(),
-            &user.to_bytes(),
-            &rewards_pool.to_bytes(),
+            &mining_owner.to_bytes(),
+            &reward_pool.to_bytes(),
         ],
-        rewards_program_addr,
-    );
-    deposit_mining
+        program_id,
+    )
 }
 
 pub async fn advance_clock_by_ts(context: &mut ProgramTestContext, ts: i64) {
