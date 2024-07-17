@@ -31,6 +31,8 @@ mod unlock_tokens;
 mod update_voter_weight_record;
 mod withdraw;
 
+pub const DAO_PUBKEY: &str = "111111111111111111111111111111111";
+
 pub fn clock_unix_timestamp() -> u64 {
     Clock::get().unwrap().unix_timestamp as u64
 }

@@ -104,4 +104,10 @@ pub enum VsrError {
     // 6033 / 0x1791
     #[msg("Rewards: Cannot change delegate to the same delegate")]
     SameDelegate,
+    // 6034 / 0x1792
+    #[msg("Rewards: To claim rewards user must interact with DAO. It's impossible to check with that number of remaining accounts")]
+    RemainingAccountsIsEmpty,
+    // 6035 / 0x1793
+    #[msg("Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found")]
+    NoDaoInteractionFound,
 }
