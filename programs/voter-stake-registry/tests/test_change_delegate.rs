@@ -107,7 +107,6 @@ async fn change_from_own_delegate_to_new_delegate() -> Result<(), TransportError
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -120,7 +119,6 @@ async fn change_from_own_delegate_to_new_delegate() -> Result<(), TransportError
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -174,7 +172,6 @@ async fn change_from_own_delegate_to_new_delegate() -> Result<(), TransportError
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -187,7 +184,6 @@ async fn change_from_own_delegate_to_new_delegate() -> Result<(), TransportError
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -336,7 +332,6 @@ async fn stake_is_too_little() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -349,7 +344,6 @@ async fn stake_is_too_little() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -403,7 +397,6 @@ async fn stake_is_too_little() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -416,7 +409,6 @@ async fn stake_is_too_little() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -557,7 +549,6 @@ async fn delegate_is_the_same() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -570,7 +561,6 @@ async fn delegate_is_the_same() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            &context.rewards.program_id,
         )
         .await?;
     context

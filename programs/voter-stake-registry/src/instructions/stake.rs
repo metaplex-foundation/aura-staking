@@ -1,4 +1,6 @@
-use crate::{clock_unix_timestamp, cpi_instructions, Stake};
+use crate::{
+    clock_unix_timestamp, cpi_instructions, find_mining_address, find_reward_pool_address, Stake,
+};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{error::VsrError, state::LockupKind};
 

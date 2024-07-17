@@ -69,7 +69,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     let target = voter.active_deposit(deposit_entry_index)?;
 
     require!(
-        ctx.accounts.new_delegate_mining.key() != target.delegate_mining,
+        delegate_voter.voter_authority != target.delegate,
         VsrError::SameDelegate
     );
 
@@ -104,7 +104,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
 
     require!(
         delegate_mining == ctx.accounts.new_delegate_mining.key(),
-        VsrError::InvalidDelegateMining
+        VsrError::InvalidMining
     );
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
