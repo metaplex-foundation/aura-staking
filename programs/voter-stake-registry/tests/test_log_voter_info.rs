@@ -104,7 +104,6 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -117,7 +116,6 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();

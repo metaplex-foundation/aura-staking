@@ -81,7 +81,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -108,7 +107,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
                 i,
                 LockupKind::Constant,
                 LockupPeriod::ThreeMonths,
-                &context.rewards.program_id,
             )
             .await
             .unwrap();
@@ -144,10 +142,9 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         .unlock_tokens(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             0,
             &rewards_pool,
-            &deposit_mining,
             &context.rewards.program_id,
         )
         .await

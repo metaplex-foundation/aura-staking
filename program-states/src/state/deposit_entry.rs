@@ -10,11 +10,10 @@ use anchor_lang::prelude::*;
 pub struct DepositEntry {
     // Locked state.
     pub lockup: Lockup,
-    /// Delegated staker. It's a mining account of a Delegate, on the Rewards program.
-    pub delegate_mining: Pubkey,
+    /// Delegated staker. It's an address a Delegate.
+    pub delegate: Pubkey,
     /// Amount in deposited, in native currency. Withdraws of vested tokens
     /// directly reduce this amount.
-    ///
     /// This directly tracks the total amount added by the user. They may
     /// never withdraw more than this amount.
     pub amount_deposited_native: u64,
@@ -96,10 +95,10 @@ mod tests {
         // future, or at least more than lockup_saturation_secs in the future.
         let lockup_start = 10_000_000_000; // arbitrary point
         let period = LockupPeriod::Flex;
-        let delegate_mining = Pubkey::new_unique();
+        let delegate = Pubkey::new_unique();
         let deposit = DepositEntry {
             amount_deposited_native: 20_000,
-            delegate_mining,
+            delegate,
             lockup: Lockup {
                 start_ts: lockup_start,
                 end_ts: lockup_start + LockupPeriod::Flex.to_secs(), // start + cooldown + period
@@ -134,7 +133,7 @@ mod tests {
             lockup: Lockup::default(),
             is_used: false,
             voting_mint_config_idx: 0,
-            delegate_mining: Pubkey::default(),
+            delegate: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(deposit.weighted_stake(0), 0);
@@ -156,7 +155,7 @@ mod tests {
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            delegate_mining: Pubkey::default(),
+            delegate: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(deposit.weighted_stake(10), amount);
@@ -178,7 +177,7 @@ mod tests {
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            delegate_mining: Pubkey::default(),
+            delegate: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(deposit.weighted_stake(150), 0);
@@ -200,7 +199,7 @@ mod tests {
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            delegate_mining: Pubkey::default(),
+            delegate: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(
@@ -226,7 +225,7 @@ mod tests {
             },
             is_used: true,
             voting_mint_config_idx: 0,
-            delegate_mining: Pubkey::default(),
+            delegate: Pubkey::default(),
             _reserved1: [0; 6],
         };
         assert_eq!(deposit.weighted_stake(50), 0);

@@ -117,7 +117,6 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -130,7 +129,6 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -171,7 +169,6 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -184,7 +181,6 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            &context.rewards.program_id,
         )
         .await?;
     context

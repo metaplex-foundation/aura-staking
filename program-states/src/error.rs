@@ -93,6 +93,9 @@ pub enum VsrError {
     #[msg("Rewards: Delegate must have at least 15_000_000 of own weighted stake")]
     InsufficientWeightedStake,
     // 6030 / 0x178e
-    #[msg("Rewards: Invalid delegate mining account")]
-    InvalidDelegateMining,
+    #[msg("Rewards: Invalid delegate account")]
+    InvalidDelegate,
+    // 6031 / 0x178f
+    #[msg("Rewards: Invalid mining account")]
+    InvalidMining,
 }

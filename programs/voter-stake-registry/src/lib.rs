@@ -91,9 +91,8 @@ pub mod voter_stake_registry {
         deposit_entry_index: u8,
         kind: LockupKind,
         period: LockupPeriod,
-        rewards_program: Pubkey,
     ) -> Result<()> {
-        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period, rewards_program)
+        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period)
     }
 
     pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
@@ -192,6 +191,9 @@ pub struct Stake<'info> {
     pub voter: AccountLoader<'info, Voter>,
     pub voter_authority: Signer<'info>,
 
+    /// CHECK: delegate might be any arbitrary address
+    pub delegate: UncheckedAccount<'info>,
+
     /// CHECK: Mining Account that belongs to Rewards Program and some delegate
     /// The address of the mining account on the rewards progra,
     /// derived from PDA(["mining", delegate wallet addr, reward_pool], rewards_program)
@@ -205,7 +207,8 @@ pub struct Stake<'info> {
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
-    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool], reward_program)
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 

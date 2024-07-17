@@ -123,7 +123,6 @@ async fn test_voting() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -175,7 +174,6 @@ async fn test_voting() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();
@@ -201,7 +199,6 @@ async fn test_voting() -> Result<(), TransportError> {
             1,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();

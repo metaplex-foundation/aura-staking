@@ -107,7 +107,6 @@ async fn successeful_claim() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
     context
@@ -120,7 +119,6 @@ async fn successeful_claim() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
-            &context.rewards.program_id,
         )
         .await?;
 

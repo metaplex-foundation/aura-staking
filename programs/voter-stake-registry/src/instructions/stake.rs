@@ -52,10 +52,27 @@ pub fn stake(
     );
     // check whether target delegate mining is the same as delegate mining from passed context
     require_eq!(
-        target.delegate_mining,
-        *ctx.accounts.delegate_mining.key,
-        VsrError::InvalidDelegateMining
+        target.delegate,
+        *ctx.accounts.delegate.key,
+        VsrError::InvalidDelegate
     );
+
+    {
+        let (reward_pool, _) = find_reward_pool_address(
+            &ctx.accounts.rewards_program.key(),
+            &ctx.accounts.registrar.key(),
+        );
+        let (delegate_mining, _) = find_mining_address(
+            &ctx.accounts.rewards_program.key(),
+            &ctx.accounts.delegate.key(),
+            &reward_pool,
+        );
+        require_eq!(
+            delegate_mining,
+            *ctx.accounts.delegate_mining.key,
+            VsrError::InvalidMining
+        );
+    }
 
     // Add target amounts
     target.amount_deposited_native = target

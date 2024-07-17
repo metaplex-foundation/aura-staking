@@ -106,7 +106,6 @@ async fn test_basic() -> Result<(), TransportError> {
             0,
             LockupKind::None,
             LockupPeriod::None,
-            &context.rewards.program_id,
         )
         .await?;
 
@@ -120,7 +119,6 @@ async fn test_basic() -> Result<(), TransportError> {
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
-            &context.rewards.program_id,
         )
         .await?;
 
@@ -172,10 +170,9 @@ async fn test_basic() -> Result<(), TransportError> {
         .unlock_tokens(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             1,
             &rewards_pool,
-            &deposit_mining,
             &context.rewards.program_id,
         )
         .await

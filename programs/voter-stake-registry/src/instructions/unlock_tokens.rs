@@ -1,4 +1,7 @@
-use crate::{clock_unix_timestamp, cpi_instructions::withdraw_mining, Stake};
+use crate::{
+    clock_unix_timestamp, cpi_instructions::withdraw_mining, find_mining_address,
+    find_reward_pool_address, Stake,
+};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{error::VsrError, state::COOLDOWN_SECS};
 
@@ -18,31 +21,53 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
         VsrError::DepositStillLocked
     );
 
+    // check whether target delegate mining is the same as delegate mining from passed context
+    require_eq!(
+        deposit_entry.delegate,
+        *ctx.accounts.delegate.key,
+        VsrError::InvalidDelegate
+    );
+
+    let (reward_pool, _) = find_reward_pool_address(
+        &ctx.accounts.rewards_program.key(),
+        &ctx.accounts.registrar.key(),
+    );
+    let (delegate_mining, _) = find_mining_address(
+        &ctx.accounts.rewards_program.key(),
+        &ctx.accounts.delegate.key(),
+        &reward_pool,
+    );
+    require_eq!(
+        delegate_mining,
+        *ctx.accounts.delegate_mining.key,
+        VsrError::InvalidMining
+    );
+
     deposit_entry.lockup.cooldown_requested = true;
     deposit_entry.lockup.cooldown_ends_at = curr_ts
         .checked_add(COOLDOWN_SECS)
         .ok_or(VsrError::InvalidTimestampArguments)?;
 
-    let rewards_program = &ctx.accounts.rewards_program;
-    let reward_pool = &ctx.accounts.reward_pool;
-    let mining = &ctx.accounts.deposit_mining;
-
-    let owner = &ctx.accounts.voter_authority;
-    let registrar = &ctx.accounts.registrar.load()?;
+    let rewards_program = ctx.accounts.rewards_program.to_account_info();
+    let reward_pool = ctx.accounts.reward_pool.to_account_info();
+    let mining = ctx.accounts.deposit_mining.to_account_info();
+    let delegate_mining = ctx.accounts.delegate_mining.to_account_info();
+    let owner = ctx.accounts.voter_authority.to_account_info();
+    let registrar = ctx.accounts.registrar.load()?;
+    let deposit_authority = ctx.accounts.registrar.to_account_info();
     let signers_seeds = &[
         registrar.realm.as_ref(),
         b"registrar".as_ref(),
         (registrar.realm_governing_token_mint.as_ref()),
         &[registrar.bump][..],
     ];
-    let pool_deposit_authority = &ctx.accounts.registrar;
 
     withdraw_mining(
-        rewards_program.to_account_info(),
-        reward_pool.to_account_info(),
-        mining.to_account_info(),
-        pool_deposit_authority.to_account_info(),
-        mining.to_account_info(),
+        rewards_program,
+        reward_pool,
+        mining,
+        deposit_authority,
+        delegate_mining,
         deposit_entry.amount_deposited_native,
         owner.key,
         signers_seeds,
