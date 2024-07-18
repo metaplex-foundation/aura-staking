@@ -271,7 +271,7 @@ pub fn deposit_mining<'a>(
     )
 }
 
-/// Extend deposit
+/// Extend stake
 #[allow(clippy::too_many_arguments)]
 pub fn extend_stake<'a>(
     program_id: AccountInfo<'a>,

@@ -10,7 +10,7 @@ use anchor_lang::prelude::*;
 pub struct DepositEntry {
     // Locked state.
     pub lockup: Lockup,
-    /// Delegated staker. It's an address a Delegate.
+    /// Delegated staker. It's an address of a Delegate.
     pub delegate: Pubkey,
     /// Amount in deposited, in native currency. Withdraws of vested tokens
     /// directly reduce this amount.
