@@ -1,7 +1,4 @@
-use crate::{
-    clock_unix_timestamp, cpi_instructions::withdraw_mining, find_mining_address,
-    find_reward_pool_address, Stake,
-};
+use crate::{clock_unix_timestamp, cpi_instructions::withdraw_mining, Stake};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{error::VsrError, state::COOLDOWN_SECS};
 
@@ -21,27 +18,13 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
         VsrError::DepositStillLocked
     );
 
-    // check whether target delegate mining is the same as delegate mining from passed context
-    require_eq!(
-        deposit_entry.delegate,
-        *ctx.accounts.delegate.key,
-        VsrError::InvalidDelegate
-    );
-
-    let (reward_pool, _) = find_reward_pool_address(
-        &ctx.accounts.rewards_program.key(),
-        &ctx.accounts.registrar.key(),
-    );
-    let (delegate_mining, _) = find_mining_address(
-        &ctx.accounts.rewards_program.key(),
-        &ctx.accounts.delegate.key(),
-        &reward_pool,
-    );
-    require_eq!(
-        delegate_mining,
-        *ctx.accounts.delegate_mining.key,
-        VsrError::InvalidMining
-    );
+    Stake::verify_delegate_and_its_mining(
+        deposit_entry,
+        &ctx.accounts.delegate,
+        &ctx.accounts.delegate_mining,
+        &ctx.accounts.registrar,
+        &ctx.accounts.rewards_program,
+    )?;
 
     deposit_entry.lockup.cooldown_requested = true;
     deposit_entry.lockup.cooldown_ends_at = curr_ts

@@ -1,8 +1,11 @@
 use anchor_lang::prelude::*;
 use instructions::*;
-use mplx_staking_states::state::{
-    lockup::{LockupKind, LockupPeriod},
-    Registrar, Voter,
+use mplx_staking_states::{
+    error::VsrError,
+    state::{
+        lockup::{LockupKind, LockupPeriod},
+        DepositEntry, Registrar, Voter,
+    },
 };
 
 pub mod cpi_instructions;
@@ -215,4 +218,38 @@ pub struct Stake<'info> {
     /// CHECK: Rewards Program account
     #[account(executable)]
     pub rewards_program: UncheckedAccount<'info>,
+}
+
+impl Stake<'_> {
+    pub fn verify_delegate_and_its_mining(
+        deposit_entry: &DepositEntry,
+        delegate: &dyn ToAccountInfo<'_>,
+        delegate_mining: &dyn ToAccountInfo<'_>,
+        registrar: &dyn ToAccountInfo<'_>,
+        rewards_program: &dyn ToAccountInfo<'_>,
+    ) -> Result<()> {
+        // check whether target delegate mining is the same as delegate mining from passed context
+        require_eq!(
+            deposit_entry.delegate,
+            *delegate.to_account_info().key,
+            VsrError::InvalidDelegate
+        );
+
+        let (reward_pool, _) = find_reward_pool_address(
+            &rewards_program.to_account_info().key(),
+            &registrar.to_account_info().key(),
+        );
+        let (calculated_delegate_mining, _) = find_mining_address(
+            &rewards_program.to_account_info().key(),
+            &delegate.to_account_info().key(),
+            &reward_pool,
+        );
+        require_eq!(
+            calculated_delegate_mining,
+            delegate_mining.to_account_info().key(),
+            VsrError::InvalidMining
+        );
+
+        Ok(())
+    }
 }
