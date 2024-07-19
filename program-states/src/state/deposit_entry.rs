@@ -17,7 +17,7 @@ pub struct DepositEntry {
     /// This directly tracks the total amount added by the user. They may
     /// never withdraw more than this amount.
     pub amount_deposited_native: u64,
-    /// The last time whe delegate was updated
+    /// The last time when the delegate was updated
     pub delegate_last_update_ts: u64,
     // Points to the VotingMintConfig this deposit uses.
     pub voting_mint_config_idx: u8,
