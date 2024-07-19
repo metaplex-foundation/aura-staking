@@ -1,3 +1,4 @@
+pub use change_delegate::*;
 pub use claim::*;
 pub use close_deposit_entry::*;
 pub use close_voter::*;
@@ -14,6 +15,7 @@ pub use unlock_tokens::*;
 pub use update_voter_weight_record::*;
 pub use withdraw::*;
 
+mod change_delegate;
 mod claim;
 mod close_deposit_entry;
 mod close_voter;

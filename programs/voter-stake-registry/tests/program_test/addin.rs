@@ -37,6 +37,64 @@ pub struct VoterCookie {
 }
 
 impl AddinCookie {
+    #[allow(clippy::too_many_arguments)]
+    pub async fn change_delegate(
+        &self,
+        // accounts
+        registrar: &RegistrarCookie,
+        voter: &VoterCookie,
+        delegate_voter: &VoterCookie,
+        old_delegate_mining: &Pubkey,
+        rewards_program: &Pubkey,
+        // params
+        deposit_entry_index: u8,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data = anchor_lang::InstructionData::data(
+            &voter_stake_registry::instruction::ChangeDelegate {
+                deposit_entry_index,
+            },
+        );
+
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+            rewards_program,
+        );
+
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), &reward_pool);
+
+        let (new_delegate_mining, _) = find_deposit_mining_addr(
+            rewards_program,
+            &delegate_voter.authority.pubkey(),
+            &reward_pool,
+        );
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &voter_stake_registry::accounts::ChangeDelegate {
+                registrar: registrar.address,
+                voter: voter.address,
+                voter_authority: voter.authority.pubkey(),
+                delegate_voter: delegate_voter.address,
+                old_delegate_mining: *old_delegate_mining,
+                new_delegate_mining,
+                reward_pool,
+                deposit_mining,
+                rewards_program: *rewards_program,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[&voter.authority]))
+            .await
+    }
+
     pub async fn create_registrar(
         &self,
         realm: &GovernanceRealmCookie,

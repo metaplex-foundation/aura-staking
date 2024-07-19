@@ -176,6 +176,10 @@ pub mod voter_stake_registry {
             realm_pubkey,
         )
     }
+
+    pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
+        instructions::change_delegate(ctx, deposit_entry_index)
+    }
 }
 
 #[derive(Accounts)]

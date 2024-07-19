@@ -1,5 +1,4 @@
 use bytemuck::{bytes_of, Contiguous};
-use mplx_staking_states::error::VsrError;
 use solana_program::{instruction::InstructionError, program_error::ProgramError};
 use solana_program_test::{BanksClientError, ProgramTestContext};
 use solana_sdk::{
@@ -10,7 +9,7 @@ use solana_sdk::{
     system_instruction,
     transaction::{Transaction, TransactionError},
 };
-use std::{borrow::BorrowMut, fmt::Debug};
+use std::borrow::BorrowMut;
 
 #[allow(dead_code)]
 pub fn gen_signer_seeds<'a>(nonce: &'a u64, acc_pk: &'a Pubkey) -> [&'a [u8]; 2] {
