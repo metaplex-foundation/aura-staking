@@ -48,13 +48,7 @@ pub fn stake(
         target.amount_deposited_native == 0,
         VsrError::DepositEntryIsOld
     );
-    Stake::verify_delegate_and_its_mining(
-        target,
-        &ctx.accounts.delegate,
-        &ctx.accounts.delegate_mining,
-        &ctx.accounts.registrar,
-        &ctx.accounts.rewards_program,
-    )?;
+    ctx.accounts.verify_delegate_and_its_mining(target)?;
 
     // Add target amounts
     target.amount_deposited_native = target

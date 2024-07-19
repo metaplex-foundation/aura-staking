@@ -68,13 +68,7 @@ pub fn extend_stake(
         source_mint_idx,
         VsrError::InvalidMint
     );
-    Stake::verify_delegate_and_its_mining(
-        target,
-        &ctx.accounts.delegate,
-        &ctx.accounts.delegate_mining,
-        &ctx.accounts.registrar,
-        &ctx.accounts.rewards_program,
-    )?;
+    ctx.accounts.verify_delegate_and_its_mining(target)?;
 
     target.amount_deposited_native = target
         .amount_deposited_native
