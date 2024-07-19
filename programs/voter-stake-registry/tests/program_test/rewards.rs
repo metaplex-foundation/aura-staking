@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::SolanaCookie;
 use anchor_lang::{prelude::*, AnchorDeserialize};
 use mplx_staking_states::state::LockupPeriod;

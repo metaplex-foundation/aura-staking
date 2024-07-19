@@ -6,7 +6,6 @@ use mplx_staking_states::{
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
-use AssertCustomOnChainErr;
 
 mod program_test;
 

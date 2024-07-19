@@ -1,3 +1,5 @@
+#![allow(clippy::await_holding_refcell_ref)]
+
 use anchor_lang::AccountDeserialize;
 use anchor_spl::token::TokenAccount;
 use solana_program::{program_pack::Pack, rent::*, system_instruction};
