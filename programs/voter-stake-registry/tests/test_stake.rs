@@ -7,7 +7,7 @@ use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 mod program_test;
 
 #[tokio::test]
-async fn successeful_claim() -> Result<(), TransportError> {
+async fn stake_with_delegate() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -23,9 +23,9 @@ async fn successeful_claim() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_authority = &context.users[1].key;
+    let voter_authority = &context.users[1].key;
     let token_owner_record = realm
-        .create_token_owner_record(deposit_authority.pubkey(), payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
     let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
@@ -66,22 +66,12 @@ async fn successeful_claim() -> Result<(), TransportError> {
         )
         .await;
 
-    // TODO: ??? voter_authority == deposit_authority ???
-    let voter_authority = deposit_authority;
     let (deposit_mining, _) = find_deposit_mining_addr(
         &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
     );
-    let voter_authority_ata = context
-        .rewards
-        .solana
-        .create_spl_ata(
-            &voter_authority.pubkey(),
-            &mngo_voting_mint.mint.pubkey.unwrap(),
-            payer,
-        )
-        .await;
+
     let voter = context
         .addin
         .create_voter(
@@ -95,8 +85,80 @@ async fn successeful_claim() -> Result<(), TransportError> {
         )
         .await;
 
-    let depositer_token_account = context.users[1].token_accounts[0];
+    // CREATE DELEGATE
+    let delegate_authority = &context.users[2].key;
+    let delegate_token_account = context.users[2].token_accounts[0];
 
+    let (delegate_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
+        &delegate_authority.pubkey(),
+        &rewards_pool,
+    );
+
+    let delegate_voter = context
+        .addin
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            delegate_authority,
+            payer,
+            &rewards_pool,
+            &delegate_mining,
+            &context.rewards.program_id,
+        )
+        .await;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &delegate_voter,
+            &delegate_voter,
+            &mngo_voting_mint,
+            0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &delegate_voter,
+            &delegate_voter,
+            &mngo_voting_mint,
+            1,
+            LockupKind::Constant,
+            LockupPeriod::OneYear,
+        )
+        .await?;
+    context
+        .addin
+        .deposit(
+            &registrar,
+            &delegate_voter,
+            &mngo_voting_mint,
+            delegate_authority,
+            delegate_token_account,
+            0,
+            6_000_000,
+        )
+        .await?;
+    context
+        .addin
+        .stake(
+            &registrar,
+            &delegate_voter,
+            delegate_authority.pubkey(),
+            &context.rewards.program_id,
+            0,
+            1,
+            6_000_000,
+        )
+        .await?;
+
+    // Create voter and stake with delegate
+    // test deposit and stake
+    let voter_token_account = context.users[1].token_accounts[0];
     context
         .addin
         .create_deposit_entry(
@@ -114,33 +176,31 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            &voter,
+            &delegate_voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
-            LockupPeriod::ThreeMonths,
+            LockupPeriod::OneYear,
         )
         .await?;
-
     context
         .addin
         .deposit(
             &registrar,
             &voter,
             &mngo_voting_mint,
-            deposit_authority,
-            depositer_token_account,
+            voter_authority,
+            voter_token_account,
             0,
             10000,
         )
         .await?;
-
     context
         .addin
         .stake(
             &registrar,
             &voter,
-            voter.authority.pubkey(),
+            delegate_voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
@@ -148,56 +208,13 @@ async fn successeful_claim() -> Result<(), TransportError> {
         )
         .await?;
 
-    let rewards_source_ata = context.users[3].token_accounts[0];
-    let amount = 100;
-    let distribution_ends_at = context
-        .solana
-        .context
-        .borrow_mut()
-        .banks_client
-        .get_sysvar::<solana_program::clock::Clock>()
-        .await
-        .unwrap()
-        .unix_timestamp as u64
-        + 86400;
-
-    let reward_mint = &realm.community_token_mint.pubkey.unwrap();
-    context
-        .rewards
-        .fill_vault(
-            &rewards_pool,
-            reward_mint,
-            &fill_authority,
-            &rewards_source_ata,
-            amount,
-            distribution_ends_at,
-        )
-        .await
-        .unwrap();
-
-    context
-        .rewards
-        .distribute_rewards(&rewards_pool, &distribution_authority)
-        .await?;
-
-    context
-        .addin
-        .claim(
-            &rewards_pool,
-            reward_mint,
-            &deposit_mining,
-            voter_authority,
-            &voter_authority_ata,
-            &context.rewards.program_id,
-            &registrar,
-        )
-        .await?;
-
-    let claimed_amount = context
-        .solana
-        .token_account_balance(voter_authority_ata)
+    let vault_balance = mngo_voting_mint
+        .vault_balance(&context.solana, &voter)
         .await;
-    assert_eq!(100, claimed_amount);
+    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
+
+    assert_eq!(vault_balance, 10000);
+    assert_eq!(deposit_amount, 10000);
 
     Ok(())
 }

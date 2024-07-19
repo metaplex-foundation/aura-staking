@@ -1,5 +1,4 @@
 use bytemuck::{bytes_of, Contiguous};
-use mplx_staking_states::error::VsrError;
 use solana_program::{instruction::InstructionError, program_error::ProgramError};
 use solana_program_test::{BanksClientError, ProgramTestContext};
 use solana_sdk::{
@@ -10,7 +9,7 @@ use solana_sdk::{
     system_instruction,
     transaction::{Transaction, TransactionError},
 };
-use std::{borrow::BorrowMut, fmt::Debug};
+use std::borrow::BorrowMut;
 
 #[allow(dead_code)]
 pub fn gen_signer_seeds<'a>(nonce: &'a u64, acc_pk: &'a Pubkey) -> [&'a [u8]; 2] {
@@ -76,19 +75,18 @@ pub async fn create_mint(
 }
 
 pub fn find_deposit_mining_addr(
-    user: &Pubkey,
-    rewards_pool: &Pubkey,
-    rewards_program_addr: &Pubkey,
-) -> Pubkey {
-    let (deposit_mining, _bump) = Pubkey::find_program_address(
+    program_id: &Pubkey,
+    mining_owner: &Pubkey,
+    reward_pool: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
         &[
             "mining".as_bytes(),
-            &user.to_bytes(),
-            &rewards_pool.to_bytes(),
+            &mining_owner.to_bytes(),
+            &reward_pool.to_bytes(),
         ],
-        rewards_program_addr,
-    );
-    deposit_mining
+        program_id,
+    )
 }
 
 pub async fn advance_clock_by_ts(context: &mut ProgramTestContext, ts: i64) {

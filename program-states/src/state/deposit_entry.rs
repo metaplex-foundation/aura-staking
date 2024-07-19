@@ -6,25 +6,26 @@ use anchor_lang::prelude::*;
 
 /// Bookkeeping for a single deposit for a given mint and lockup schedule.
 #[zero_copy]
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DepositEntry {
     // Locked state.
     pub lockup: Lockup,
-    /// Delegated staker
+    /// Delegated staker. It's an address of a Delegate.
     pub delegate: Pubkey,
     /// Amount in deposited, in native currency. Withdraws of vested tokens
     /// directly reduce this amount.
-    ///
     /// This directly tracks the total amount added by the user. They may
     /// never withdraw more than this amount.
     pub amount_deposited_native: u64,
+    /// The last time when the delegate was updated
+    pub delegate_last_update_ts: u64,
     // Points to the VotingMintConfig this deposit uses.
     pub voting_mint_config_idx: u8,
     // True if the deposit entry is being used.
     pub is_used: bool,
     pub _reserved1: [u8; 6],
 }
-const_assert!(std::mem::size_of::<DepositEntry>() == 32 + 32 + 8 + 1 + 1 + 6);
+const_assert!(std::mem::size_of::<DepositEntry>() == 32 + 32 + 8 + 8 + 1 + 1 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {
@@ -105,13 +106,10 @@ mod tests {
                 end_ts: lockup_start + LockupPeriod::Flex.to_secs(), // start + cooldown + period
                 kind: Constant,
                 period,
-                cooldown_requested: false,
-                cooldown_ends_at: 0,
-                _reserved1: [0; 5],
+                ..Default::default()
             },
             is_used: true,
-            voting_mint_config_idx: 0,
-            _reserved1: [0; 6],
+            ..Default::default()
         };
 
         let baseline_vote_weight = deposit.amount_deposited_native;
@@ -131,11 +129,7 @@ mod tests {
     fn test_weighted_stake_unused() {
         let deposit = DepositEntry {
             amount_deposited_native: 20_000,
-            lockup: Lockup::default(),
-            is_used: false,
-            voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
-            _reserved1: [0; 6],
+            ..Default::default()
         };
         assert_eq!(deposit.weighted_stake(0), 0);
     }
@@ -145,19 +139,9 @@ mod tests {
         let amount = 20_000;
         let deposit = DepositEntry {
             amount_deposited_native: amount,
-            lockup: Lockup {
-                start_ts: 0,
-                end_ts: 0,
-                kind: Constant,
-                period: LockupPeriod::Flex,
-                cooldown_requested: false,
-                cooldown_ends_at: 0,
-                _reserved1: [0; 5],
-            },
+            lockup: Lockup::default(),
             is_used: true,
-            voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
-            _reserved1: [0; 6],
+            ..Default::default()
         };
         assert_eq!(deposit.weighted_stake(10), amount);
     }
@@ -168,18 +152,12 @@ mod tests {
         let deposit = DepositEntry {
             amount_deposited_native: amount,
             lockup: Lockup {
-                start_ts: 0,
                 end_ts: 100,
-                kind: Constant,
-                period: LockupPeriod::Flex,
                 cooldown_requested: true,
-                cooldown_ends_at: 200,
-                _reserved1: [0; 5],
+                ..Default::default()
             },
             is_used: true,
-            voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
-            _reserved1: [0; 6],
+            ..Default::default()
         };
         assert_eq!(deposit.weighted_stake(150), 0);
     }
@@ -190,18 +168,13 @@ mod tests {
         let deposit = DepositEntry {
             amount_deposited_native: amount,
             lockup: Lockup {
-                start_ts: 0,
                 end_ts: 100,
                 kind: Constant,
                 period: LockupPeriod::OneYear,
-                cooldown_requested: false,
-                cooldown_ends_at: 0,
-                _reserved1: [0; 5],
+                ..Default::default()
             },
             is_used: true,
-            voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
-            _reserved1: [0; 6],
+            ..Default::default()
         };
         assert_eq!(
             deposit.weighted_stake(50),
@@ -216,18 +189,13 @@ mod tests {
         let deposit = DepositEntry {
             amount_deposited_native: amount,
             lockup: Lockup {
-                start_ts: 0,
                 end_ts: 200,
                 kind: None,
                 period: LockupPeriod::None,
-                cooldown_requested: false,
-                cooldown_ends_at: 0,
-                _reserved1: [0; 5],
+                ..Default::default()
             },
             is_used: true,
-            voting_mint_config_idx: 0,
-            delegate: Pubkey::default(),
-            _reserved1: [0; 6],
+            ..Default::default()
         };
         assert_eq!(deposit.weighted_stake(50), 0);
 

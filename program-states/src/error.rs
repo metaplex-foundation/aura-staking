@@ -89,4 +89,19 @@ pub enum VsrError {
     // 6028 / 0x178c
     #[msg("Arithmetic operation has beed overflowed")]
     ArithmeticOverflow,
+    // 6029 / 0x178d
+    #[msg("Rewards: Delegate must have at least 15_000_000 of own weighted stake")]
+    InsufficientWeightedStake,
+    // 6030 / 0x178e
+    #[msg("Rewards: Invalid delegate account")]
+    InvalidDelegate,
+    // 6031 / 0x178f
+    #[msg("Rewards: Invalid mining account")]
+    InvalidMining,
+    // 6032 / 0x1790
+    #[msg("Rewards: Updating delegate is sooner than 5 days")]
+    DelegateUpdateIsTooSoon,
+    // 6033 / 0x1791
+    #[msg("Rewards: Cannot change delegate to the same delegate")]
+    SameDelegate,
 }

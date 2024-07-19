@@ -1,4 +1,6 @@
-use crate::{clock_unix_timestamp, cpi_instructions, Stake};
+use crate::{
+    clock_unix_timestamp, cpi_instructions, find_mining_address, find_reward_pool_address, Stake,
+};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{error::VsrError, state::LockupKind};
 
@@ -48,15 +50,18 @@ pub fn stake(
         target.amount_deposited_native == 0,
         VsrError::DepositEntryIsOld
     );
+    ctx.accounts.verify_delegate_and_its_mining(target)?;
+
     // Add target amounts
     target.amount_deposited_native = target
         .amount_deposited_native
         .checked_add(amount)
         .ok_or(VsrError::ArithmeticOverflow)?;
 
-    let reward_pool = &ctx.accounts.reward_pool;
-    let mining = &ctx.accounts.deposit_mining;
-    let pool_deposit_authority = &ctx.accounts.registrar.to_account_info();
+    let reward_pool = ctx.accounts.reward_pool.to_account_info();
+    let mining = ctx.accounts.deposit_mining.to_account_info();
+    let deposit_authority = ctx.accounts.registrar.to_account_info();
+    let delegate_mining = ctx.accounts.delegate_mining.to_account_info();
     let signers_seeds = &[
         &registrar.realm.key().to_bytes(),
         b"registrar".as_ref(),
@@ -67,9 +72,10 @@ pub fn stake(
 
     cpi_instructions::deposit_mining(
         ctx.accounts.rewards_program.to_account_info(),
-        reward_pool.to_account_info(),
-        mining.to_account_info(),
-        pool_deposit_authority.to_account_info(),
+        reward_pool,
+        mining,
+        deposit_authority,
+        delegate_mining,
         amount,
         target.lockup.period,
         owner,
