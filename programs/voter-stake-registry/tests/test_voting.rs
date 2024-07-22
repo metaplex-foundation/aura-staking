@@ -2,9 +2,7 @@ use anchor_spl::token::TokenAccount;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
-use solana_sdk::transport::TransportError;
+use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 mod program_test;
 #[tokio::test]
 async fn test_voting() -> Result<(), TransportError> {
@@ -55,10 +53,6 @@ async fn test_voting() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            2.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
             None,
             None,
         )
@@ -70,19 +64,15 @@ async fn test_voting() -> Result<(), TransportError> {
             payer,
             1,
             &context.mints[1],
-            0,
-            0.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
             None,
             Some(&[context.mints[0].pubkey.unwrap()]),
         )
         .await;
 
-    let deposit_mining_voter = find_deposit_mining_addr(
+    let (deposit_mining_voter, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
     let voter = addin
         .create_voter(
@@ -96,10 +86,10 @@ async fn test_voting() -> Result<(), TransportError> {
         )
         .await;
 
-    let deposit_mining_voter2 = find_deposit_mining_addr(
+    let (deposit_mining_voter2, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter2_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
     let voter2 = addin
         .create_voter(
@@ -124,17 +114,15 @@ async fn test_voting() -> Result<(), TransportError> {
         )
         .await;
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -173,24 +161,19 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             1,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
         )
         .await
         .expect_err("could not withdraw");
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
             &voter2,
-            voter2_authority,
+            &voter2,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -207,17 +190,15 @@ async fn test_voting() -> Result<(), TransportError> {
         .await
         .unwrap();
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
             &voter2,
-            voter2_authority,
+            &voter2,
             &usdc_voting_mint,
             1,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -264,14 +245,11 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             1,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
         )
         .await
         .expect_err("could not withdraw");
 
-    // but can withdraw USDC
+    // also, can't withdraw USDC
     addin
         .withdraw(
             &registrar,
@@ -281,12 +259,9 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_usdc,
             1,
             1,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
         )
         .await
-        .unwrap();
+        .expect_err("could not withdraw");
 
     realm
         .relinquish_vote(
@@ -309,9 +284,6 @@ async fn test_voting() -> Result<(), TransportError> {
             voter_mngo,
             0,
             750,
-            &rewards_pool,
-            &deposit_mining_voter2,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();

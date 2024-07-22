@@ -2,9 +2,7 @@ use anchor_spl::token::TokenAccount;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
-use solana_sdk::transport::TransportError;
+use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 mod program_test;
 
@@ -72,10 +70,6 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            1.0,
-            365 * 24 * 60 * 60,
             None,
             None,
         )
@@ -83,10 +77,10 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = addin
@@ -101,17 +95,15 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         )
         .await;
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -119,12 +111,11 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::OneYear,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -141,17 +132,14 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         .await
         .unwrap();
     addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
-            voter_authority,
-            &deposit_mining,
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
             12000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
 

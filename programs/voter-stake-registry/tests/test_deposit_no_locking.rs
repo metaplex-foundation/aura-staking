@@ -1,11 +1,11 @@
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod},
+};
 use program_test::*;
 use solana_program_test::*;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
-use solana_sdk::transport::TransportError;
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
 
 mod program_test;
 
@@ -91,10 +91,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            10.0, // no locking, so has no effect
-            5 * 365 * 24 * 60 * 60,
             None,
             None,
         )
@@ -102,10 +98,10 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;
-    let deposit_mining_voter = find_deposit_mining_addr(
+    let (deposit_mining_voter, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
     let voter = addin
         .create_voter(
@@ -120,10 +116,10 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
         .await;
 
     let voter2_authority = deposit2_authority;
-    let deposit_mining_voter2 = find_deposit_mining_addr(
+    let (deposit_mining_voter2, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter2_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
     let voter2 = addin
         .create_voter(
@@ -157,9 +153,6 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             reference_account,
             0,
             amount,
-            &rewards_pool,
-            &deposit_mining_voter,
-            &context.rewards.program_id,
         )
     };
     let deposit = |deposit_id: u8, amount: u64| {
@@ -179,17 +172,15 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
         .token_account_balance(reference_account)
         .await;
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -201,18 +192,16 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     assert_eq!(after_deposit.vault, 15000);
     assert_eq!(after_deposit.deposit, 15000);
 
-    let delegate = Keypair::new();
     // create a separate deposit (index 1)
     addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -232,7 +221,9 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     assert_eq!(after_withdraw1.vault, 12000);
     assert_eq!(after_withdraw1.deposit, 5000);
 
-    withdraw(5001).await.expect_err("withdrew too much");
+    withdraw(5001)
+        .await
+        .assert_on_chain_err(VsrError::InsufficientUnlockedTokens);
 
     withdraw(5000).await.unwrap();
 
@@ -246,11 +237,11 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     addin
         .close_deposit_entry(&voter, voter_authority, 2)
         .await
-        .expect_err("deposit not in use");
+        .assert_on_chain_err(VsrError::UnusedDepositEntryIndex);
     addin
         .close_deposit_entry(&voter, voter_authority, 1)
         .await
-        .expect_err("deposit not empty");
+        .assert_on_chain_err(VsrError::VotingTokenNonZero);
     addin
         .close_deposit_entry(&voter, voter_authority, 0)
         .await
@@ -275,17 +266,16 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     assert_eq!(voter2_voter_weight, 0);
 
     // now voter2 deposits
-    let delegate = Keypair::new();
+
     addin
         .create_deposit_entry(
             &registrar,
             &voter2,
-            voter2_authority,
+            &voter2,
             &mngo_voting_mint,
             5,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -316,17 +306,16 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     assert_eq!(voter2_balances.vault, 1000);
 
     // when voter1 deposits again, they can reuse deposit index 0
-    let delegate = Keypair::new();
+
     addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();

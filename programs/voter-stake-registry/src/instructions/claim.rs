@@ -1,5 +1,4 @@
-use crate::borsh::BorshDeserialize;
-use crate::cpi_instructions;
+use crate::{borsh::BorshDeserialize, cpi_instructions};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 use mplx_staking_states::error::VsrError;
@@ -27,7 +26,6 @@ pub struct Claim<'info> {
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
-    #[account(mut)]
     pub mining_owner: Signer<'info>,
 
     /// CHECK: Registrar plays the role of deposit_authority on the Rewards Contract,

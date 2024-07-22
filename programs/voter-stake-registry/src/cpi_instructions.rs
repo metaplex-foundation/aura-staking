@@ -1,16 +1,18 @@
-use anchor_lang::prelude::{borsh, Pubkey};
-use anchor_lang::{AnchorDeserialize, AnchorSerialize, Key};
+use anchor_lang::{prelude::*, Key};
+use borsh::{BorshDeserialize, BorshSerialize};
 use mplx_staking_states::state::LockupPeriod;
-use solana_program::account_info::AccountInfo;
-use solana_program::entrypoint::ProgramResult;
-use solana_program::instruction::{AccountMeta, Instruction};
-use solana_program::program::{invoke, invoke_signed};
-use solana_program::system_program;
+use solana_program::{
+    account_info::AccountInfo,
+    entrypoint::ProgramResult,
+    instruction::{AccountMeta, Instruction},
+    program::{invoke, invoke_signed},
+    system_program,
+};
 
 pub const REWARD_CONTRACT_ID: Pubkey =
     solana_program::pubkey!("BF5PatmRTQDgEKoXR7iHRbkibEEi83nVM38cUKWzQcTR");
 
-#[derive(Debug, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
+#[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
 
 pub enum RewardsInstruction {
     /// Creates and initializes a reward pool account
@@ -20,12 +22,11 @@ pub enum RewardsInstruction {
     /// [R] Reward mint account
     /// [W] Vault account
     /// [WS] Payer
+    /// [RS] Deposit authority account
     /// [R] Rent sysvar
     /// [R] Token program
     /// [R] System program
     InitializePool {
-        /// Account responsible for charging mining owners
-        deposit_authority: Pubkey,
         /// Account can fill the reward vault
         fill_authority: Pubkey,
         /// Account can distribute rewards for stakers
@@ -103,7 +104,7 @@ pub enum RewardsInstruction {
     /// [R] Token program
     Claim,
 
-    /// Restakes deposit
+    /// Extends stake
     ///
     /// Accounts:
     /// [W] Reward pool account
@@ -111,7 +112,7 @@ pub enum RewardsInstruction {
     /// [R] Mint of rewards account
     /// [R] Mining owner
     /// [RS] Deposit authority
-    RestakeDeposit {
+    ExtendStake {
         /// Lockup period before restaking. Actually it's only needed
         /// for Flex to AnyPeriod edge case
         old_lockup_period: LockupPeriod,
@@ -121,7 +122,7 @@ pub enum RewardsInstruction {
         deposit_start_ts: u64,
         /// Amount of tokens to be restaked, this
         /// number cannot be decreased. It reflects the number of staked tokens
-        /// before the restake function call
+        /// before the extend_stake function call
         base_amount: u64,
         /// In case user wants to increase it's staked number of tokens,
         /// the addition amount might be provided
@@ -138,6 +139,23 @@ pub enum RewardsInstruction {
     /// [W] Vault for rewards account
     /// [RS] Distribute rewards authority
     DistributeRewards,
+
+    /// Closes Mining Account
+    CloseMining,
+
+    /// Changes delegate for the existing stake
+    ///
+    /// Accounts:
+    /// [W] Reward pool account
+    /// [W] Mining
+    /// [RS] Deposit authority
+    /// [RS] Mining owner
+    /// [W] Old delegate mining
+    /// [W] New delegate mining
+    ChangeDelegate {
+        /// Amount of staked tokens
+        staked_amount: u64,
+    },
 }
 
 /// This function initializes pool. Some sort of a "root"
@@ -149,18 +167,20 @@ pub fn initialize_pool<'a>(
     reward_mint: AccountInfo<'a>,
     reward_vault: AccountInfo<'a>,
     payer: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
     rent: AccountInfo<'a>,
     token_program: AccountInfo<'a>,
     system_program: AccountInfo<'a>,
-    deposit_authority: Pubkey,
     fill_authority: Pubkey,
     distribution_authority: Pubkey,
+    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new_readonly(reward_mint.key(), false),
         AccountMeta::new(reward_vault.key(), false),
         AccountMeta::new(payer.key(), true),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
         AccountMeta::new_readonly(rent.key(), false),
         AccountMeta::new_readonly(token_program.key(), false),
         AccountMeta::new_readonly(system_program::id(), false),
@@ -169,25 +189,26 @@ pub fn initialize_pool<'a>(
     let ix = Instruction::new_with_borsh(
         program_id.key(),
         &RewardsInstruction::InitializePool {
-            deposit_authority,
             fill_authority,
             distribution_authority,
         },
         accounts,
     );
 
-    invoke(
+    invoke_signed(
         &ix,
         &[
             reward_pool,
             reward_mint,
             reward_vault,
             payer,
+            deposit_authority,
             rent,
             token_program,
             system_program,
             program_id,
         ],
+        &[signers_seeds],
     )
 }
 
@@ -229,6 +250,7 @@ pub fn deposit_mining<'a>(
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
+    delegate_mining: AccountInfo<'a>,
     amount: u64,
     lockup_period: LockupPeriod,
     owner: &Pubkey,
@@ -238,6 +260,7 @@ pub fn deposit_mining<'a>(
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new(delegate_mining.key(), false),
     ];
 
     let ix = Instruction::new_with_borsh(
@@ -252,18 +275,25 @@ pub fn deposit_mining<'a>(
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, deposit_authority, program_id],
+        &[
+            reward_pool,
+            mining,
+            deposit_authority,
+            delegate_mining,
+            program_id,
+        ],
         &[signers_seeds],
     )
 }
 
-/// Restake deposit
+/// Extend stake
 #[allow(clippy::too_many_arguments)]
-pub fn extend_deposit<'a>(
+pub fn extend_stake<'a>(
     program_id: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
+    delegate_mining: AccountInfo<'a>,
     old_lockup_period: LockupPeriod,
     new_lockup_period: LockupPeriod,
     deposit_start_ts: u64,
@@ -276,11 +306,12 @@ pub fn extend_deposit<'a>(
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new(delegate_mining.key(), false),
     ];
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
-        &RewardsInstruction::RestakeDeposit {
+        &RewardsInstruction::ExtendStake {
             old_lockup_period,
             new_lockup_period,
             deposit_start_ts,
@@ -293,7 +324,13 @@ pub fn extend_deposit<'a>(
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, deposit_authority, program_id],
+        &[
+            reward_pool,
+            mining,
+            deposit_authority,
+            delegate_mining,
+            program_id,
+        ],
         &[signers_seeds],
     )?;
 
@@ -307,6 +344,7 @@ pub fn withdraw_mining<'a>(
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
+    delegate_mining: AccountInfo<'a>,
     amount: u64,
     owner: &Pubkey,
     signers_seeds: &[&[u8]],
@@ -315,6 +353,7 @@ pub fn withdraw_mining<'a>(
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
         AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new(delegate_mining.key(), false),
     ];
 
     let ix = Instruction::new_with_borsh(
@@ -328,7 +367,13 @@ pub fn withdraw_mining<'a>(
 
     invoke_signed(
         &ix,
-        &[reward_pool, mining, deposit_authority, program_id],
+        &[
+            reward_pool,
+            mining,
+            deposit_authority,
+            delegate_mining,
+            program_id,
+        ],
         &[signers_seeds],
     )
 }
@@ -371,6 +416,83 @@ pub fn claim<'a>(
             deposit_authority,
             user_reward_token_account,
             token_program,
+            program_id,
+        ],
+        &[signers_seeds],
+    )
+}
+
+/// Rewards deposit mining
+#[allow(clippy::too_many_arguments)]
+pub fn close_mining<'a>(
+    program_id: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    mining_owner: AccountInfo<'a>,
+    target_account: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new(mining.key(), false),
+        AccountMeta::new_readonly(mining_owner.key(), true),
+        AccountMeta::new(target_account.key(), false),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(reward_pool.key(), false),
+    ];
+
+    let ix =
+        Instruction::new_with_borsh(program_id.key(), &RewardsInstruction::CloseMining, accounts);
+
+    invoke_signed(
+        &ix,
+        &[
+            mining,
+            mining_owner,
+            target_account,
+            deposit_authority,
+            reward_pool,
+            program_id,
+        ],
+        &[signers_seeds],
+    )
+}
+
+pub fn change_delegate<'a>(
+    program_id: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    mining_owner: AccountInfo<'a>,
+    old_delegate_mining: AccountInfo<'a>,
+    new_delegate_mining: AccountInfo<'a>,
+    staked_amount: u64,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(mining_owner.key(), true),
+        AccountMeta::new(old_delegate_mining.key(), false),
+        AccountMeta::new(new_delegate_mining.key(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::ChangeDelegate { staked_amount },
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[
+            reward_pool,
+            mining,
+            deposit_authority,
+            mining_owner,
+            old_delegate_mining,
+            new_delegate_mining,
             program_id,
         ],
         &[signers_seeds],

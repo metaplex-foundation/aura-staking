@@ -13,10 +13,9 @@ export type VoterStakeRegistry = {
     "",
     "- Create a SPL governance realm.",
     "- Create a governance registry account.",
-    "- Add exchange rates for any tokens one wants to deposit. For example,",
-    "if one wants to vote with tokens A and B, where token B has twice the",
-    "voting power of token A, then the exchange rate of B would be 2 and the",
-    "exchange rate of A would be 1.",
+    "- Add exchange rates for any tokens one wants to deposit. For example, if one wants to vote with",
+    "tokens A and B, where token B has twice the voting power of token A, then the exchange rate of",
+    "B would be 2 and the exchange rate of A would be 1.",
     "- Create a voter account.",
     "- Deposit tokens into this program, with an optional lockup period.",
     "- Vote.",
@@ -182,22 +181,6 @@ export type VoterStakeRegistry = {
           "type": "u16"
         },
         {
-          "name": "digitShift",
-          "type": "i8"
-        },
-        {
-          "name": "baselineVoteWeightScaledFactor",
-          "type": "u64"
-        },
-        {
-          "name": "maxExtraLockupVoteWeightScaledFactor",
-          "type": "u64"
-        },
-        {
-          "name": "lockupSaturationSecs",
-          "type": "u64"
-        },
-        {
           "name": "grantAuthority",
           "type": {
             "option": "publicKey"
@@ -269,7 +252,8 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
+            "reward_program)"
           ]
         },
         {
@@ -277,7 +261,8 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
           ]
         },
         {
@@ -342,11 +327,6 @@ export type VoterStakeRegistry = {
         },
         {
           "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -475,21 +455,6 @@ export type VoterStakeRegistry = {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "rewardPool",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "depositMining",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "rewardsProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -500,18 +465,6 @@ export type VoterStakeRegistry = {
         {
           "name": "amount",
           "type": "u64"
-        },
-        {
-          "name": "registrarBump",
-          "type": "u8"
-        },
-        {
-          "name": "realmGoverningMintPubkey",
-          "type": "publicKey"
-        },
-        {
-          "name": "realmPubkey",
-          "type": "publicKey"
         }
       ]
     },
@@ -579,6 +532,21 @@ export type VoterStakeRegistry = {
           "name": "voterAuthority",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rewardPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "depositMining",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -607,12 +575,34 @@ export type VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "depositMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
+          ]
+        },
+        {
+          "name": "rewardPool",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
+          ]
+        },
+        {
           "name": "solDestination",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rewardsProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -645,7 +635,7 @@ export type VoterStakeRegistry = {
       ]
     },
     {
-      "name": "lockTokens",
+      "name": "stake",
       "accounts": [
         {
           "name": "registrar",
@@ -667,7 +657,8 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
+            "reward_program)"
           ]
         },
         {
@@ -675,7 +666,8 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
           ]
         },
         {
@@ -696,19 +688,11 @@ export type VoterStakeRegistry = {
         {
           "name": "amount",
           "type": "u64"
-        },
-        {
-          "name": "realmGoverningMintPubkey",
-          "type": "publicKey"
-        },
-        {
-          "name": "realmPubkey",
-          "type": "publicKey"
         }
       ]
     },
     {
-      "name": "restakeDeposit",
+      "name": "extendStake",
       "accounts": [
         {
           "name": "registrar",
@@ -721,39 +705,26 @@ export type VoterStakeRegistry = {
           "isSigner": false
         },
         {
-          "name": "depositToken",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "depositAuthority",
+          "name": "voterAuthority",
           "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "The owner of the deposit and its reward's mining account"
-          ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          "isSigner": true
         },
         {
           "name": "rewardPool",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
+            "reward_program)"
+          ]
         },
         {
           "name": "depositMining",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
           ]
         },
         {
@@ -764,7 +735,11 @@ export type VoterStakeRegistry = {
       ],
       "args": [
         {
-          "name": "depositEntryIndex",
+          "name": "sourceDepositEntryIndex",
+          "type": "u8"
+        },
+        {
+          "name": "targetDepositEntryIndex",
           "type": "u8"
         },
         {
@@ -772,18 +747,6 @@ export type VoterStakeRegistry = {
           "type": {
             "defined": "LockupPeriod"
           }
-        },
-        {
-          "name": "registrarBump",
-          "type": "u8"
-        },
-        {
-          "name": "realmGoverningMintPubkey",
-          "type": "publicKey"
-        },
-        {
-          "name": "realmPubkey",
-          "type": "publicKey"
         },
         {
           "name": "additionalAmount",
@@ -821,12 +784,13 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
           ]
         },
         {
           "name": "miningOwner",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -872,7 +836,7 @@ export type VoterStakeRegistry = {
   ],
   "accounts": [
     {
-      "name": "Registrar",
+      "name": "registrar",
       "docs": [
         "Instance of a voting rights distributor."
       ],
@@ -911,21 +875,23 @@ export type VoterStakeRegistry = {
             }
           },
           {
-            "name": "timeOffset",
-            "docs": [
-              "Debug only: time offset, to allow tests to move forward in time."
-            ],
-            "type": "i64"
-          },
-          {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                7
+              ]
+            }
           }
         ]
       }
     },
     {
-      "name": "Voter",
+      "name": "voter",
       "docs": [
         "User account for minting voting rights."
       ],
@@ -973,6 +939,63 @@ export type VoterStakeRegistry = {
     }
   ],
   "types": [
+    {
+      "name": "VestingInfo",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rate",
+            "docs": [
+              "Amount of tokens vested each period"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "nextTimestamp",
+            "docs": [
+              "Time of the next upcoming vesting"
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LockingInfo",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "docs": [
+              "Amount of locked tokens"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "endTimestamp",
+            "docs": [
+              "Time at which the lockup fully ends (None for Constant lockup)"
+            ],
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "vesting",
+            "docs": [
+              "Information about vesting, if any"
+            ],
+            "type": {
+              "option": {
+                "defined": "VestingInfo"
+              }
+            }
+          }
+        ]
+      }
+    },
     {
       "name": "DepositEntry",
       "docs": [
@@ -1033,8 +1056,6 @@ export type VoterStakeRegistry = {
           {
             "name": "startTs",
             "docs": [
-              "Note, that if start_ts is in the future, the funds are nevertheless",
-              "locked up!",
               "Start of the lockup."
             ],
             "type": "u64"
@@ -1091,46 +1112,6 @@ export type VoterStakeRegistry = {
       }
     },
     {
-      "name": "LockupKind",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Constant"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockupPeriod",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "ThreeMonths"
-          },
-          {
-            "name": "SixMonths"
-          },
-          {
-            "name": "OneYear"
-          },
-          {
-            "name": "Flex"
-          },
-          {
-            "name": "Test"
-          }
-        ]
-      }
-    },
-    {
       "name": "VotingMintConfig",
       "docs": [
         "Exchange rate for an asset that can be used to mint voting rights.",
@@ -1154,114 +1135,236 @@ export type VoterStakeRegistry = {
               "The authority that is allowed to push grants into voters"
             ],
             "type": "publicKey"
-          },
-          {
-            "name": "baselineVoteWeightScaledFactor",
-            "docs": [
-              "Vote weight factor for all funds in the account, no matter if locked or not.",
-              "",
-              "In 1/SCALED_FACTOR_BASE units."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "maxExtraLockupVoteWeightScaledFactor",
-            "docs": [
-              "Maximum extra vote weight factor for lockups.",
-              "",
-              "This is the extra votes gained for lockups lasting lockup_saturation_secs or",
-              "longer. Shorter lockups receive only a fraction of the maximum extra vote weight,",
-              "based on lockup_time divided by lockup_saturation_secs.",
-              "",
-              "In 1/SCALED_FACTOR_BASE units."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "lockupSaturationSecs",
-            "docs": [
-              "Number of seconds of lockup needed to reach the maximum lockup bonus."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "digitShift",
-            "docs": [
-              "Number of digits to shift native amounts, applying a 10^digit_shift factor."
-            ],
-            "type": "i8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
           }
         ]
       }
     },
     {
-      "name": "LockingInfo",
+      "name": "RewardsInstruction",
       "type": {
-        "kind": "struct",
-        "fields": [
+        "kind": "enum",
+        "variants": [
           {
-            "name": "amount",
-            "docs": [
-              "Amount of locked tokens"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "endTimestamp",
-            "docs": [
-              "Time at which the lockup fully ends (None for Constant lockup)"
-            ],
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "vesting",
-            "docs": [
-              "Information about vesting, if any"
-            ],
-            "type": {
-              "option": {
-                "defined": "VestingInfo"
+            "name": "InitializePool",
+            "fields": [
+              {
+                "name": "fill_authority",
+                "docs": [
+                  "Account can fill the reward vault"
+                ],
+                "type": "publicKey"
+              },
+              {
+                "name": "distribution_authority",
+                "docs": [
+                  "Account can distribute rewards for stakers"
+                ],
+                "type": "publicKey"
               }
-            }
+            ]
+          },
+          {
+            "name": "FillVault",
+            "fields": [
+              {
+                "name": "amount",
+                "docs": [
+                  "Amount to fill"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "distribution_ends_at",
+                "docs": [
+                  "Rewards distribution ends at given date"
+                ],
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "InitializeMining",
+            "fields": [
+              {
+                "name": "mining_owner",
+                "docs": [
+                  "Represent the end-user, owner of the mining"
+                ],
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "DepositMining",
+            "fields": [
+              {
+                "name": "amount",
+                "docs": [
+                  "Amount to deposit"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "lockup_period",
+                "docs": [
+                  "Lockup Period"
+                ],
+                "type": {
+                  "defined": "LockupPeriod"
+                }
+              },
+              {
+                "name": "owner",
+                "docs": [
+                  "Specifies the owner of the Mining Account"
+                ],
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "WithdrawMining",
+            "fields": [
+              {
+                "name": "amount",
+                "docs": [
+                  "Amount to withdraw"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "owner",
+                "docs": [
+                  "Specifies the owner of the Mining Account"
+                ],
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "Claim"
+          },
+          {
+            "name": "ExtendStake",
+            "fields": [
+              {
+                "name": "old_lockup_period",
+                "docs": [
+                  "Lockup period before restaking. Actually it's only needed",
+                  "for Flex to AnyPeriod edge case"
+                ],
+                "type": {
+                  "defined": "LockupPeriod"
+                }
+              },
+              {
+                "name": "new_lockup_period",
+                "docs": [
+                  "Requested lockup period for restaking"
+                ],
+                "type": {
+                  "defined": "LockupPeriod"
+                }
+              },
+              {
+                "name": "deposit_start_ts",
+                "docs": [
+                  "Deposit start_ts"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "base_amount",
+                "docs": [
+                  "Amount of tokens to be restaked, this",
+                  "number cannot be decreased. It reflects the number of staked tokens",
+                  "before the extend_stake function call"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "additional_amount",
+                "docs": [
+                  "In case user wants to increase it's staked number of tokens,",
+                  "the addition amount might be provided"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "mining_owner",
+                "docs": [
+                  "The wallet who owns the mining account"
+                ],
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "DistributeRewards"
+          },
+          {
+            "name": "CloseMining"
           }
         ]
       }
     },
     {
-      "name": "VestingInfo",
+      "name": "LockupPeriod",
       "type": {
-        "kind": "struct",
-        "fields": [
+        "kind": "enum",
+        "variants": [
           {
-            "name": "rate",
-            "docs": [
-              "Amount of tokens vested each period"
-            ],
-            "type": "u64"
+            "name": "None"
           },
           {
-            "name": "nextTimestamp",
-            "docs": [
-              "Time of the next upcoming vesting"
-            ],
-            "type": "u64"
+            "name": "Flex"
+          },
+          {
+            "name": "ThreeMonths"
+          },
+          {
+            "name": "SixMonths"
+          },
+          {
+            "name": "OneYear"
+          },
+          {
+            "name": "Test"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LockupKind",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Constant"
           }
         ]
       }
     }
   ],
   "events": [
+    {
+      "name": "VoterInfo",
+      "fields": [
+        {
+          "name": "votingPower",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "votingPowerBaseline",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
     {
       "name": "DepositEntryInfo",
       "fields": [
@@ -1297,21 +1400,6 @@ export type VoterStakeRegistry = {
               "defined": "LockingInfo"
             }
           },
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "VoterInfo",
-      "fields": [
-        {
-          "name": "votingPower",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "votingPowerBaseline",
-          "type": "u64",
           "index": false
         }
       ]
@@ -1435,7 +1523,7 @@ export type VoterStakeRegistry = {
     },
     {
       "code": 6023,
-      "name": "RestakeDepositIsNotAllowed",
+      "name": "ExtendDepositIsNotAllowed",
       "msg": ""
     },
     {
@@ -1457,6 +1545,11 @@ export type VoterStakeRegistry = {
       "code": 6027,
       "name": "DepositEntryIsOld",
       "msg": "Locking up tokens is only allowed for freshly-deposited deposit entry"
+    },
+    {
+      "code": 6028,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic operation has beed overflowed"
     }
   ]
 };
@@ -1476,10 +1569,9 @@ export const IDL: VoterStakeRegistry = {
     "",
     "- Create a SPL governance realm.",
     "- Create a governance registry account.",
-    "- Add exchange rates for any tokens one wants to deposit. For example,",
-    "if one wants to vote with tokens A and B, where token B has twice the",
-    "voting power of token A, then the exchange rate of B would be 2 and the",
-    "exchange rate of A would be 1.",
+    "- Add exchange rates for any tokens one wants to deposit. For example, if one wants to vote with",
+    "tokens A and B, where token B has twice the voting power of token A, then the exchange rate of",
+    "B would be 2 and the exchange rate of A would be 1.",
     "- Create a voter account.",
     "- Deposit tokens into this program, with an optional lockup period.",
     "- Vote.",
@@ -1645,22 +1737,6 @@ export const IDL: VoterStakeRegistry = {
           "type": "u16"
         },
         {
-          "name": "digitShift",
-          "type": "i8"
-        },
-        {
-          "name": "baselineVoteWeightScaledFactor",
-          "type": "u64"
-        },
-        {
-          "name": "maxExtraLockupVoteWeightScaledFactor",
-          "type": "u64"
-        },
-        {
-          "name": "lockupSaturationSecs",
-          "type": "u64"
-        },
-        {
           "name": "grantAuthority",
           "type": {
             "option": "publicKey"
@@ -1732,7 +1808,8 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
+            "reward_program)"
           ]
         },
         {
@@ -1740,7 +1817,8 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
           ]
         },
         {
@@ -1805,11 +1883,6 @@ export const IDL: VoterStakeRegistry = {
         },
         {
           "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -1938,21 +2011,6 @@ export const IDL: VoterStakeRegistry = {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "rewardPool",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "depositMining",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "rewardsProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -1963,18 +2021,6 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "amount",
           "type": "u64"
-        },
-        {
-          "name": "registrarBump",
-          "type": "u8"
-        },
-        {
-          "name": "realmGoverningMintPubkey",
-          "type": "publicKey"
-        },
-        {
-          "name": "realmPubkey",
-          "type": "publicKey"
         }
       ]
     },
@@ -2042,6 +2088,21 @@ export const IDL: VoterStakeRegistry = {
           "name": "voterAuthority",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "rewardPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "depositMining",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -2070,12 +2131,34 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "depositMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
+          ]
+        },
+        {
+          "name": "rewardPool",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
+          ]
+        },
+        {
           "name": "solDestination",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rewardsProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -2108,7 +2191,7 @@ export const IDL: VoterStakeRegistry = {
       ]
     },
     {
-      "name": "lockTokens",
+      "name": "stake",
       "accounts": [
         {
           "name": "registrar",
@@ -2130,7 +2213,8 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority], reward_program)"
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
+            "reward_program)"
           ]
         },
         {
@@ -2138,7 +2222,8 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
           ]
         },
         {
@@ -2159,19 +2244,11 @@ export const IDL: VoterStakeRegistry = {
         {
           "name": "amount",
           "type": "u64"
-        },
-        {
-          "name": "realmGoverningMintPubkey",
-          "type": "publicKey"
-        },
-        {
-          "name": "realmPubkey",
-          "type": "publicKey"
         }
       ]
     },
     {
-      "name": "restakeDeposit",
+      "name": "extendStake",
       "accounts": [
         {
           "name": "registrar",
@@ -2184,39 +2261,26 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": false
         },
         {
-          "name": "depositToken",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "depositAuthority",
+          "name": "voterAuthority",
           "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "The owner of the deposit and its reward's mining account"
-          ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
+          "isSigner": true
         },
         {
           "name": "rewardPool",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
+            "reward_program)"
+          ]
         },
         {
           "name": "depositMining",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
           ]
         },
         {
@@ -2227,7 +2291,11 @@ export const IDL: VoterStakeRegistry = {
       ],
       "args": [
         {
-          "name": "depositEntryIndex",
+          "name": "sourceDepositEntryIndex",
+          "type": "u8"
+        },
+        {
+          "name": "targetDepositEntryIndex",
           "type": "u8"
         },
         {
@@ -2235,18 +2303,6 @@ export const IDL: VoterStakeRegistry = {
           "type": {
             "defined": "LockupPeriod"
           }
-        },
-        {
-          "name": "registrarBump",
-          "type": "u8"
-        },
-        {
-          "name": "realmGoverningMintPubkey",
-          "type": "publicKey"
-        },
-        {
-          "name": "realmPubkey",
-          "type": "publicKey"
         },
         {
           "name": "additionalAmount",
@@ -2284,12 +2340,13 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool], reward_program)"
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
           ]
         },
         {
           "name": "miningOwner",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -2335,7 +2392,7 @@ export const IDL: VoterStakeRegistry = {
   ],
   "accounts": [
     {
-      "name": "Registrar",
+      "name": "registrar",
       "docs": [
         "Instance of a voting rights distributor."
       ],
@@ -2374,21 +2431,23 @@ export const IDL: VoterStakeRegistry = {
             }
           },
           {
-            "name": "timeOffset",
-            "docs": [
-              "Debug only: time offset, to allow tests to move forward in time."
-            ],
-            "type": "i64"
-          },
-          {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                7
+              ]
+            }
           }
         ]
       }
     },
     {
-      "name": "Voter",
+      "name": "voter",
       "docs": [
         "User account for minting voting rights."
       ],
@@ -2436,6 +2495,63 @@ export const IDL: VoterStakeRegistry = {
     }
   ],
   "types": [
+    {
+      "name": "VestingInfo",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rate",
+            "docs": [
+              "Amount of tokens vested each period"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "nextTimestamp",
+            "docs": [
+              "Time of the next upcoming vesting"
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LockingInfo",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "docs": [
+              "Amount of locked tokens"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "endTimestamp",
+            "docs": [
+              "Time at which the lockup fully ends (None for Constant lockup)"
+            ],
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "vesting",
+            "docs": [
+              "Information about vesting, if any"
+            ],
+            "type": {
+              "option": {
+                "defined": "VestingInfo"
+              }
+            }
+          }
+        ]
+      }
+    },
     {
       "name": "DepositEntry",
       "docs": [
@@ -2496,8 +2612,6 @@ export const IDL: VoterStakeRegistry = {
           {
             "name": "startTs",
             "docs": [
-              "Note, that if start_ts is in the future, the funds are nevertheless",
-              "locked up!",
               "Start of the lockup."
             ],
             "type": "u64"
@@ -2554,46 +2668,6 @@ export const IDL: VoterStakeRegistry = {
       }
     },
     {
-      "name": "LockupKind",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Constant"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockupPeriod",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "ThreeMonths"
-          },
-          {
-            "name": "SixMonths"
-          },
-          {
-            "name": "OneYear"
-          },
-          {
-            "name": "Flex"
-          },
-          {
-            "name": "Test"
-          }
-        ]
-      }
-    },
-    {
       "name": "VotingMintConfig",
       "docs": [
         "Exchange rate for an asset that can be used to mint voting rights.",
@@ -2617,114 +2691,236 @@ export const IDL: VoterStakeRegistry = {
               "The authority that is allowed to push grants into voters"
             ],
             "type": "publicKey"
-          },
-          {
-            "name": "baselineVoteWeightScaledFactor",
-            "docs": [
-              "Vote weight factor for all funds in the account, no matter if locked or not.",
-              "",
-              "In 1/SCALED_FACTOR_BASE units."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "maxExtraLockupVoteWeightScaledFactor",
-            "docs": [
-              "Maximum extra vote weight factor for lockups.",
-              "",
-              "This is the extra votes gained for lockups lasting lockup_saturation_secs or",
-              "longer. Shorter lockups receive only a fraction of the maximum extra vote weight,",
-              "based on lockup_time divided by lockup_saturation_secs.",
-              "",
-              "In 1/SCALED_FACTOR_BASE units."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "lockupSaturationSecs",
-            "docs": [
-              "Number of seconds of lockup needed to reach the maximum lockup bonus."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "digitShift",
-            "docs": [
-              "Number of digits to shift native amounts, applying a 10^digit_shift factor."
-            ],
-            "type": "i8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
           }
         ]
       }
     },
     {
-      "name": "LockingInfo",
+      "name": "RewardsInstruction",
       "type": {
-        "kind": "struct",
-        "fields": [
+        "kind": "enum",
+        "variants": [
           {
-            "name": "amount",
-            "docs": [
-              "Amount of locked tokens"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "endTimestamp",
-            "docs": [
-              "Time at which the lockup fully ends (None for Constant lockup)"
-            ],
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "vesting",
-            "docs": [
-              "Information about vesting, if any"
-            ],
-            "type": {
-              "option": {
-                "defined": "VestingInfo"
+            "name": "InitializePool",
+            "fields": [
+              {
+                "name": "fill_authority",
+                "docs": [
+                  "Account can fill the reward vault"
+                ],
+                "type": "publicKey"
+              },
+              {
+                "name": "distribution_authority",
+                "docs": [
+                  "Account can distribute rewards for stakers"
+                ],
+                "type": "publicKey"
               }
-            }
+            ]
+          },
+          {
+            "name": "FillVault",
+            "fields": [
+              {
+                "name": "amount",
+                "docs": [
+                  "Amount to fill"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "distribution_ends_at",
+                "docs": [
+                  "Rewards distribution ends at given date"
+                ],
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "InitializeMining",
+            "fields": [
+              {
+                "name": "mining_owner",
+                "docs": [
+                  "Represent the end-user, owner of the mining"
+                ],
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "DepositMining",
+            "fields": [
+              {
+                "name": "amount",
+                "docs": [
+                  "Amount to deposit"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "lockup_period",
+                "docs": [
+                  "Lockup Period"
+                ],
+                "type": {
+                  "defined": "LockupPeriod"
+                }
+              },
+              {
+                "name": "owner",
+                "docs": [
+                  "Specifies the owner of the Mining Account"
+                ],
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "WithdrawMining",
+            "fields": [
+              {
+                "name": "amount",
+                "docs": [
+                  "Amount to withdraw"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "owner",
+                "docs": [
+                  "Specifies the owner of the Mining Account"
+                ],
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "Claim"
+          },
+          {
+            "name": "ExtendStake",
+            "fields": [
+              {
+                "name": "old_lockup_period",
+                "docs": [
+                  "Lockup period before restaking. Actually it's only needed",
+                  "for Flex to AnyPeriod edge case"
+                ],
+                "type": {
+                  "defined": "LockupPeriod"
+                }
+              },
+              {
+                "name": "new_lockup_period",
+                "docs": [
+                  "Requested lockup period for restaking"
+                ],
+                "type": {
+                  "defined": "LockupPeriod"
+                }
+              },
+              {
+                "name": "deposit_start_ts",
+                "docs": [
+                  "Deposit start_ts"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "base_amount",
+                "docs": [
+                  "Amount of tokens to be restaked, this",
+                  "number cannot be decreased. It reflects the number of staked tokens",
+                  "before the extend_stake function call"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "additional_amount",
+                "docs": [
+                  "In case user wants to increase it's staked number of tokens,",
+                  "the addition amount might be provided"
+                ],
+                "type": "u64"
+              },
+              {
+                "name": "mining_owner",
+                "docs": [
+                  "The wallet who owns the mining account"
+                ],
+                "type": "publicKey"
+              }
+            ]
+          },
+          {
+            "name": "DistributeRewards"
+          },
+          {
+            "name": "CloseMining"
           }
         ]
       }
     },
     {
-      "name": "VestingInfo",
+      "name": "LockupPeriod",
       "type": {
-        "kind": "struct",
-        "fields": [
+        "kind": "enum",
+        "variants": [
           {
-            "name": "rate",
-            "docs": [
-              "Amount of tokens vested each period"
-            ],
-            "type": "u64"
+            "name": "None"
           },
           {
-            "name": "nextTimestamp",
-            "docs": [
-              "Time of the next upcoming vesting"
-            ],
-            "type": "u64"
+            "name": "Flex"
+          },
+          {
+            "name": "ThreeMonths"
+          },
+          {
+            "name": "SixMonths"
+          },
+          {
+            "name": "OneYear"
+          },
+          {
+            "name": "Test"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LockupKind",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Constant"
           }
         ]
       }
     }
   ],
   "events": [
+    {
+      "name": "VoterInfo",
+      "fields": [
+        {
+          "name": "votingPower",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "votingPowerBaseline",
+          "type": "u64",
+          "index": false
+        }
+      ]
+    },
     {
       "name": "DepositEntryInfo",
       "fields": [
@@ -2760,21 +2956,6 @@ export const IDL: VoterStakeRegistry = {
               "defined": "LockingInfo"
             }
           },
-          "index": false
-        }
-      ]
-    },
-    {
-      "name": "VoterInfo",
-      "fields": [
-        {
-          "name": "votingPower",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "votingPowerBaseline",
-          "type": "u64",
           "index": false
         }
       ]
@@ -2898,7 +3079,7 @@ export const IDL: VoterStakeRegistry = {
     },
     {
       "code": 6023,
-      "name": "RestakeDepositIsNotAllowed",
+      "name": "ExtendDepositIsNotAllowed",
       "msg": ""
     },
     {
@@ -2920,6 +3101,11 @@ export const IDL: VoterStakeRegistry = {
       "code": 6027,
       "name": "DepositEntryIsOld",
       "msg": "Locking up tokens is only allowed for freshly-deposited deposit entry"
+    },
+    {
+      "code": 6028,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic operation has beed overflowed"
     }
   ]
 };

@@ -2,9 +2,7 @@ use anchor_spl::token::TokenAccount;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
-use solana_sdk::transport::TransportError;
+use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 mod program_test;
 #[tokio::test]
@@ -51,19 +49,15 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
             None,
             None,
         )
         .await;
 
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = addin
@@ -78,17 +72,15 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         )
         .await;
 
-    let delegate = Keypair::new();
     addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await
         .unwrap();
@@ -106,32 +98,27 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         .unwrap();
 
     for i in 1..32 {
-        let delegate = Keypair::new();
         addin
             .create_deposit_entry(
                 &registrar,
                 &voter,
-                voter_authority,
+                &voter,
                 &mngo_voting_mint,
                 i,
                 LockupKind::Constant,
                 LockupPeriod::ThreeMonths,
-                delegate.pubkey(),
             )
             .await
             .unwrap();
         addin
-            .lock_tokens(
+            .stake(
                 &registrar,
                 &voter,
-                voter_authority,
-                &deposit_mining,
+                voter.authority.pubkey(),
                 &context.rewards.program_id,
                 0,
                 i,
                 1000,
-                mngo_voting_mint.mint.pubkey.unwrap(),
-                realm.realm,
             )
             .await?;
     }
@@ -152,7 +139,14 @@ async fn test_all_deposits() -> Result<(), TransportError> {
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 0)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            &voter,
+            0,
+            &rewards_pool,
+            &context.rewards.program_id,
+        )
         .await
         .unwrap();
 
@@ -168,9 +162,6 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             voter_mngo,
             0,
             1000,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await
         .unwrap();

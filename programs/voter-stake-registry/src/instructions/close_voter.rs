@@ -1,10 +1,12 @@
-use crate::clock_unix_timestamp;
+use crate::{clock_unix_timestamp, cpi_instructions};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount, Transfer};
 use bytemuck::bytes_of_mut;
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{Registrar, Voter};
-use mplx_staking_states::voter_seeds;
+use mplx_staking_states::{
+    error::VsrError,
+    state::{Registrar, Voter},
+    voter_seeds,
+};
 use std::ops::DerefMut;
 
 // Remaining accounts must be all the token token accounts owned by voter, he wants to close,
@@ -25,13 +27,28 @@ pub struct CloseVoter<'info> {
     )]
     pub voter: AccountLoader<'info, Voter>,
 
+    // also, it's an owner of the mining_account
     pub voter_authority: Signer<'info>,
+
+    /// CHECK: mining PDA will be checked in the rewards contract
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
+    #[account(mut)]
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    /// PDA(["reward_pool", deposit_authority[aka registrar in our case]], rewards_program)
+    pub reward_pool: UncheckedAccount<'info>,
 
     #[account(mut)]
     /// CHECK: Destination may be any address.
     pub sol_destination: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token>,
+
+    /// CHECK: Rewards Program account
+    #[account(executable)]
+    pub rewards_program: UncheckedAccount<'info>,
 }
 
 /// Closes the voter account, transfers all funds from token accounts and closes vaults.
@@ -109,6 +126,28 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
         let voter_bytes = bytes_of_mut(voter_dereffed);
         voter_bytes.fill(0);
     }
+
+    let reward_pool = &ctx.accounts.reward_pool;
+    let mining = &ctx.accounts.deposit_mining;
+    let mining_owner = &ctx.accounts.voter_authority;
+    let deposit_authority = &ctx.accounts.registrar.to_account_info();
+    let target_account = &ctx.accounts.sol_destination.to_account_info();
+    let signers_seeds = &[
+        &registrar.realm.key().to_bytes(),
+        b"registrar".as_ref(),
+        &registrar.realm_governing_token_mint.key().to_bytes(),
+        &[registrar.bump][..],
+    ];
+
+    cpi_instructions::close_mining(
+        ctx.accounts.rewards_program.to_account_info(),
+        mining.to_account_info(),
+        mining_owner.to_account_info(),
+        target_account.to_account_info(),
+        deposit_authority.to_account_info(),
+        reward_pool.to_account_info(),
+        signers_seeds,
+    )?;
 
     Ok(())
 }

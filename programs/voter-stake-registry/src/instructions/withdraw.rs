@@ -1,11 +1,14 @@
-use crate::clock_unix_timestamp;
-use crate::cpi_instructions::withdraw_mining;
-use crate::voter::{load_token_owner_record, VoterWeightRecord};
+use crate::{
+    clock_unix_timestamp,
+    voter::{load_token_owner_record, VoterWeightRecord},
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
-use mplx_staking_states::error::VsrError;
-use mplx_staking_states::state::{DepositEntry, LockupKind, LockupPeriod, Registrar, Voter};
-use mplx_staking_states::voter_seeds;
+use mplx_staking_states::{
+    error::VsrError,
+    state::{DepositEntry, LockupKind, LockupPeriod, Registrar, Voter},
+    voter_seeds,
+};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -57,18 +60,6 @@ pub struct Withdraw<'info> {
     pub destination: Box<Account<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token>,
-
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    #[account(mut)]
-    pub reward_pool: UncheckedAccount<'info>,
-
-    /// CHECK: mining PDA will be checked in the rewards contract
-    #[account(mut)]
-    pub deposit_mining: UncheckedAccount<'info>,
-
-    /// CHECK: Rewards Program account
-    #[account(executable)]
-    pub rewards_program: UncheckedAccount<'info>,
 }
 
 impl<'info> Withdraw<'info> {
@@ -87,14 +78,7 @@ impl<'info> Withdraw<'info> {
 ///
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
-pub fn withdraw(
-    ctx: Context<Withdraw>,
-    deposit_entry_index: u8,
-    amount: u64,
-    registrar_bump: u8,
-    realm_governing_mint_pubkey: Pubkey,
-    realm_pubkey: Pubkey,
-) -> Result<()> {
+pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
     // we need that block to free all references borrowed from registart/voter/etc,
     // otherwise later, during transfer we would pass references that are already borrowed
     {
@@ -115,14 +99,12 @@ pub fn withdraw(
 
     // Governance may forbid withdraws, for example when engaged in a vote.
     // Not applicable for tokens that don't contribute to voting power.
-    if registrar.voting_mints[mint_idx].grants_vote_weight() {
-        let token_owner_record = load_token_owner_record(
-            &voter.voter_authority,
-            &ctx.accounts.token_owner_record.to_account_info(),
-            registrar,
-        )?;
-        token_owner_record.assert_can_withdraw_governing_tokens()?;
-    }
+    let token_owner_record = load_token_owner_record(
+        &voter.voter_authority,
+        &ctx.accounts.token_owner_record.to_account_info(),
+        registrar,
+    )?;
+    token_owner_record.assert_can_withdraw_governing_tokens()?;
 
     // Get the deposit being withdrawn from.
     let curr_ts = clock_unix_timestamp();
@@ -181,38 +163,10 @@ pub fn withdraw(
         deposit_entry.lockup.seconds_left(curr_ts),
     );
 
-    if deposit_entry.lockup.kind == LockupKind::None
-        && deposit_entry.lockup.period == LockupPeriod::None
-    {
-        return Ok(());
-    }
-
     // Update the voter weight record
     let record = &mut ctx.accounts.voter_weight_record;
     record.voter_weight = voter.weight()?;
     record.voter_weight_expiry = Some(Clock::get()?.slot);
-
-    let rewards_program = &ctx.accounts.rewards_program;
-    let reward_pool = &ctx.accounts.reward_pool;
-    let mining = &ctx.accounts.deposit_mining;
-    let pool_deposit_authority = &ctx.accounts.registrar;
-    let owner = &ctx.accounts.voter_authority;
-    let signers_seeds = &[
-        &realm_pubkey.key().to_bytes(),
-        b"registrar".as_ref(),
-        &realm_governing_mint_pubkey.key().to_bytes(),
-        &[registrar_bump][..],
-    ];
-
-    withdraw_mining(
-        rewards_program.to_account_info(),
-        reward_pool.to_account_info(),
-        mining.to_account_info(),
-        pool_deposit_authority.to_account_info(),
-        amount,
-        owner.key,
-        signers_seeds,
-    )?;
 
     Ok(())
 }

@@ -2,9 +2,7 @@ use anchor_spl::token::TokenAccount;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
-use solana_sdk::transport::TransportError;
+use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 mod program_test;
 
@@ -51,10 +49,6 @@ async fn test_basic() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            10,
-            0.0,
-            0.0,
-            1,
             None,
             None,
         )
@@ -67,10 +61,6 @@ async fn test_basic() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
             None,
             None,
         )
@@ -78,10 +68,10 @@ async fn test_basic() -> Result<(), TransportError> {
 
     // TODO: ??? voter_authority == deposit_authority ???
     let voter_authority = deposit_authority;
-    let deposit_mining = find_deposit_mining_addr(
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
-        &context.rewards.program_id,
     );
 
     let voter = context
@@ -106,18 +96,16 @@ async fn test_basic() -> Result<(), TransportError> {
     let balance_initial = voter.deposit_amount(&context.solana, 0).await;
     assert_eq!(balance_initial, 0);
 
-    let delegate = Keypair::new();
     context
         .addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
             LockupKind::None,
             LockupPeriod::None,
-            delegate.pubkey(),
         )
         .await?;
 
@@ -126,12 +114,11 @@ async fn test_basic() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             1,
             LockupKind::Constant,
             LockupPeriod::ThreeMonths,
-            delegate.pubkey(),
         )
         .await?;
 
@@ -150,17 +137,14 @@ async fn test_basic() -> Result<(), TransportError> {
 
     context
         .addin
-        .lock_tokens(
+        .stake(
             &registrar,
             &voter,
-            deposit_authority,
-            &deposit_mining,
+            voter.authority.pubkey(),
             &context.rewards.program_id,
             0,
             1,
             10000,
-            mngo_voting_mint.mint.pubkey.unwrap(),
-            realm.realm,
         )
         .await?;
 
@@ -183,7 +167,14 @@ async fn test_basic() -> Result<(), TransportError> {
 
     context
         .addin
-        .unlock_tokens(&registrar, &voter, voter_authority, 1)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            &voter,
+            1,
+            &rewards_pool,
+            &context.rewards.program_id,
+        )
         .await
         .unwrap();
 
@@ -202,9 +193,6 @@ async fn test_basic() -> Result<(), TransportError> {
             reference_account,
             1,
             10000,
-            &rewards_pool,
-            &deposit_mining,
-            &context.rewards.program_id,
         )
         .await?;
 
@@ -229,7 +217,13 @@ async fn test_basic() -> Result<(), TransportError> {
         .await?;
     context
         .addin
-        .close_voter(&registrar, &voter, &mngo_voting_mint, voter_authority)
+        .close_voter(
+            &registrar,
+            &voter,
+            &mngo_voting_mint,
+            voter_authority,
+            &context.rewards.program_id,
+        )
         .await?;
     let lamports_after = context
         .solana

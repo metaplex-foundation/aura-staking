@@ -1,6 +1,12 @@
 use anchor_lang::prelude::*;
 use instructions::*;
-use mplx_staking_states::state::lockup::{LockupKind, LockupPeriod};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{
+        lockup::{LockupKind, LockupPeriod},
+        DepositEntry, Registrar, Voter,
+    },
+};
 
 pub mod cpi_instructions;
 pub mod events;
@@ -70,21 +76,9 @@ pub mod voter_stake_registry {
     pub fn configure_voting_mint(
         ctx: Context<ConfigureVotingMint>,
         idx: u16,
-        digit_shift: i8,
-        baseline_vote_weight_scaled_factor: u64,
-        max_extra_lockup_vote_weight_scaled_factor: u64,
-        lockup_saturation_secs: u64,
         grant_authority: Option<Pubkey>,
     ) -> Result<()> {
-        instructions::configure_voting_mint(
-            ctx,
-            idx,
-            digit_shift,
-            baseline_vote_weight_scaled_factor,
-            max_extra_lockup_vote_weight_scaled_factor,
-            lockup_saturation_secs,
-            grant_authority,
-        )
+        instructions::configure_voting_mint(ctx, idx, grant_authority)
     }
 
     pub fn create_voter(
@@ -100,31 +94,16 @@ pub mod voter_stake_registry {
         deposit_entry_index: u8,
         kind: LockupKind,
         period: LockupPeriod,
-        delegate: Pubkey,
     ) -> Result<()> {
-        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period, delegate)
+        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period)
     }
 
     pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
         instructions::deposit(ctx, deposit_entry_index, amount)
     }
 
-    pub fn withdraw(
-        ctx: Context<Withdraw>,
-        deposit_entry_index: u8,
-        amount: u64,
-        registrar_bump: u8,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
-    ) -> Result<()> {
-        instructions::withdraw(
-            ctx,
-            deposit_entry_index,
-            amount,
-            registrar_bump,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
-        )
+    pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+        instructions::withdraw(ctx, deposit_entry_index, amount)
     }
 
     pub fn close_deposit_entry(
@@ -138,7 +117,7 @@ pub mod voter_stake_registry {
         instructions::update_voter_weight_record(ctx)
     }
 
-    pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
+    pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()> {
         instructions::unlock_tokens(ctx, deposit_entry_index)
     }
 
@@ -154,40 +133,32 @@ pub mod voter_stake_registry {
         instructions::log_voter_info(ctx, deposit_entry_begin, deposit_entry_count)
     }
 
-    pub fn lock_tokens(
-        ctx: Context<LockTokens>,
+    pub fn stake(
+        ctx: Context<Stake>,
         source_deposit_entry_index: u8,
         target_deposit_entry_index: u8,
         amount: u64,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
     ) -> Result<()> {
-        instructions::lock_tokens(
+        instructions::stake(
             ctx,
             source_deposit_entry_index,
             target_deposit_entry_index,
             amount,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
         )
     }
 
-    pub fn restake_deposit(
-        ctx: Context<RestakeDeposit>,
-        deposit_entry_index: u8,
+    pub fn extend_stake(
+        ctx: Context<Stake>,
+        source_deposit_entry_index: u8,
+        target_deposit_entry_index: u8,
         new_lockup_period: LockupPeriod,
-        registrar_bump: u8,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
         additional_amount: u64,
     ) -> Result<()> {
-        instructions::restake_deposit(
+        instructions::extend_stake(
             ctx,
-            deposit_entry_index,
+            source_deposit_entry_index,
+            target_deposit_entry_index,
             new_lockup_period,
-            registrar_bump,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
             additional_amount,
         )
     }
@@ -204,5 +175,79 @@ pub mod voter_stake_registry {
             realm_governing_mint_pubkey,
             realm_pubkey,
         )
+    }
+
+    pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
+        instructions::change_delegate(ctx, deposit_entry_index)
+    }
+}
+
+#[derive(Accounts)]
+pub struct Stake<'info> {
+    pub registrar: AccountLoader<'info, Registrar>,
+
+    // checking the PDA address it just an extra precaution,
+    // the other constraints must be exhaustive
+    #[account(
+        mut,
+        seeds = [registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
+        bump = voter.load()?.voter_bump,
+        has_one = voter_authority,
+        has_one = registrar)
+    ]
+    pub voter: AccountLoader<'info, Voter>,
+    pub voter_authority: Signer<'info>,
+
+    /// CHECK: delegate might be any arbitrary address
+    pub delegate: UncheckedAccount<'info>,
+
+    /// CHECK: Mining Account that belongs to Rewards Program and some delegate
+    /// The address of the mining account on the rewards progra,
+    /// derived from PDA(["mining", delegate wallet addr, reward_pool], rewards_program)
+    #[account(mut)]
+    pub delegate_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
+    /// reward_program)
+    #[account(mut)]
+    pub reward_pool: UncheckedAccount<'info>,
+
+    /// CHECK: mining PDA will be checked in the rewards contract
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
+    #[account(mut)]
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Rewards Program account
+    #[account(executable)]
+    pub rewards_program: UncheckedAccount<'info>,
+}
+
+impl Stake<'_> {
+    pub fn verify_delegate_and_its_mining(&self, deposit_entry: &DepositEntry) -> Result<()> {
+        // check whether target delegate mining is the same as delegate mining from passed context
+        require_eq!(
+            deposit_entry.delegate,
+            *self.delegate.to_account_info().key,
+            VsrError::InvalidDelegate
+        );
+
+        let (reward_pool, _) = find_reward_pool_address(
+            &self.rewards_program.to_account_info().key(),
+            &self.registrar.to_account_info().key(),
+        );
+        let (calculated_delegate_mining, _) = find_mining_address(
+            &self.rewards_program.to_account_info().key(),
+            &self.delegate.to_account_info().key(),
+            &reward_pool,
+        );
+        require_eq!(
+            calculated_delegate_mining,
+            self.delegate_mining.to_account_info().key(),
+            VsrError::InvalidMining
+        );
+
+        Ok(())
     }
 }

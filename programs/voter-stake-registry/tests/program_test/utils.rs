@@ -1,12 +1,14 @@
 use bytemuck::{bytes_of, Contiguous};
-use solana_program::program_error::ProgramError;
+use solana_program::{instruction::InstructionError, program_error::ProgramError};
 use solana_program_test::{BanksClientError, ProgramTestContext};
-use solana_sdk::program_pack::Pack;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
-use solana_sdk::system_instruction;
-use solana_sdk::transaction::Transaction;
+use solana_sdk::{
+    program_pack::Pack,
+    pubkey::Pubkey,
+    signature::Keypair,
+    signer::Signer,
+    system_instruction,
+    transaction::{Transaction, TransactionError},
+};
 use std::borrow::BorrowMut;
 
 #[allow(dead_code)]
@@ -73,19 +75,18 @@ pub async fn create_mint(
 }
 
 pub fn find_deposit_mining_addr(
-    user: &Pubkey,
-    rewards_pool: &Pubkey,
-    rewards_program_addr: &Pubkey,
-) -> Pubkey {
-    let (deposit_mining, _bump) = Pubkey::find_program_address(
+    program_id: &Pubkey,
+    mining_owner: &Pubkey,
+    reward_pool: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
         &[
             "mining".as_bytes(),
-            &user.to_bytes(),
-            &rewards_pool.to_bytes(),
+            &mining_owner.to_bytes(),
+            &reward_pool.to_bytes(),
         ],
-        rewards_program_addr,
-    );
-    deposit_mining
+        program_id,
+    )
 }
 
 pub async fn advance_clock_by_ts(context: &mut ProgramTestContext, ts: i64) {
@@ -103,4 +104,29 @@ pub async fn advance_clock_by_ts(context: &mut ProgramTestContext, ts: i64) {
     let mut new_clock = old_clock.clone();
     new_clock.unix_timestamp += ts;
     context.borrow_mut().set_sysvar(&new_clock);
+}
+
+pub mod assert_custom_on_chain_error {
+    use super::*;
+    use mplx_staking_states::error::VsrError;
+    use std::fmt::Debug;
+
+    pub trait AssertCustomOnChainErr {
+        fn assert_on_chain_err(self, expected_err: VsrError);
+    }
+
+    impl<T: Debug> AssertCustomOnChainErr for Result<T, BanksClientError> {
+        fn assert_on_chain_err(self, expected_err: VsrError) {
+            assert!(self.is_err());
+            match self.unwrap_err() {
+                BanksClientError::TransactionError(TransactionError::InstructionError(
+                    _,
+                    InstructionError::Custom(code),
+                )) => {
+                    debug_assert_eq!((expected_err as u32) + 6000, code);
+                }
+                _ => unreachable!("BanksClientError has no 'Custom' variant."),
+            }
+        }
+    }
 }

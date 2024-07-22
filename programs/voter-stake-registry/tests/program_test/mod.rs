@@ -4,18 +4,20 @@ pub use cookies::*;
 pub use governance::*;
 use log::*;
 pub use solana::*;
-use solana_program::program_option::COption;
-use solana_program::program_pack::Pack;
+use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::{Keypair, Signer};
-use spl_token::state::*;
-use spl_token::*;
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::str::FromStr;
-use std::sync::{Arc, RwLock};
-pub use utils::*;
+use solana_sdk::{
+    pubkey::Pubkey,
+    signature::{Keypair, Signer},
+};
+use spl_token::{state::*, *};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    str::FromStr,
+    sync::{Arc, RwLock},
+};
+pub use utils::{assert_custom_on_chain_error::AssertCustomOnChainErr, *};
 
 pub mod addin;
 pub mod cookies;
@@ -119,7 +121,7 @@ impl TestContext {
         let governance_program_id =
             Pubkey::from_str("GovernanceProgramTest1111111111111111111111").unwrap();
         test.add_program(
-            "spl_governance",
+            "spl_governance_3_1_1",
             governance_program_id,
             processor!(spl_governance::processor::process_instruction),
         );
