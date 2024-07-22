@@ -1,8 +1,13 @@
+use crate::clock_unix_timestamp;
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{Mint, Token, TokenAccount};
-use mplx_staking_states::error::*;
-use mplx_staking_states::state::*;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{DepositEntry, Lockup, LockupKind, LockupPeriod, Registrar, Voter},
+};
 
 #[derive(Accounts)]
 pub struct CreateDepositEntry<'info> {
@@ -25,18 +30,16 @@ pub struct CreateDepositEntry<'info> {
         payer = payer
     )]
     pub vault: Box<Account<'info, TokenAccount>>,
-
     pub voter_authority: Signer<'info>,
+    pub delegate_voter: AccountLoader<'info, Voter>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
     pub deposit_mint: Box<Account<'info, Mint>>,
-
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 /// Creates a new deposit entry.
@@ -46,23 +49,44 @@ pub struct CreateDepositEntry<'info> {
 ///
 /// - `deposit_entry_index`: deposit entry to use
 /// - `kind`: Type of lockup to use.
-/// - `start_ts`: Start timestamp in seconds, defaults to current clock.
-///    The lockup will end after `start + LockupPeriod::to_ts + COOLDOWNS_SECS.
-///
-///    Note that tokens will already be locked before start_ts, it only defines
-///    the vesting start time and the anchor for the periods computation.
-///
-/// - `period`: An enum that represents possible options for locking up
+/// - `period`: An enum that represents possible options for locking up.
 pub fn create_deposit_entry(
     ctx: Context<CreateDepositEntry>,
     deposit_entry_index: u8,
     kind: LockupKind,
-    start_ts: Option<u64>,
     period: LockupPeriod,
 ) -> Result<()> {
     // Load accounts.
     let registrar = &ctx.accounts.registrar.load()?;
-    let voter = &mut ctx.accounts.voter.load_mut()?;
+    let mut voter = ctx.accounts.voter.load_mut()?;
+
+    let delegate = if ctx.accounts.delegate_voter.key() != ctx.accounts.voter.key() {
+        let curr_ts = clock_unix_timestamp();
+        let delegate_voter = ctx.accounts.delegate_voter.load()?;
+
+        let delegate_voter_weighted_stake = delegate_voter
+            .deposits
+            .iter()
+            .fold(0, |acc, d| acc + d.weighted_stake(curr_ts));
+        require!(
+            delegate_voter_weighted_stake >= Voter::MIN_OWN_WEIGHTED_STAKE,
+            VsrError::InsufficientUnlockedTokens
+        );
+
+        delegate_voter.voter_authority.key()
+    } else {
+        voter.voter_authority.key()
+    };
+
+    // if both period and lockup are None, that means the deposit entry is not lockable
+    // in that case delegate field doesn't make sense and should be the same as mining account
+    // derived from voter
+    if period == LockupPeriod::None && kind == LockupKind::None {
+        require!(
+            delegate == voter.voter_authority.key(),
+            VsrError::InvalidDelegate
+        );
+    }
 
     // Get the exchange rate entry associated with this deposit.
     let mint_idx = registrar.voting_mint_config_index(ctx.accounts.deposit_mint.key())?;
@@ -76,10 +100,10 @@ pub fn create_deposit_entry(
     let d_entry = &mut voter.deposits[deposit_entry_index as usize];
     require!(!d_entry.is_used, VsrError::UnusedDepositEntryIndex);
 
-    let curr_ts = registrar.clock_unix_timestamp();
-    let start_ts = start_ts.unwrap_or(curr_ts);
-
+    let start_ts = clock_unix_timestamp();
     *d_entry = DepositEntry::default();
+
+    d_entry.delegate = delegate;
     d_entry.is_used = true;
     d_entry.voting_mint_config_idx = mint_idx as u8;
     d_entry.amount_deposited_native = 0;

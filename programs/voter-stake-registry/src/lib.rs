@@ -1,14 +1,21 @@
 use anchor_lang::prelude::*;
 use instructions::*;
-use mplx_staking_states::state::*;
+use mplx_staking_states::{
+    error::VsrError,
+    state::{
+        lockup::{LockupKind, LockupPeriod},
+        DepositEntry, Registrar, Voter,
+    },
+};
 
+pub mod cpi_instructions;
 pub mod events;
 mod governance;
 mod instructions;
 pub mod voter;
 
 // The program address.
-declare_id!("3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s");
+declare_id!("9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8");
 
 /// # Introduction
 ///
@@ -21,10 +28,9 @@ declare_id!("3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s");
 ///
 /// - Create a SPL governance realm.
 /// - Create a governance registry account.
-/// - Add exchange rates for any tokens one wants to deposit. For example,
-///   if one wants to vote with tokens A and B, where token B has twice the
-///   voting power of token A, then the exchange rate of B would be 2 and the
-///   exchange rate of A would be 1.
+/// - Add exchange rates for any tokens one wants to deposit. For example, if one wants to vote with
+///   tokens A and B, where token B has twice the voting power of token A, then the exchange rate of
+///   B would be 2 and the exchange rate of A would be 1.
 /// - Create a voter account.
 /// - Deposit tokens into this program, with an optional lockup period.
 /// - Vote.
@@ -56,32 +62,23 @@ declare_id!("3GepGwMp6WgPqgNa5NuSpnw3rQjYnqHCcVWhVmpGnw6s");
 /// a u64.
 #[program]
 pub mod voter_stake_registry {
-    use mplx_staking_states::state::lockup::{LockupKind, LockupPeriod};
-
     use super::*;
 
-    pub fn create_registrar(ctx: Context<CreateRegistrar>, registrar_bump: u8) -> Result<()> {
-        instructions::create_registrar(ctx, registrar_bump)
+    pub fn create_registrar(
+        ctx: Context<CreateRegistrar>,
+        registrar_bump: u8,
+        fill_authority: Pubkey,
+        distribution_authority: Pubkey,
+    ) -> Result<()> {
+        instructions::create_registrar(ctx, registrar_bump, fill_authority, distribution_authority)
     }
 
     pub fn configure_voting_mint(
         ctx: Context<ConfigureVotingMint>,
         idx: u16,
-        digit_shift: i8,
-        baseline_vote_weight_scaled_factor: u64,
-        max_extra_lockup_vote_weight_scaled_factor: u64,
-        lockup_saturation_secs: u64,
         grant_authority: Option<Pubkey>,
     ) -> Result<()> {
-        instructions::configure_voting_mint(
-            ctx,
-            idx,
-            digit_shift,
-            baseline_vote_weight_scaled_factor,
-            max_extra_lockup_vote_weight_scaled_factor,
-            lockup_saturation_secs,
-            grant_authority,
-        )
+        instructions::configure_voting_mint(ctx, idx, grant_authority)
     }
 
     pub fn create_voter(
@@ -96,10 +93,9 @@ pub mod voter_stake_registry {
         ctx: Context<CreateDepositEntry>,
         deposit_entry_index: u8,
         kind: LockupKind,
-        start_ts: Option<u64>,
         period: LockupPeriod,
     ) -> Result<()> {
-        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, start_ts, period)
+        instructions::create_deposit_entry(ctx, deposit_entry_index, kind, period)
     }
 
     pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
@@ -121,13 +117,11 @@ pub mod voter_stake_registry {
         instructions::update_voter_weight_record(ctx)
     }
 
-    pub fn unlock_tokens(ctx: Context<UnlockTokens>, deposit_entry_index: u8) -> Result<()> {
+    pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()> {
         instructions::unlock_tokens(ctx, deposit_entry_index)
     }
 
-    pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
-        ctx: Context<'key, 'accounts, 'remaining, 'info, CloseVoter<'info>>,
-    ) -> Result<()> {
+    pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
         instructions::close_voter(ctx)
     }
 
@@ -139,17 +133,121 @@ pub mod voter_stake_registry {
         instructions::log_voter_info(ctx, deposit_entry_begin, deposit_entry_count)
     }
 
-    pub fn internal_transfer_unlocked(
-        ctx: Context<InternalTransferUnlocked>,
+    pub fn stake(
+        ctx: Context<Stake>,
         source_deposit_entry_index: u8,
         target_deposit_entry_index: u8,
         amount: u64,
     ) -> Result<()> {
-        instructions::internal_transfer_unlocked(
+        instructions::stake(
             ctx,
             source_deposit_entry_index,
             target_deposit_entry_index,
             amount,
         )
+    }
+
+    pub fn extend_stake(
+        ctx: Context<Stake>,
+        source_deposit_entry_index: u8,
+        target_deposit_entry_index: u8,
+        new_lockup_period: LockupPeriod,
+        additional_amount: u64,
+    ) -> Result<()> {
+        instructions::extend_stake(
+            ctx,
+            source_deposit_entry_index,
+            target_deposit_entry_index,
+            new_lockup_period,
+            additional_amount,
+        )
+    }
+
+    pub fn claim(
+        ctx: Context<Claim>,
+        registrar_bump: u8,
+        realm_governing_mint_pubkey: Pubkey,
+        realm_pubkey: Pubkey,
+    ) -> Result<u64> {
+        instructions::claim(
+            ctx,
+            registrar_bump,
+            realm_governing_mint_pubkey,
+            realm_pubkey,
+        )
+    }
+
+    pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
+        instructions::change_delegate(ctx, deposit_entry_index)
+    }
+}
+
+#[derive(Accounts)]
+pub struct Stake<'info> {
+    pub registrar: AccountLoader<'info, Registrar>,
+
+    // checking the PDA address it just an extra precaution,
+    // the other constraints must be exhaustive
+    #[account(
+        mut,
+        seeds = [registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
+        bump = voter.load()?.voter_bump,
+        has_one = voter_authority,
+        has_one = registrar)
+    ]
+    pub voter: AccountLoader<'info, Voter>,
+    pub voter_authority: Signer<'info>,
+
+    /// CHECK: delegate might be any arbitrary address
+    pub delegate: UncheckedAccount<'info>,
+
+    /// CHECK: Mining Account that belongs to Rewards Program and some delegate
+    /// The address of the mining account on the rewards progra,
+    /// derived from PDA(["mining", delegate wallet addr, reward_pool], rewards_program)
+    #[account(mut)]
+    pub delegate_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
+    /// reward_program)
+    #[account(mut)]
+    pub reward_pool: UncheckedAccount<'info>,
+
+    /// CHECK: mining PDA will be checked in the rewards contract
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
+    #[account(mut)]
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Rewards Program account
+    #[account(executable)]
+    pub rewards_program: UncheckedAccount<'info>,
+}
+
+impl Stake<'_> {
+    pub fn verify_delegate_and_its_mining(&self, deposit_entry: &DepositEntry) -> Result<()> {
+        // check whether target delegate mining is the same as delegate mining from passed context
+        require_eq!(
+            deposit_entry.delegate,
+            *self.delegate.to_account_info().key,
+            VsrError::InvalidDelegate
+        );
+
+        let (reward_pool, _) = find_reward_pool_address(
+            &self.rewards_program.to_account_info().key(),
+            &self.registrar.to_account_info().key(),
+        );
+        let (calculated_delegate_mining, _) = find_mining_address(
+            &self.rewards_program.to_account_info().key(),
+            &self.delegate.to_account_info().key(),
+            &reward_pool,
+        );
+        require_eq!(
+            calculated_delegate_mining,
+            self.delegate_mining.to_account_info().key(),
+            VsrError::InvalidMining
+        );
+
+        Ok(())
     }
 }

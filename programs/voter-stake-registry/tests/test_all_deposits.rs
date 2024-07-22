@@ -18,7 +18,7 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
@@ -26,11 +26,21 @@ async fn test_all_deposits() -> Result<(), TransportError> {
     let voter_authority = &context.users[1].key;
     let voter_mngo = context.users[1].token_accounts[0];
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
-    let registrar = addin
-        .create_registrar(&realm, &realm_authority, payer)
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
+        .addin
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     let mngo_voting_mint = addin
         .configure_voting_mint(
@@ -39,61 +49,108 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            0.0,
-            5 * 365 * 24 * 60 * 60,
             None,
             None,
         )
         .await;
 
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
+        &voter_authority.pubkey(),
+        &rewards_pool,
+    );
+
     let voter = addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
-    for i in 0..32 {
+    addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            &voter,
+            &mngo_voting_mint,
+            0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await
+        .unwrap();
+    addin
+        .deposit(
+            &registrar,
+            &voter,
+            &mngo_voting_mint,
+            voter_authority,
+            voter_mngo,
+            0,
+            32000,
+        )
+        .await
+        .unwrap();
+
+    for i in 1..32 {
         addin
             .create_deposit_entry(
                 &registrar,
                 &voter,
-                voter_authority,
+                &voter,
                 &mngo_voting_mint,
                 i,
-                LockupKind::None,
-                None,
-                LockupPeriod::None,
+                LockupKind::Constant,
+                LockupPeriod::ThreeMonths,
             )
             .await
             .unwrap();
         addin
-            .deposit(
+            .stake(
                 &registrar,
                 &voter,
-                &mngo_voting_mint,
-                voter_authority,
-                voter_mngo,
+                voter.authority.pubkey(),
+                &context.rewards.program_id,
+                0,
                 i,
-                12000,
+                1000,
             )
-            .await
-            .unwrap();
+            .await?;
     }
 
     // advance time, to be in the middle of all deposit lockups
-    addin
-        .set_time_offset(&registrar, &realm_authority, 32 * 24 * 60 * 60)
-        .await;
-    context.solana.advance_clock_by_slots(2).await;
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 45 * 86400).await;
 
-    // the two most expensive calls which scale with number of deposts
+    // the two most expensive calls which scale with number of deposits
     // are update_voter_weight_record and withdraw - both compute the vote weight
 
     let vwr = addin
         .update_voter_weight_record(&registrar, &voter)
         .await
         .unwrap();
-    assert_eq!(vwr.voter_weight, 12000 * 32);
+    assert_eq!(vwr.voter_weight, 1000 * 32);
+
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 50 * 86400).await;
+
+    context
+        .addin
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            &voter,
+            0,
+            &rewards_pool,
+            &context.rewards.program_id,
+        )
+        .await
+        .unwrap();
+
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400).await;
 
     // make sure withdrawing works with all deposits filled
     addin

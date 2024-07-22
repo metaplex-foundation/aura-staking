@@ -1,18 +1,16 @@
-use std::cell::RefCell;
-use std::sync::Arc;
-
-use mplx_staking_states::state::LockupPeriod;
-use solana_sdk::pubkey::Pubkey;
+use crate::*;
+use anchor_lang::Key;
+use mplx_staking_states::state::Voter;
 use solana_sdk::{
     instruction::Instruction,
+    pubkey::Pubkey,
     signature::{Keypair, Signer},
 };
-
-use crate::*;
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Clone)]
 pub struct AddinCookie {
-    pub solana: Arc<solana::SolanaCookie>,
+    pub solana: Rc<solana::SolanaCookie>,
     pub program_id: Pubkey,
     pub time_offset: RefCell<i64>,
 }
@@ -21,6 +19,9 @@ pub struct RegistrarCookie {
     pub address: Pubkey,
     pub authority: Pubkey,
     pub mint: MintCookie,
+    pub registrar_bump: u8,
+    pub realm_pubkey: Pubkey,
+    pub realm_governing_token_mint_pubkey: Pubkey,
 }
 
 #[derive(Clone)]
@@ -30,18 +31,79 @@ pub struct VotingMintConfigCookie {
 
 pub struct VoterCookie {
     pub address: Pubkey,
-    pub authority: Pubkey,
+    pub authority: Keypair,
     pub voter_weight_record: Pubkey,
     pub token_owner_record: Pubkey,
 }
 
 impl AddinCookie {
+    #[allow(clippy::too_many_arguments)]
+    pub async fn change_delegate(
+        &self,
+        // accounts
+        registrar: &RegistrarCookie,
+        voter: &VoterCookie,
+        delegate_voter: &VoterCookie,
+        old_delegate_mining: &Pubkey,
+        rewards_program: &Pubkey,
+        // params
+        deposit_entry_index: u8,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data = anchor_lang::InstructionData::data(
+            &voter_stake_registry::instruction::ChangeDelegate {
+                deposit_entry_index,
+            },
+        );
+
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+            rewards_program,
+        );
+
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), &reward_pool);
+
+        let (new_delegate_mining, _) = find_deposit_mining_addr(
+            rewards_program,
+            &delegate_voter.authority.pubkey(),
+            &reward_pool,
+        );
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &voter_stake_registry::accounts::ChangeDelegate {
+                registrar: registrar.address,
+                voter: voter.address,
+                voter_authority: voter.authority.pubkey(),
+                delegate_voter: delegate_voter.address,
+                old_delegate_mining: *old_delegate_mining,
+                new_delegate_mining,
+                reward_pool,
+                deposit_mining,
+                rewards_program: *rewards_program,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[&voter.authority]))
+            .await
+    }
+
     pub async fn create_registrar(
         &self,
         realm: &GovernanceRealmCookie,
         authority: &Keypair,
         payer: &Keypair,
-    ) -> RegistrarCookie {
+        fill_authority: &Pubkey,
+        distribution_authority: &Pubkey,
+        rewards_program: &Pubkey,
+    ) -> (RegistrarCookie, Pubkey) {
         let community_token_mint = realm.community_token_mint.pubkey.unwrap();
 
         let (registrar, registrar_bump) = Pubkey::find_program_address(
@@ -54,7 +116,25 @@ impl AddinCookie {
         );
 
         let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::CreateRegistrar { registrar_bump },
+            &voter_stake_registry::instruction::CreateRegistrar {
+                registrar_bump,
+                fill_authority: *fill_authority,
+                distribution_authority: *distribution_authority,
+            },
+        );
+
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &["reward_pool".as_bytes(), &registrar.key().to_bytes()],
+            rewards_program,
+        );
+
+        let (reward_vault, _reward_vault_bump) = Pubkey::find_program_address(
+            &[
+                "vault".as_bytes(),
+                &reward_pool.key().to_bytes(),
+                &community_token_mint.to_bytes(),
+            ],
+            rewards_program,
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
@@ -67,6 +147,10 @@ impl AddinCookie {
                 payer: payer.pubkey(),
                 system_program: solana_sdk::system_program::id(),
                 rent: solana_program::sysvar::rent::id(),
+                reward_pool,
+                reward_vault,
+                token_program: spl_token::id(),
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -77,45 +161,63 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the user secret
-        let signer1 = Keypair::from_base58_string(&payer.to_base58_string());
-        let signer2 = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer1, &signer2]))
+            .process_transaction(&instructions, Some(&[payer, authority]))
             .await
             .unwrap();
 
-        RegistrarCookie {
+        let registrar_cookie = RegistrarCookie {
             address: registrar,
             authority: realm.authority,
             mint: realm.community_token_mint.clone(),
-        }
+            registrar_bump,
+            realm_pubkey: realm.realm,
+            realm_governing_token_mint_pubkey: community_token_mint,
+        };
+
+        (registrar_cookie, reward_pool)
     }
 
-    #[allow(dead_code)]
-    pub async fn internal_transfer_unlocked(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn stake(
         &self,
+        // accounts
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-        authority: &Keypair,
+        delegate: Pubkey,
+        rewards_program: &Pubkey,
+        // params
         source_deposit_entry_index: u8,
         target_deposit_entry_index: u8,
         amount: u64,
-    ) -> Result<(), BanksClientError> {
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::InternalTransferUnlocked {
-                source_deposit_entry_index,
-                target_deposit_entry_index,
-                amount,
-            },
+    ) -> std::result::Result<(), BanksClientError> {
+        let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Stake {
+            source_deposit_entry_index,
+            target_deposit_entry_index,
+            amount,
+        });
+
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+            rewards_program,
         );
 
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), &reward_pool);
+
+        let (delegate_mining, _) =
+            find_deposit_mining_addr(rewards_program, &delegate, &reward_pool);
+
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::InternalTransferUnlocked {
+            &voter_stake_registry::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
-                voter_authority: authority.pubkey(),
+                voter_authority: voter.authority.pubkey(),
+                delegate,
+                delegate_mining,
+                reward_pool,
+                deposit_mining,
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -126,14 +228,12 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[&voter.authority]))
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn configure_voting_mint(
         &self,
         registrar: &RegistrarCookie,
@@ -141,10 +241,6 @@ impl AddinCookie {
         _payer: &Keypair,
         index: u16,
         mint: &MintCookie,
-        digit_shift: i8,
-        baseline_vote_weight_scaled_factor: f64,
-        max_extra_lockup_vote_weight_scaled_factor: f64,
-        lockup_saturation_secs: u64,
         grant_authority: Option<Pubkey>,
         other_mints: Option<&[Pubkey]>,
     ) -> VotingMintConfigCookie {
@@ -153,12 +249,6 @@ impl AddinCookie {
         let data = anchor_lang::InstructionData::data(
             &voter_stake_registry::instruction::ConfigureVotingMint {
                 idx: index,
-                digit_shift,
-                baseline_vote_weight_scaled_factor: (baseline_vote_weight_scaled_factor * 1e9)
-                    as u64,
-                max_extra_lockup_vote_weight_scaled_factor:
-                    (max_extra_lockup_vote_weight_scaled_factor * 1e9) as u64,
-                lockup_saturation_secs,
                 grant_authority,
             },
         );
@@ -187,24 +277,24 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the user secret
-        //let signer1 = Keypair::from_base58_string(&payer.to_base58_string());
-        let signer2 = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer2]))
+            .process_transaction(&instructions, Some(&[authority]))
             .await
             .unwrap();
 
         VotingMintConfigCookie { mint: mint.clone() }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_voter(
         &self,
         registrar: &RegistrarCookie,
         token_owner_record: &TokenOwnerRecordCookie,
         authority: &Keypair,
         payer: &Keypair,
+        reward_pool: &Pubkey,
+        deposit_mining: &Pubkey,
+        rewards_program: &Pubkey,
     ) -> VoterCookie {
         let (voter, voter_bump) = Pubkey::find_program_address(
             &[
@@ -239,6 +329,9 @@ impl AddinCookie {
                 system_program: solana_sdk::system_program::id(),
                 rent: solana_program::sysvar::rent::id(),
                 instructions: solana_program::sysvar::instructions::id(),
+                reward_pool: *reward_pool,
+                deposit_mining: *deposit_mining,
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -249,41 +342,38 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer1 = Keypair::from_base58_string(&payer.to_base58_string());
-        let signer2 = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer1, &signer2]))
+            .process_transaction(&instructions, Some(&[&payer, &authority]))
             .await
             .unwrap();
 
+        let authority = Keypair::from_bytes(&authority.to_bytes()).unwrap();
+
         VoterCookie {
             address: voter,
-            authority: authority.pubkey(),
+            authority,
             voter_weight_record,
             token_owner_record: token_owner_record.address,
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_deposit_entry(
         &self,
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-        voter_authority: &Keypair,
+        delegate_voter: &VoterCookie,
         voting_mint: &VotingMintConfigCookie,
         deposit_entry_index: u8,
-        lockup_kind: mplx_staking_states::state::LockupKind,
-        start_ts: Option<u64>,
+        lockup_kind: LockupKind,
         period: LockupPeriod,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(&voting_mint);
+        let vault = voter.vault_address(voting_mint);
 
         let data = anchor_lang::InstructionData::data(
             &voter_stake_registry::instruction::CreateDepositEntry {
                 deposit_entry_index,
                 kind: lockup_kind,
-                start_ts,
                 period,
             },
         );
@@ -293,13 +383,13 @@ impl AddinCookie {
                 vault,
                 registrar: registrar.address,
                 voter: voter.address,
-                voter_authority: voter_authority.pubkey(),
-                payer: voter_authority.pubkey(),
+                voter_authority: voter.authority.pubkey(),
+                payer: voter.authority.pubkey(),
                 deposit_mint: voting_mint.mint.pubkey.unwrap(),
                 system_program: solana_sdk::system_program::id(),
                 token_program: spl_token::id(),
                 associated_token_program: spl_associated_token_account::id(),
-                rent: solana_program::sysvar::rent::id(),
+                delegate_voter: delegate_voter.address,
             },
             None,
         );
@@ -310,26 +400,23 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer1 = Keypair::from_base58_string(&voter_authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer1]))
+            .process_transaction(&instructions, Some(&[&voter.authority]))
             .await
     }
 
-    #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
     pub async fn deposit(
         &self,
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
         voting_mint: &VotingMintConfigCookie,
-        authority: &Keypair,
+        deposit_authority: &Keypair,
         token_address: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(&voting_mint);
+        let vault = voter.vault_address(voting_mint);
 
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Deposit {
@@ -343,7 +430,7 @@ impl AddinCookie {
                 voter: voter.address,
                 vault,
                 deposit_token: token_address,
-                deposit_authority: authority.pubkey(),
+                deposit_authority: deposit_authority.pubkey(),
                 token_program: spl_token::id(),
             },
             None,
@@ -355,32 +442,55 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[deposit_authority]))
             .await
     }
 
-    #[allow(dead_code)]
-    pub async fn unlock_tokens(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn extend_stake(
         &self,
+        // accounts
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-        authority: &Keypair,
-        deposit_entry_index: u8,
+        voter_authority: &Keypair,
+        delegate: &Pubkey,
+        rewards_program: &Pubkey,
+        // params
+        source_deposit_entry_index: u8,
+        target_deposit_entry_index: u8,
+        new_lockup_period: LockupPeriod,
+        additional_amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
         let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::UnlockTokens {
-                deposit_entry_index,
+            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::ExtendStake {
+                source_deposit_entry_index,
+                target_deposit_entry_index,
+                new_lockup_period,
+                additional_amount,
             });
 
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+            rewards_program,
+        );
+
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter_authority.pubkey(), &reward_pool);
+
+        let (delegate_mining, _) =
+            find_deposit_mining_addr(rewards_program, delegate, &reward_pool);
+
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::UnlockTokens {
+            &voter_stake_registry::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
-                voter_authority: authority.pubkey(),
+                voter_authority: voter_authority.pubkey(),
+                delegate: *delegate,
+                delegate_mining,
+                reward_pool,
+                deposit_mining,
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -391,15 +501,61 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[voter_authority]))
             .await
     }
 
-    #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
+    pub async fn unlock_tokens(
+        &self,
+        registrar: &RegistrarCookie,
+        voter: &VoterCookie,
+        delegate_voter: &VoterCookie,
+        deposit_entry_index: u8,
+        reward_pool: &Pubkey,
+        rewards_program: &Pubkey,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data =
+            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::UnlockTokens {
+                deposit_entry_index,
+            });
+
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), &reward_pool);
+
+        let (delegate_mining, _) = find_deposit_mining_addr(
+            rewards_program,
+            &delegate_voter.authority.pubkey(),
+            &reward_pool,
+        );
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &voter_stake_registry::accounts::Stake {
+                registrar: registrar.address,
+                voter: voter.address,
+                voter_authority: voter.authority.pubkey(),
+                delegate: delegate_voter.authority.pubkey(),
+                reward_pool: *reward_pool,
+                deposit_mining,
+                delegate_mining,
+                rewards_program: *rewards_program,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[&voter.authority]))
+            .await
+    }
+
+    #[allow(clippy::too_many_arguments)]
     pub async fn withdraw(
         &self,
         registrar: &RegistrarCookie,
@@ -410,7 +566,7 @@ impl AddinCookie {
         deposit_entry_index: u8,
         amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(&voting_mint);
+        let vault = voter.vault_address(voting_mint);
 
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Withdraw {
@@ -438,23 +594,28 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[authority]))
             .await
     }
 
-    #[allow(dead_code)]
     pub async fn close_voter(
         &self,
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
         voting_mint: &VotingMintConfigCookie,
         voter_authority: &Keypair,
+        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(&voting_mint);
+        let vault = voter.vault_address(voting_mint);
+
+        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
+            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+            rewards_program,
+        );
+
+        let (deposit_mining, _) =
+            find_deposit_mining_addr(rewards_program, &voter_authority.pubkey(), &reward_pool);
 
         let data =
             anchor_lang::InstructionData::data(&voter_stake_registry::instruction::CloseVoter {});
@@ -464,8 +625,11 @@ impl AddinCookie {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter_authority.pubkey(),
+                deposit_mining,
+                reward_pool,
                 sol_destination: voter_authority.pubkey(),
                 token_program: spl_token::id(),
+                rewards_program: *rewards_program,
             },
             None,
         );
@@ -477,11 +641,8 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&voter_authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[voter_authority]))
             .await
     }
 
@@ -511,7 +672,6 @@ impl AddinCookie {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn update_voter_weight_record(
         &self,
         registrar: &RegistrarCookie,
@@ -529,13 +689,12 @@ impl AddinCookie {
             .await)
     }
 
-    #[allow(dead_code)]
     pub async fn close_deposit_entry(
         &self,
         voter: &VoterCookie,
         authority: &Keypair,
         deposit_entry_index: u8,
-    ) -> Result<(), BanksClientError> {
+    ) -> std::result::Result<(), BanksClientError> {
         let data = anchor_lang::InstructionData::data(
             &voter_stake_registry::instruction::CloseDepositEntry {
                 deposit_entry_index,
@@ -556,15 +715,11 @@ impl AddinCookie {
             data,
         }];
 
-        // clone the secrets
-        let signer = Keypair::from_base58_string(&authority.to_base58_string());
-
         self.solana
-            .process_transaction(&instructions, Some(&[&signer]))
+            .process_transaction(&instructions, Some(&[authority]))
             .await
     }
 
-    #[allow(dead_code)]
     pub async fn log_voter_info(
         &self,
         registrar: &RegistrarCookie,
@@ -597,7 +752,6 @@ impl AddinCookie {
             .unwrap();
     }
 
-    #[allow(dead_code)]
     pub async fn set_time_offset(
         &self,
         _registrar: &RegistrarCookie,
@@ -620,23 +774,70 @@ impl AddinCookie {
         new_clock.unix_timestamp += time_offset - old_offset;
         self.solana.context.borrow_mut().set_sysvar(&new_clock);
     }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn claim(
+        &self,
+        reward_pool: &Pubkey,
+        reward_mint: &Pubkey,
+        reward_mining: &Pubkey,
+        mining_owner: &Keypair,
+        owner_reward_ata: &Pubkey,
+        rewards_program: &Pubkey,
+        registrar: &RegistrarCookie,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Claim {
+            realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
+            registrar_bump: registrar.registrar_bump,
+            realm_pubkey: registrar.realm_pubkey,
+        });
+
+        let (vault_pubkey, _) = Pubkey::find_program_address(
+            &[
+                b"vault".as_ref(),
+                reward_pool.as_ref(),
+                reward_mint.as_ref(),
+            ],
+            rewards_program,
+        );
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &voter_stake_registry::accounts::Claim {
+                reward_pool: *reward_pool,
+                reward_mint: *reward_mint,
+                vault: vault_pubkey,
+                deposit_mining: *reward_mining,
+                mining_owner: mining_owner.pubkey(),
+                registrar: registrar.address,
+                user_reward_token_account: *owner_reward_ata,
+                token_program: spl_token::id(),
+                rewards_program: *rewards_program,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[mining_owner]))
+            .await
+    }
 }
 
 impl VotingMintConfigCookie {
-    #[allow(dead_code)]
     pub async fn vault_balance(&self, solana: &SolanaCookie, voter: &VoterCookie) -> u64 {
-        let vault = voter.vault_address(&self);
+        let vault = voter.vault_address(self);
         solana.get_account::<TokenAccount>(vault).await.amount
     }
 }
 
 impl VoterCookie {
-    #[allow(dead_code)]
     pub async fn deposit_amount(&self, solana: &SolanaCookie, deposit_id: u8) -> u64 {
-        solana
-            .get_account::<mplx_staking_states::state::Voter>(self.address)
-            .await
-            .deposits[deposit_id as usize]
+        solana.get_account::<Voter>(self.address).await.deposits[deposit_id as usize]
             .amount_deposited_native
     }
 

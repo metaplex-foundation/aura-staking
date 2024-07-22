@@ -1,5 +1,6 @@
 use crate::error::*;
 use anchor_lang::prelude::*;
+use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Seconds in one day.
 pub const SECS_PER_DAY: u64 = 86_400;
@@ -11,11 +12,8 @@ pub const SECS_PER_MONTH: u64 = 365 * SECS_PER_DAY / 12;
 pub const COOLDOWN_SECS: u64 = 86_400 * 5;
 
 #[zero_copy]
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Lockup {
-    /// Note, that if start_ts is in the future, the funds are nevertheless
-    /// locked up!
-
     /// Start of the lockup.
     pub start_ts: u64,
 
@@ -164,14 +162,13 @@ impl Lockup {
     }
 }
 
-#[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
+#[derive(BorshDeserialize, BorshSerialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LockupPeriod {
     None,
+    Flex,
     ThreeMonths,
     SixMonths,
     OneYear,
-    Flex,
 }
 
 impl Default for LockupPeriod {
@@ -202,8 +199,7 @@ impl LockupPeriod {
     }
 }
 
-#[repr(u8)]
-#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, Copy, PartialEq)]
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone, Copy, PartialEq)]
 pub enum LockupKind {
     /// No lockup, tokens can be withdrawn as long as not engaged in a proposal.
     None,

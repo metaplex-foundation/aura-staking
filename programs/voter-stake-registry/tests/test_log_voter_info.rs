@@ -39,19 +39,29 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
 
-    let voter_authority = &context.users[1].key;
+    let deposit_authority = &context.users[1].key;
     let voter_mngo = context.users[1].token_accounts[0];
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(deposit_authority.pubkey(), payer)
         .await;
 
-    let registrar = addin
-        .create_registrar(&realm, &realm_authority, payer)
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
+        .addin
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     let mngo_voting_mint = addin
         .configure_voting_mint(
@@ -60,28 +70,51 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            1.0,
-            365 * 24 * 60 * 60,
             None,
             None,
         )
         .await;
 
+    // TODO: ??? voter_authority == deposit_authority ???
+    let voter_authority = deposit_authority;
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
+        &voter_authority.pubkey(),
+        &rewards_pool,
+    );
+
     let voter = addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     addin
         .create_deposit_entry(
             &registrar,
             &voter,
-            voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await
+        .unwrap();
+    addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            &voter,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
             LockupPeriod::OneYear,
         )
         .await
@@ -98,6 +131,17 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
         )
         .await
         .unwrap();
+    addin
+        .stake(
+            &registrar,
+            &voter,
+            voter.authority.pubkey(),
+            &context.rewards.program_id,
+            0,
+            1,
+            12000,
+        )
+        .await?;
 
     // advance time to one month ahead
     addin
@@ -107,7 +151,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
 
     addin.log_voter_info(&registrar, &voter, 0).await;
     let data_log = context.solana.program_output().data;
-    assert_eq!(data_log.len(), 2);
+    assert_eq!(data_log.len(), 3);
 
     let voter_event =
         deserialize_event::<voter_stake_registry::events::VoterInfo>(&data_log[0]).unwrap();
@@ -119,6 +163,9 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
     assert_eq!(deposit_event.deposit_entry_index, 0);
     assert_eq!(deposit_event.voting_mint_config_index, 0);
     assert_eq!(deposit_event.unlocked, 0);
+
+    let deposit_event =
+        deserialize_event::<voter_stake_registry::events::DepositEntryInfo>(&data_log[2]).unwrap();
     assert_eq!(deposit_event.voting_power, voter_event.voting_power);
     assert_eq!(
         deposit_event.voting_power_baseline,

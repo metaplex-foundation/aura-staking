@@ -7,7 +7,7 @@ use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 mod program_test;
 
 #[tokio::test]
-async fn test_basic() -> Result<(), TransportError> {
+async fn successeful_claim() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -73,7 +73,15 @@ async fn test_basic() -> Result<(), TransportError> {
         &voter_authority.pubkey(),
         &rewards_pool,
     );
-
+    let voter_authority_ata = context
+        .rewards
+        .solana
+        .create_spl_ata(
+            &voter_authority.pubkey(),
+            &mngo_voting_mint.mint.pubkey.unwrap(),
+            payer,
+        )
+        .await;
     let voter = context
         .addin
         .create_voter(
@@ -87,14 +95,7 @@ async fn test_basic() -> Result<(), TransportError> {
         )
         .await;
 
-    // test deposit and withdraw
-    let reference_account = context.users[1].token_accounts[0];
-    let reference_initial = context
-        .solana
-        .token_account_balance(reference_account)
-        .await;
-    let balance_initial = voter.deposit_amount(&context.solana, 0).await;
-    assert_eq!(balance_initial, 0);
+    let depositer_token_account = context.users[1].token_accounts[0];
 
     context
         .addin
@@ -108,7 +109,6 @@ async fn test_basic() -> Result<(), TransportError> {
             LockupPeriod::None,
         )
         .await?;
-
     context
         .addin
         .create_deposit_entry(
@@ -129,7 +129,7 @@ async fn test_basic() -> Result<(), TransportError> {
             &voter,
             &mngo_voting_mint,
             deposit_authority,
-            reference_account,
+            depositer_token_account,
             0,
             10000,
         )
@@ -148,91 +148,56 @@ async fn test_basic() -> Result<(), TransportError> {
         )
         .await?;
 
-    let reference_after_deposit = context
+    let rewards_source_ata = context.users[3].token_accounts[0];
+    let amount = 100;
+    let distribution_ends_at = context
         .solana
-        .token_account_balance(reference_account)
-        .await;
-    assert_eq!(reference_initial, reference_after_deposit + 10000);
-    let vault_after_deposit = mngo_voting_mint
-        .vault_balance(&context.solana, &voter)
-        .await;
-    assert_eq!(vault_after_deposit, 10000);
-    let balance_after_deposit = voter.deposit_amount(&context.solana, 1).await;
-    assert_eq!(balance_after_deposit, 10000);
+        .context
+        .borrow_mut()
+        .banks_client
+        .get_sysvar::<solana_program::clock::Clock>()
+        .await
+        .unwrap()
+        .unix_timestamp as u64
+        + 86400;
 
+    let reward_mint = &realm.community_token_mint.pubkey.unwrap();
     context
-        .addin
-        .set_time_offset(&registrar, &realm_authority, 100 * 86400)
-        .await;
-
-    context
-        .addin
-        .unlock_tokens(
-            &registrar,
-            &voter,
-            &voter,
-            1,
+        .rewards
+        .fill_vault(
             &rewards_pool,
-            &context.rewards.program_id,
+            reward_mint,
+            &fill_authority,
+            &rewards_source_ata,
+            amount,
+            distribution_ends_at,
         )
         .await
         .unwrap();
 
     context
-        .addin
-        .set_time_offset(&registrar, &realm_authority, 106 * 86400)
-        .await;
+        .rewards
+        .distribute_rewards(&rewards_pool, &distribution_authority)
+        .await?;
 
     context
         .addin
-        .withdraw(
-            &registrar,
-            &voter,
-            &mngo_voting_mint,
-            deposit_authority,
-            reference_account,
-            1,
-            10000,
-        )
-        .await?;
-
-    let reference_after_withdraw = context
-        .solana
-        .token_account_balance(reference_account)
-        .await;
-    assert_eq!(reference_initial, reference_after_withdraw);
-    let vault_after_withdraw = mngo_voting_mint
-        .vault_balance(&context.solana, &voter)
-        .await;
-    assert_eq!(vault_after_withdraw, 0);
-    let balance_after_withdraw = voter.deposit_amount(&context.solana, 0).await;
-    assert_eq!(balance_after_withdraw, 0);
-
-    let lamports_before = context
-        .solana
-        .context
-        .borrow_mut()
-        .banks_client
-        .get_balance(voter_authority.pubkey())
-        .await?;
-    context
-        .addin
-        .close_voter(
-            &registrar,
-            &voter,
-            &mngo_voting_mint,
+        .claim(
+            &rewards_pool,
+            reward_mint,
+            &deposit_mining,
             voter_authority,
+            &voter_authority_ata,
             &context.rewards.program_id,
+            &registrar,
         )
         .await?;
-    let lamports_after = context
+
+    let claimed_amount = context
         .solana
-        .context
-        .borrow_mut()
-        .banks_client
-        .get_balance(voter_authority.pubkey())
-        .await?;
-    assert!(lamports_after > lamports_before);
+        .token_account_balance(voter_authority_ata)
+        .await;
+    assert_eq!(100, claimed_amount);
 
     Ok(())
 }

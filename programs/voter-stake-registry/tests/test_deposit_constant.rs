@@ -1,5 +1,8 @@
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod},
+};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transport::TransportError};
@@ -26,11 +29,11 @@ async fn balances(
     context.solana.advance_clock_by_slots(2).await;
 
     let token = context.solana.token_account_balance(address).await;
-    let vault = voting_mint.vault_balance(&context.solana, &voter).await;
+    let vault = voting_mint.vault_balance(&context.solana, voter).await;
     let deposit = voter.deposit_amount(&context.solana, deposit_id).await;
     let vwr = context
         .addin
-        .update_voter_weight_record(&registrar, &voter)
+        .update_voter_weight_record(registrar, voter)
         .await
         .unwrap();
     Balances {
@@ -54,18 +57,28 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
 
-    let voter_authority = &context.users[1].key;
+    let deposit_authority = &context.users[1].key;
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(deposit_authority.pubkey(), payer)
         .await;
 
-    let registrar = addin
-        .create_registrar(&realm, &realm_authority, payer)
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
+        .addin
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     let mngo_voting_mint = addin
         .configure_voting_mint(
@@ -74,17 +87,29 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            1.0,
-            2 * 24 * 60 * 60,
             None,
             None,
         )
         .await;
 
+    // TODO: ??? voter_authority == deposit_authority ???
+    let voter_authority = deposit_authority;
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
+        &voter_authority.pubkey(),
+        &rewards_pool,
+    );
+
     let voter = addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     let reference_account = context.users[1].token_accounts[0];
@@ -98,25 +123,25 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             depot_id,
         )
     };
-    let withdraw = |amount: u64| {
+    let withdraw = |amount: u64, d_entry_index: u8| {
         addin.withdraw(
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
-            0,
+            d_entry_index,
             amount,
         )
     };
-    let deposit = |amount: u64| {
+    let deposit = |amount: u64, d_entry_index: u8| {
         addin.deposit(
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
-            0,
+            d_entry_index,
             amount,
         )
     };
@@ -131,23 +156,47 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            &voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await
+        .unwrap();
+    addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            &voter,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
             LockupPeriod::ThreeMonths,
         )
         .await
         .unwrap();
-    deposit(10_000).await.unwrap();
+    deposit(10_000, 0).await.unwrap();
+    addin
+        .stake(
+            &registrar,
+            &voter,
+            voter.authority.pubkey(),
+            &context.rewards.program_id,
+            0,
+            1,
+            10000,
+        )
+        .await?;
 
-    let after_deposit = get_balances(0).await;
+    let after_deposit = get_balances(1).await;
     assert_eq!(token, after_deposit.token + after_deposit.vault);
     assert_eq!(after_deposit.voter_weight, after_deposit.vault); // unchanged
     assert_eq!(after_deposit.vault, 10_000);
     assert_eq!(after_deposit.deposit, 10_000);
-    withdraw(1).await.expect_err("all locked up");
+    withdraw(1, 1)
+        .await
+        .assert_on_chain_err(VsrError::UnlockMustBeCalledFirst);
 
     // advance to day 95. Just to be sure withdraw isn't possible without unlocking first
     // even at lockup period + cooldown period (90 + 5 respectively in that case)
@@ -158,12 +207,19 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
 
     // request unlock
     addin
-        .unlock_tokens(&registrar, &voter, &voter_authority, 0)
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            &voter,
+            1,
+            &rewards_pool,
+            &context.rewards.program_id,
+        )
         .await
         .unwrap();
-    withdraw(10_000)
+    withdraw(10_000, 1)
         .await
-        .expect_err("Cooldown still not passed");
+        .assert_on_chain_err(VsrError::InvalidTimestampArguments);
 
     context.solana.advance_clock_by_slots(2).await; // avoid caching of transactions
                                                     // warp to day 100. (90 days of lockup + fake cooldown (5 days)) + 5 days of true cooldown
@@ -172,7 +228,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
         .await;
 
     // request claim && withdraw
-    withdraw(10_000).await.unwrap();
+    withdraw(10_000, 1).await.unwrap();
 
     Ok(())
 }
@@ -190,18 +246,28 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             "testrealm",
             realm_authority.pubkey(),
             &context.mints[0],
-            &payer,
+            payer,
             &context.addin.program_id,
         )
         .await;
 
     let voter_authority = &context.users[1].key;
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), &payer)
+        .create_token_owner_record(voter_authority.pubkey(), payer)
         .await;
 
-    let registrar = addin
-        .create_registrar(&realm, &realm_authority, payer)
+    let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
+    let distribution_authority = Keypair::new();
+    let (registrar, rewards_pool) = context
+        .addin
+        .create_registrar(
+            &realm,
+            &realm_authority,
+            payer,
+            &fill_authority.pubkey(),
+            &distribution_authority.pubkey(),
+            &context.rewards.program_id,
+        )
         .await;
     let mngo_voting_mint = addin
         .configure_voting_mint(
@@ -210,17 +276,27 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             payer,
             0,
             &context.mints[0],
-            0,
-            1.0,
-            1.0,
-            2 * 24 * 60 * 60,
             None,
             None,
         )
         .await;
 
+    let (deposit_mining, _) = find_deposit_mining_addr(
+        &context.rewards.program_id,
+        &voter_authority.pubkey(),
+        &rewards_pool,
+    );
+
     let voter = addin
-        .create_voter(&registrar, &token_owner_record, &voter_authority, &payer)
+        .create_voter(
+            &registrar,
+            &token_owner_record,
+            voter_authority,
+            payer,
+            &rewards_pool,
+            &deposit_mining,
+            &context.rewards.program_id,
+        )
         .await;
 
     let reference_account = context.users[1].token_accounts[0];
@@ -229,20 +305,20 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
             0,
             amount,
         )
     };
-    let deposit = |amount: u64| {
+    let deposit = |amount: u64, d_entry_index: u8| {
         addin.deposit(
             &registrar,
             &voter,
             &mngo_voting_mint,
-            &voter_authority,
+            voter_authority,
             reference_account,
-            0,
+            d_entry_index,
             amount,
         )
     };
@@ -251,16 +327,38 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
         .create_deposit_entry(
             &registrar,
             &voter,
-            &voter_authority,
+            &voter,
             &mngo_voting_mint,
             0,
+            LockupKind::None,
+            LockupPeriod::None,
+        )
+        .await
+        .unwrap();
+    addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            &voter,
+            &mngo_voting_mint,
+            1,
             LockupKind::Constant,
-            None,
             LockupPeriod::ThreeMonths,
         )
         .await
         .unwrap();
-    deposit(10000).await.unwrap();
+    deposit(10000, 0).await.unwrap();
+    addin
+        .stake(
+            &registrar,
+            &voter,
+            voter.authority.pubkey(),
+            &context.rewards.program_id,
+            0,
+            1,
+            10000,
+        )
+        .await?;
 
     // advance to 100 days
     addin
@@ -270,7 +368,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
     // withdraw
     withdraw(10_000)
         .await
-        .expect_err("impossible to withdraw without unlocking");
+        .assert_on_chain_err(VsrError::InsufficientUnlockedTokens);
 
     Ok(())
 }

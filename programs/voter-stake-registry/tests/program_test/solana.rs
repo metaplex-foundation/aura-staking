@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-use std::sync::{Arc, RwLock};
-
 use anchor_lang::AccountDeserialize;
 use anchor_spl::token::TokenAccount;
 use solana_program::{program_pack::Pack, rent::*, system_instruction};
@@ -13,6 +10,10 @@ use solana_sdk::{
     transaction::Transaction,
 };
 use spl_token::*;
+use std::{
+    cell::RefCell,
+    sync::{Arc, RwLock},
+};
 
 pub struct SolanaCookie {
     pub context: RefCell<ProgramTestContext>,
@@ -32,7 +33,7 @@ impl SolanaCookie {
         let mut context = self.context.borrow_mut();
 
         let mut transaction =
-            Transaction::new_with_payer(&instructions, Some(&context.payer.pubkey()));
+            Transaction::new_with_payer(instructions, Some(&context.payer.pubkey()));
 
         let mut all_signers = vec![&context.payer];
 
@@ -97,7 +98,7 @@ impl SolanaCookie {
         self.process_transaction(&instructions, Some(&[&keypair]))
             .await
             .unwrap();
-        return keypair.pubkey();
+        keypair.pubkey()
     }
 
     #[allow(dead_code)]
@@ -113,7 +114,6 @@ impl SolanaCookie {
             .to_vec()
     }
 
-    #[allow(dead_code)]
     pub async fn get_account<T: AccountDeserialize>(&self, address: Pubkey) -> T {
         let data = self.get_account_data(address).await;
         let mut data_slice: &[u8] = &data;
@@ -128,5 +128,35 @@ impl SolanaCookie {
     #[allow(dead_code)]
     pub fn program_output(&self) -> super::ProgramOutput {
         self.program_output.read().unwrap().clone()
+    }
+
+    #[allow(dead_code)]
+    pub async fn create_spl_ata(&self, owner: &Pubkey, mint: &Pubkey, payer: &Keypair) -> Pubkey {
+        // let rent = self.rent.minimum_balance(spl_token::state::Account::LEN);
+
+        let (ata_addr, _ata_bump) = Pubkey::find_program_address(
+            &[
+                &owner.to_bytes(),
+                &spl_token::ID.to_bytes(),
+                &mint.to_bytes(),
+            ],
+            &spl_associated_token_account::ID,
+        );
+
+        let create_ata_ix =
+            spl_associated_token_account::instruction::create_associated_token_account(
+                &payer.pubkey(),
+                owner,
+                mint,
+                &spl_token::ID,
+            );
+
+        let instructions = &[create_ata_ix];
+
+        self.process_transaction(instructions, Some(&[payer]))
+            .await
+            .unwrap();
+
+        ata_addr
     }
 }

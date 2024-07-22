@@ -1,7 +1,9 @@
+use self::rewards::RewardsCookie;
+pub use addin::*;
+pub use cookies::*;
+pub use governance::*;
 use log::*;
-use std::cell::RefCell;
-use std::{str::FromStr, sync::Arc, sync::RwLock};
-
+pub use solana::*;
 use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
 use solana_sdk::{
@@ -9,16 +11,18 @@ use solana_sdk::{
     signature::{Keypair, Signer},
 };
 use spl_token::{state::*, *};
-
-pub use addin::*;
-pub use cookies::*;
-pub use governance::*;
-pub use solana::*;
-pub use utils::*;
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    str::FromStr,
+    sync::{Arc, RwLock},
+};
+pub use utils::{assert_custom_on_chain_error::AssertCustomOnChainErr, *};
 
 pub mod addin;
 pub mod cookies;
 pub mod governance;
+pub mod rewards;
 pub mod solana;
 pub mod utils;
 
@@ -80,8 +84,9 @@ impl Log for LoggerWrapper {
 }
 
 pub struct TestContext {
-    pub solana: Arc<SolanaCookie>,
+    pub solana: Rc<SolanaCookie>,
     pub governance: GovernanceCookie,
+    pub rewards: RewardsCookie,
     pub addin: AddinCookie,
     pub mints: Vec<MintCookie>,
     pub users: Vec<UserCookie>,
@@ -105,23 +110,24 @@ impl TestContext {
             output: program_output.clone(),
         }));
 
-        let addin_program_id = voter_stake_registry::id();
-
         let mut test = ProgramTest::new(
             "voter_stake_registry",
-            addin_program_id,
+            voter_stake_registry::id(),
             processor!(voter_stake_registry::entry),
         );
         // intentionally set to half the limit, to catch potential problems early
         test.set_compute_max_units(120000);
 
         let governance_program_id =
-            Pubkey::from_str(&"GovernanceProgramTest1111111111111111111111").unwrap();
+            Pubkey::from_str("GovernanceProgramTest1111111111111111111111").unwrap();
         test.add_program(
-            "spl_governance",
+            "spl_governance_3_1_1",
             governance_program_id,
             processor!(spl_governance::processor::process_instruction),
         );
+        let rewards_program_id =
+            Pubkey::from_str("J8oa8UUJBydrTKtCdkvwmQQ27ZFDq54zAxWJY5Ey72Ji").unwrap();
+        test.add_program("mplx_rewards", rewards_program_id, None);
 
         // Setup the environment
 
@@ -131,8 +137,8 @@ impl TestContext {
                 index: 0,
                 decimals: 6,
                 unit: 10u64.pow(6) as f64,
-                base_lot: 100 as f64,
-                quote_lot: 10 as f64,
+                base_lot: 100_f64,
+                quote_lot: 10_f64,
                 pubkey: None, //Some(mngo_token::ID),
                 authority: Keypair::new(),
             }, // symbol: "MNGO".to_string()
@@ -147,26 +153,25 @@ impl TestContext {
             }, // symbol: "USDC".to_string()
         ];
         // Add mints in loop
-        for mint_index in 0..mints.len() {
-            let mint_pk: Pubkey;
-            if mints[mint_index].pubkey.is_none() {
-                mint_pk = Pubkey::new_unique();
+        for mint in mints.iter_mut() {
+            let mint_pk = if mint.pubkey.is_none() {
+                Pubkey::new_unique()
             } else {
-                mint_pk = mints[mint_index].pubkey.unwrap();
-            }
+                mint.pubkey.unwrap()
+            };
 
             test.add_packable_account(
                 mint_pk,
                 u32::MAX as u64,
                 &Mint {
                     is_initialized: true,
-                    mint_authority: COption::Some(mints[mint_index].authority.pubkey()),
-                    decimals: mints[mint_index].decimals,
+                    mint_authority: COption::Some(mint.authority.pubkey()),
+                    decimals: mint.decimals,
                     ..Mint::default()
                 },
                 &spl_token::id(),
             );
-            mints[mint_index].pubkey = Some(mint_pk);
+            mint.pubkey = Some(mint_pk);
         }
         let quote_index = mints.len() - 1;
 
@@ -187,13 +192,14 @@ impl TestContext {
             // give every user 10^18 (< 2^60) of every token
             // ~~ 1 trillion in case of 6 decimals
             let mut token_accounts = Vec::new();
-            for mint_index in 0..mints.len() {
+            for mint in mints.iter() {
+                // for mint_index in 0..mints.len() {
                 let token_key = Pubkey::new_unique();
                 test.add_packable_account(
                     token_key,
                     u32::MAX as u64,
                     &spl_token::state::Account {
-                        mint: mints[mint_index].pubkey.unwrap(),
+                        mint: mint.pubkey.unwrap(),
                         owner: user_key.pubkey(),
                         amount: 1_000_000_000_000_000_000,
                         state: spl_token::state::AccountState::Initialized,
@@ -213,7 +219,7 @@ impl TestContext {
         let mut context = test.start_with_context().await;
         let rent = context.banks_client.get_rent().await.unwrap();
 
-        let solana = Arc::new(SolanaCookie {
+        let solana = Rc::new(SolanaCookie {
             context: RefCell::new(context),
             rent,
             program_output: program_output.clone(),
@@ -227,8 +233,12 @@ impl TestContext {
             },
             addin: AddinCookie {
                 solana: solana.clone(),
-                program_id: addin_program_id,
+                program_id: voter_stake_registry::id(),
                 time_offset: RefCell::new(0),
+            },
+            rewards: RewardsCookie {
+                solana,
+                program_id: rewards_program_id,
             },
             mints,
             users,

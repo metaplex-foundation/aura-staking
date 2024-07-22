@@ -1,6 +1,6 @@
-use crate::events::*;
+use crate::{clock_unix_timestamp, events::*};
 use anchor_lang::prelude::*;
-use mplx_staking_states::state::*;
+use mplx_staking_states::state::{LockupKind, Registrar, Voter};
 
 #[derive(Accounts)]
 pub struct LogVoterInfo<'info> {
@@ -22,16 +22,15 @@ pub fn log_voter_info(
     deposit_entry_begin: u8,
     deposit_entry_count: u8,
 ) -> Result<()> {
-    let registrar = &ctx.accounts.registrar.load()?;
     let voter = ctx.accounts.voter.load()?;
-    let curr_ts = registrar.clock_unix_timestamp();
+    let curr_ts = clock_unix_timestamp();
     let deposit_entry_begin = deposit_entry_begin as usize;
     let deposit_entry_count = deposit_entry_count as usize;
 
     msg!("voter");
     emit!(VoterInfo {
         voting_power: voter.weight()?,
-        voting_power_baseline: voter.weight_baseline(registrar)?,
+        voting_power_baseline: voter.weight_baseline(),
     });
 
     msg!("deposit_entries");
@@ -44,11 +43,10 @@ pub fn log_voter_info(
         }
         let lockup = &deposit.lockup;
         let seconds_left = lockup.seconds_left(curr_ts);
-        let end_ts = curr_ts as u64 + seconds_left;
-        let voting_mint_config = &registrar.voting_mints[deposit.voting_mint_config_idx as usize];
+        let end_ts = curr_ts + seconds_left;
         let locking_info = (seconds_left > 0).then(|| LockingInfo {
             amount: deposit.amount_locked(curr_ts),
-            end_timestamp: (lockup.kind != LockupKind::Constant).then(|| end_ts),
+            end_timestamp: (lockup.kind != LockupKind::Constant).then_some(end_ts),
             vesting: None,
         });
 
@@ -57,8 +55,7 @@ pub fn log_voter_info(
             voting_mint_config_index: deposit.voting_mint_config_idx,
             unlocked: deposit.amount_unlocked(curr_ts),
             voting_power: deposit.voting_power()?,
-            voting_power_baseline: voting_mint_config
-                .baseline_vote_weight(deposit.amount_deposited_native)?,
+            voting_power_baseline: deposit.amount_deposited_native,
             locking: locking_info,
         });
     }

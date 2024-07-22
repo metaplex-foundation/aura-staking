@@ -1,13 +1,15 @@
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as tx_instructions;
-use mplx_staking_states::error::*;
-use mplx_staking_states::state::*;
+use crate::{cpi_instructions, voter::VoterWeightRecord};
+use anchor_lang::{prelude::*, solana_program::sysvar::instructions as tx_instructions};
+use mplx_staking_states::{
+    error::VsrError,
+    state::{Registrar, Voter},
+};
 use std::mem::size_of;
-
-use crate::voter::VoterWeightRecord;
 
 #[derive(Accounts)]
 pub struct CreateVoter<'info> {
+    /// Also, Registrar plays the role of deposit_authority on the Rewards Contract,
+    /// therefore their PDA that should sign the CPI call
     pub registrar: AccountLoader<'info, Registrar>,
 
     #[account(
@@ -45,6 +47,22 @@ pub struct CreateVoter<'info> {
     /// CHECK: Address constraint is set
     #[account(address = tx_instructions::ID)]
     pub instructions: UncheckedAccount<'info>,
+
+    /// CHECK: Reward Pool PDA will be checked in the rewards contract
+    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
+    /// reward_program)
+    #[account(mut)]
+    pub reward_pool: UncheckedAccount<'info>,
+
+    /// CHECK: mining PDA will be checked in the rewards contract
+    /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
+    /// reward_program)
+    #[account(mut)]
+    pub deposit_mining: UncheckedAccount<'info>,
+
+    /// CHECK: Rewards program ID
+    #[account(executable)]
+    pub rewards_program: UncheckedAccount<'info>,
 }
 
 /// Creates a new voter account. There can only be a single voter per
@@ -93,6 +111,23 @@ pub fn create_voter(
     voter_weight_record.realm = registrar.realm;
     voter_weight_record.governing_token_mint = registrar.realm_governing_token_mint;
     voter_weight_record.governing_token_owner = voter_authority;
+
+    // initialize Mining account for Voter
+    let mining = ctx.accounts.deposit_mining.to_account_info();
+    let payer = ctx.accounts.payer.to_account_info();
+    let user = ctx.accounts.voter_authority.key;
+    let system_program = ctx.accounts.system_program.to_account_info();
+    let reward_pool = ctx.accounts.reward_pool.to_account_info();
+    let rewards_program_id = ctx.accounts.rewards_program.to_account_info();
+
+    cpi_instructions::initialize_mining(
+        rewards_program_id,
+        reward_pool,
+        mining,
+        user,
+        payer,
+        system_program,
+    )?;
 
     Ok(())
 }

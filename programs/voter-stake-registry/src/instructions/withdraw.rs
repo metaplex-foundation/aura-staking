@@ -1,10 +1,14 @@
+use crate::{
+    clock_unix_timestamp,
+    voter::{load_token_owner_record, VoterWeightRecord},
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
-use mplx_staking_states::error::*;
-use mplx_staking_states::state::*;
-
-use crate::voter::load_token_owner_record;
-use crate::voter::VoterWeightRecord;
+use mplx_staking_states::{
+    error::VsrError,
+    state::{DepositEntry, LockupKind, LockupPeriod, Registrar, Voter},
+    voter_seeds,
+};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -75,10 +79,10 @@ impl<'info> Withdraw<'info> {
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
 pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-    // NOTE: that block is mandatory because otherwise runtime borrow checking will fail!
+    // we need that block to free all references borrowed from registart/voter/etc,
+    // otherwise later, during transfer we would pass references that are already borrowed
     {
-        // Transfer the tokens to withdraw.
-        let voter = &mut ctx.accounts.voter.load()?;
+        let voter = ctx.accounts.voter.load()?;
         let voter_seeds = voter_seeds!(voter);
         token::transfer(
             ctx.accounts.transfer_ctx().with_signer(&[voter_seeds]),
@@ -95,17 +99,15 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
 
     // Governance may forbid withdraws, for example when engaged in a vote.
     // Not applicable for tokens that don't contribute to voting power.
-    if registrar.voting_mints[mint_idx].grants_vote_weight() {
-        let token_owner_record = load_token_owner_record(
-            &voter.voter_authority,
-            &ctx.accounts.token_owner_record.to_account_info(),
-            registrar,
-        )?;
-        token_owner_record.assert_can_withdraw_governing_tokens()?;
-    }
+    let token_owner_record = load_token_owner_record(
+        &voter.voter_authority,
+        &ctx.accounts.token_owner_record.to_account_info(),
+        registrar,
+    )?;
+    token_owner_record.assert_can_withdraw_governing_tokens()?;
 
     // Get the deposit being withdrawn from.
-    let curr_ts = registrar.clock_unix_timestamp();
+    let curr_ts = clock_unix_timestamp();
     let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
 
     // check whether funds are cooled down
@@ -142,6 +144,16 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
         .amount_deposited_native
         .checked_sub(amount)
         .unwrap();
+
+    // if deposit doesn't have tokens after withdrawal
+    // then is shouldn't be used
+    if deposit_entry.amount_deposited_native == 0
+        && deposit_entry.lockup.kind != LockupKind::None
+        && deposit_entry.lockup.period != LockupPeriod::None
+    {
+        *deposit_entry = DepositEntry::default();
+        deposit_entry.is_used = false;
+    }
 
     msg!(
         "Withdrew amount {} at deposit index {} with lockup kind {:?} and {} seconds left",

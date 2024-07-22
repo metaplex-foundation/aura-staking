@@ -1,7 +1,10 @@
+use crate::clock_unix_timestamp;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
-use mplx_staking_states::error::*;
-use mplx_staking_states::state::*;
+use mplx_staking_states::{
+    error::VsrError,
+    state::{LockupKind, LockupPeriod, Registrar, Voter},
+};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -53,23 +56,22 @@ impl<'info> Deposit<'info> {
 ///
 /// `deposit_entry_index`: Index of the deposit entry.
 /// `amount`: Number of native tokens to transfer.
-///
-/// Note that adding tokens to a deposit entry with vesting, where some vesting
-/// periods are already in the past is supported. What happens is that the tokens
-/// get distributed over vesting points in the future.
-///
-/// Example: 20 tokens are deposited to a three-day vesting deposit entry
-/// that started 36 hours ago. That means 10 extra tokens will vest in 12 hours
-/// and another 10 in 36 hours.
 pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> Result<()> {
     if amount == 0 {
         return Ok(());
     }
 
     let registrar = &ctx.accounts.registrar.load()?;
-    let voter = &mut ctx.accounts.voter.load_mut()?;
+    let curr_ts = clock_unix_timestamp();
 
+    let voter = &mut ctx.accounts.voter.load_mut()?;
     let d_entry = voter.active_deposit_mut(deposit_entry_index)?;
+    require!(
+        d_entry.lockup.kind == LockupKind::None
+            && d_entry.lockup.period == LockupPeriod::None
+            && d_entry.is_used,
+        VsrError::DepositingIsForbidded,
+    );
 
     // Get the exchange rate entry associated with this deposit.
     let mint_idx = registrar.voting_mint_config_index(ctx.accounts.deposit_token.mint)?;
@@ -80,7 +82,6 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     );
 
     // Deposit tokens into the vault and increase the lockup amount too.
-    let curr_ts = registrar.clock_unix_timestamp();
     token::transfer(ctx.accounts.transfer_ctx(), amount)?;
     d_entry.amount_deposited_native = d_entry.amount_deposited_native.checked_add(amount).unwrap();
 
