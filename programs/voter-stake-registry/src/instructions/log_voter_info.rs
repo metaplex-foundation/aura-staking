@@ -1,6 +1,6 @@
-use crate::{clock_unix_timestamp, events::*};
+use crate::events::*;
 use anchor_lang::prelude::*;
-use mplx_staking_states::state::{LockupKind, Registrar, Voter};
+use mplx_staking_states::state::{Registrar, Voter};
 
 #[derive(Accounts)]
 pub struct LogVoterInfo<'info> {
@@ -23,7 +23,6 @@ pub fn log_voter_info(
     deposit_entry_count: u8,
 ) -> Result<()> {
     let voter = ctx.accounts.voter.load()?;
-    let curr_ts = clock_unix_timestamp();
     let deposit_entry_begin = deposit_entry_begin as usize;
     let deposit_entry_count = deposit_entry_count as usize;
 
@@ -41,19 +40,20 @@ pub fn log_voter_info(
         {
             continue;
         }
-        let lockup = &deposit.lockup;
-        let seconds_left = lockup.seconds_left(curr_ts);
-        let end_ts = curr_ts + seconds_left;
-        let locking_info = (seconds_left > 0).then(|| LockingInfo {
-            amount: deposit.amount_locked(curr_ts),
-            end_timestamp: (lockup.kind != LockupKind::Constant).then_some(end_ts),
-            vesting: None,
-        });
+        let locking_info = if !deposit.lockup.cooldown_requested {
+            Some(LockingInfo {
+                amount: deposit.amount_locked(),
+                end_timestamp: Some(deposit.lockup.end_ts),
+                vesting: None,
+            })
+        } else {
+            None
+        };
 
         emit!(DepositEntryInfo {
             deposit_entry_index: deposit_index as u8,
             voting_mint_config_index: deposit.voting_mint_config_idx,
-            unlocked: deposit.amount_unlocked(curr_ts),
+            unlocked: deposit.amount_unlocked(),
             voting_power: deposit.voting_power()?,
             voting_power_baseline: deposit.amount_deposited_native,
             locking: locking_info,

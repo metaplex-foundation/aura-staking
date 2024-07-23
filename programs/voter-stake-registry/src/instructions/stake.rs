@@ -1,4 +1,4 @@
-use crate::{clock_unix_timestamp, cpi_instructions, Stake};
+use crate::{cpi_instructions, Stake};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{error::VsrError, state::LockupKind};
 
@@ -15,7 +15,6 @@ pub fn stake(
 ) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
-    let curr_ts = clock_unix_timestamp();
 
     let source = voter.active_deposit_mut(source_deposit_entry_index)?;
     let source_mint_idx = source.voting_mint_config_idx;
@@ -26,7 +25,7 @@ pub fn stake(
 
     // Reduce source amounts
     require_gte!(
-        source.amount_unlocked(curr_ts),
+        source.amount_unlocked(),
         amount,
         VsrError::InsufficientUnlockedTokens
     );

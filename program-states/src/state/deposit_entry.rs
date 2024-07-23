@@ -39,28 +39,23 @@ impl DepositEntry {
 
     /// Returns native tokens still locked.
     #[inline(always)]
-    pub fn amount_locked(&self, curr_ts: u64) -> u64 {
-        let unlocked_tokens = if self.lockup.expired(curr_ts) {
+    pub fn amount_locked(&self) -> u64 {
+        if self.is_staked() {
             self.amount_deposited_native
         } else {
             0
-        };
-        self.amount_deposited_native
-            .checked_sub(unlocked_tokens)
-            .unwrap()
+        }
     }
 
     /// Returns native tokens that are unlocked given current vesting
     /// and previous withdraws.
     #[inline(always)]
-    pub fn amount_unlocked(&self, curr_ts: u64) -> u64 {
-        if let LockupKind::None = self.lockup.kind {
-            return self.amount_deposited_native;
+    pub fn amount_unlocked(&self) -> u64 {
+        if self.is_staked() {
+            0
+        } else {
+            self.amount_deposited_native
         }
-
-        self.amount_deposited_native
-            .checked_sub(self.amount_locked(curr_ts))
-            .unwrap()
     }
 
     /// Returns the weighted stake for the given deposit at the specified timestamp.
@@ -80,6 +75,7 @@ impl DepositEntry {
         self.is_used
             && self.lockup.kind.ne(&LockupKind::None)
             && self.lockup.period.ne(&LockupPeriod::None)
+            && !self.lockup.cooldown_requested
     }
 }
 
@@ -116,7 +112,7 @@ mod tests {
         assert_eq!(baseline_vote_weight, 20_000);
 
         // The timestamp 100_000 is very far before the lockup_start timestamp
-        let withdrawable = deposit.amount_unlocked(100_000);
+        let withdrawable = deposit.amount_unlocked();
         assert_eq!(withdrawable, 0);
 
         let voting_power = deposit.voting_power().unwrap();

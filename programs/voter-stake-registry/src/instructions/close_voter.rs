@@ -1,4 +1,4 @@
-use crate::{clock_unix_timestamp, cpi_instructions};
+use crate::cpi_instructions;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount, Transfer};
 use bytemuck::bytes_of_mut;
@@ -58,11 +58,10 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
     ctx: Context<'key, 'accounts, 'remaining, 'info, CloseVoter<'info>>,
 ) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
-    let curr_ts = clock_unix_timestamp();
     {
         let voter = ctx.accounts.voter.load()?;
 
-        let any_locked = voter.deposits.iter().any(|d| d.amount_locked(curr_ts) > 0);
+        let any_locked = voter.deposits.iter().any(|d| d.amount_locked() > 0);
         require!(!any_locked, VsrError::DepositStillLocked);
 
         let active_deposit_entries = voter.deposits.iter().filter(|d| d.is_used).count();

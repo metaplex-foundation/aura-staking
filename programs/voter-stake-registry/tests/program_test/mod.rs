@@ -19,7 +19,7 @@ use std::{
     str::FromStr,
     sync::{Arc, RwLock},
 };
-pub use utils::{assert_custom_on_chain_error::AssertCustomOnChainErr, *};
+pub use utils::*;
 
 pub mod addin;
 pub mod cookies;

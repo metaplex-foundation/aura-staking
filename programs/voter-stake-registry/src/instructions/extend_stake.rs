@@ -26,7 +26,7 @@ pub fn extend_stake(
 
     let source = voter.active_deposit_mut(source_deposit_entry_index)?;
     let source_mint_idx = source.voting_mint_config_idx;
-    let source_available_tokens = source.amount_unlocked(curr_ts);
+    let source_available_tokens = source.amount_unlocked();
     require!(
         source.lockup.kind == LockupKind::None,
         VsrError::LockingIsForbidded

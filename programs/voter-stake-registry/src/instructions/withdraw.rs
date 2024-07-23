@@ -123,7 +123,7 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
     }
 
     require_gte!(
-        deposit_entry.amount_unlocked(curr_ts),
+        deposit_entry.amount_unlocked(),
         amount,
         VsrError::InsufficientUnlockedTokens
     );
