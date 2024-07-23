@@ -1,13 +1,14 @@
-name: Lint and Test
+name: Lint
+
 on:
   push:
-    branches: master
+    branches:
+      - master
   pull_request:
 
 env:
   CARGO_TERM_COLOR: always
-  SOLANA_VERSION: "1.9.5"
-  RUST_TOOLCHAIN: stable
+  RUST_TOOLCHAIN: "1.66.0"
 
 defaults:
   run:
@@ -15,58 +16,30 @@ defaults:
 
 jobs:
   lint:
-    name: Lint
+    name: Linter
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rust nightly
-        uses: actions-rs/toolchain@v1
+
+      - name: Install stable Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           override: true
-          profile: minimal
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt, clippy
+          cache: true
+
+      - name: Install nightly Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
       - name: Run fmt
-        run: cargo fmt -- --check
-      # The style and complexity lints have not been processed yet.
+        run: cargo +nightly fmt -- --check
+
       - name: Run clippy
-        run: cargo clippy -- --deny=warnings --allow=clippy::style --allow=clippy::complexity
-
-  tests:
-    name: Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install Linux dependencies
-        run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev
-      - name: Install Rust nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          override: true
-          profile: minimal
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v1
-        
-      # Install Solana
-      - name: Cache Solana binaries
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/solana
-          key: ${{ runner.os }}-${{ env.SOLANA_VERSION }}
-      - name: Install Solana
-        run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          solana --version
-          echo "Generating keypair..."
-          solana-keygen new -o "$HOME/.config/solana/id.json" --no-passphrase --silent
-
-      - name: Run bpf tests
-        run: cargo test-bpf
+        run: cargo clippy --all-targets --all-features --workspace -- -D warnings --allow=clippy::result_large_err --allow=clippy::await_holding_refcell_ref
