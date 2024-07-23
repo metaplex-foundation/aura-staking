@@ -343,7 +343,7 @@ impl AddinCookie {
         }];
 
         self.solana
-            .process_transaction(&instructions, Some(&[&payer, &authority]))
+            .process_transaction(&instructions, Some(&[payer, authority]))
             .await
             .unwrap();
 
@@ -522,12 +522,12 @@ impl AddinCookie {
             });
 
         let (deposit_mining, _) =
-            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), &reward_pool);
+            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), reward_pool);
 
         let (delegate_mining, _) = find_deposit_mining_addr(
             rewards_program,
             &delegate_voter.authority.pubkey(),
-            &reward_pool,
+            reward_pool,
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
@@ -770,7 +770,7 @@ impl AddinCookie {
             .await
             .unwrap();
 
-        let mut new_clock = old_clock.clone();
+        let mut new_clock = old_clock;
         new_clock.unix_timestamp += time_offset - old_offset;
         self.solana.context.borrow_mut().set_sysvar(&new_clock);
     }

@@ -18,8 +18,7 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
         VsrError::DepositStillLocked
     );
 
-    ctx.accounts
-        .verify_delegate_and_its_mining(&deposit_entry)?;
+    ctx.accounts.verify_delegate_and_its_mining(deposit_entry)?;
 
     deposit_entry.lockup.cooldown_requested = true;
     deposit_entry.lockup.cooldown_ends_at = curr_ts
