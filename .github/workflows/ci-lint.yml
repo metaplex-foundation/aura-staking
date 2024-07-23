@@ -22,18 +22,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install stable Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
-          components: clippy
-          cache: true
+#      - name: Install stable Rust
+#        uses: actions-rust-lang/setup-rust-toolchain@v1
+#        with:
+#          toolchain: ${{ env.RUST_TOOLCHAIN }}
+#          components: clippy
+#          cache: true
 
       - name: Install nightly Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly
-          components: rustfmt
+          components: rustfmt, clippy
           cache: true
 
       - name: Run fmt
