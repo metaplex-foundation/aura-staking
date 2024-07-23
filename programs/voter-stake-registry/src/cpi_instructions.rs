@@ -458,6 +458,7 @@ pub fn close_mining<'a>(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn change_delegate<'a>(
     program_id: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,

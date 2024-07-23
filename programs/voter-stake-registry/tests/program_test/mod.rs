@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use self::rewards::RewardsCookie;
 pub use addin::*;
 pub use cookies::*;
