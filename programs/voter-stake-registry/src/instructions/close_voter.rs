@@ -62,11 +62,11 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
     {
         let voter = ctx.accounts.voter.load()?;
 
-        let active_deposit_entries = voter.deposits.iter().filter(|d| d.is_used).count();
-        require_eq!(ctx.remaining_accounts.len(), active_deposit_entries);
-
         let any_locked = voter.deposits.iter().any(|d| d.amount_locked(curr_ts) > 0);
         require!(!any_locked, VsrError::DepositStillLocked);
+
+        let active_deposit_entries = voter.deposits.iter().filter(|d| d.is_used).count();
+        require_eq!(ctx.remaining_accounts.len(), active_deposit_entries);
 
         let voter_seeds = voter_seeds!(voter);
 
