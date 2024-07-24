@@ -63,10 +63,15 @@ pub struct ChangeDelegate<'info> {
 /// The old delegate will stop receiving rewards.
 /// It might be done once per five days.
 pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
+    require!(
+        &ctx.accounts.voter.key() != &ctx.accounts.delegate_voter.key(),
+        VsrError::SameDelegate
+    );
+
     let registrar = &ctx.accounts.registrar.load()?;
-    let voter = &ctx.accounts.voter.load()?;
+    let voter = &mut ctx.accounts.voter.load_mut()?;
     let delegate_voter = &ctx.accounts.delegate_voter.load()?;
-    let target = voter.active_deposit(deposit_entry_index)?;
+    let target = voter.active_deposit_mut(deposit_entry_index)?;
 
     require!(
         delegate_voter.voter_authority != target.delegate,
@@ -106,6 +111,8 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
         delegate_mining == ctx.accounts.new_delegate_mining.key(),
         VsrError::InvalidMining
     );
+
+    target.delegate = delegate_voter.voter_authority;
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();
