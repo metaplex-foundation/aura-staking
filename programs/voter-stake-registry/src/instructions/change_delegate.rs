@@ -63,56 +63,56 @@ pub struct ChangeDelegate<'info> {
 /// The old delegate will stop receiving rewards.
 /// It might be done once per five days.
 pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
-    require!(
-        &ctx.accounts.voter.key() != &ctx.accounts.delegate_voter.key(),
-        VsrError::SameDelegate
-    );
-
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
-    let delegate_voter = &ctx.accounts.delegate_voter.load()?;
+    let voter_authority = voter.voter_authority;
     let target = voter.active_deposit_mut(deposit_entry_index)?;
 
-    require!(
-        delegate_voter.voter_authority != target.delegate,
-        VsrError::SameDelegate
-    );
+    if &ctx.accounts.voter.key() == &ctx.accounts.delegate_voter.key() {
+        require!(target.delegate != voter_authority, VsrError::SameDelegate);
+        target.delegate = voter_authority;
+    } else {
+        let delegate_voter = &ctx.accounts.delegate_voter.load()?;
+        require!(
+            &ctx.accounts.voter.key() != &ctx.accounts.delegate_voter.key()
+                && delegate_voter.voter_authority != target.delegate,
+            VsrError::SameDelegate
+        );
 
-    let curr_ts = clock_unix_timestamp();
-    let delegate_voter_weighted_stake = delegate_voter
-        .deposits
-        .iter()
-        .fold(0, |acc, d| acc + d.weighted_stake(curr_ts));
-    require!(
-        delegate_voter_weighted_stake >= Voter::MIN_OWN_WEIGHTED_STAKE,
-        VsrError::InsufficientWeightedStake
-    );
+        let curr_ts = clock_unix_timestamp();
+        let delegate_voter_weighted_stake = delegate_voter
+            .deposits
+            .iter()
+            .fold(0, |acc, d| acc + d.weighted_stake(curr_ts));
+        require!(
+            delegate_voter_weighted_stake >= Voter::MIN_OWN_WEIGHTED_STAKE,
+            VsrError::InsufficientWeightedStake
+        );
+        let delegate_last_update_diff = curr_ts
+            .checked_sub(target.delegate_last_update_ts)
+            .ok_or(VsrError::ArithmeticOverflow)?;
 
-    let delegate_last_update_diff = curr_ts
-        .checked_sub(target.delegate_last_update_ts)
-        .ok_or(VsrError::ArithmeticOverflow)?;
+        require!(
+            delegate_last_update_diff > DELEGATE_UPDATE_DIFF_THRESHOLD,
+            VsrError::DelegateUpdateIsTooSoon
+        );
 
-    require!(
-        delegate_last_update_diff > DELEGATE_UPDATE_DIFF_THRESHOLD,
-        VsrError::DelegateUpdateIsTooSoon
-    );
+        let (reward_pool, _) = find_reward_pool_address(
+            &ctx.accounts.rewards_program.key(),
+            &ctx.accounts.registrar.key(),
+        );
+        let (delegate_mining, _) = find_mining_address(
+            &ctx.accounts.rewards_program.key(),
+            &delegate_voter.voter_authority,
+            &reward_pool,
+        );
 
-    let (reward_pool, _) = find_reward_pool_address(
-        &ctx.accounts.rewards_program.key(),
-        &ctx.accounts.registrar.key(),
-    );
-    let (delegate_mining, _) = find_mining_address(
-        &ctx.accounts.rewards_program.key(),
-        &delegate_voter.voter_authority,
-        &reward_pool,
-    );
-
-    require!(
-        delegate_mining == ctx.accounts.new_delegate_mining.key(),
-        VsrError::InvalidMining
-    );
-
-    target.delegate = delegate_voter.voter_authority;
+        require!(
+            delegate_mining == ctx.accounts.new_delegate_mining.key(),
+            VsrError::InvalidMining
+        );
+        target.delegate = delegate_voter.voter_authority;
+    }
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();
