@@ -5,7 +5,7 @@ use crate::{
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{DepositEntry, LockupKind, LockupPeriod, Registrar, Voter},
     voter_seeds,
 };
@@ -114,30 +114,30 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
     if deposit_entry.lockup.kind == LockupKind::Constant {
         require!(
             deposit_entry.lockup.cooldown_requested,
-            VsrError::UnlockMustBeCalledFirst
+            MplStakingError::UnlockMustBeCalledFirst
         );
         require!(
             curr_ts >= deposit_entry.lockup.cooldown_ends_at,
-            VsrError::InvalidTimestampArguments
+            MplStakingError::InvalidTimestampArguments
         );
     }
 
     require_gte!(
         deposit_entry.amount_unlocked(),
         amount,
-        VsrError::InsufficientUnlockedTokens
+        MplStakingError::InsufficientUnlockedTokens
     );
     require_eq!(
         mint_idx,
         deposit_entry.voting_mint_config_idx as usize,
-        VsrError::InvalidMint
+        MplStakingError::InvalidMint
     );
 
     // Bookkeeping for withdrawn funds.
     require_gte!(
         deposit_entry.amount_deposited_native,
         amount,
-        VsrError::InternalProgramError
+        MplStakingError::InternalProgramError
     );
 
     deposit_entry.amount_deposited_native = deposit_entry

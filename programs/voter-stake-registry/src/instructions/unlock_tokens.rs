@@ -1,6 +1,6 @@
 use crate::{clock_unix_timestamp, cpi_instructions::withdraw_mining, Stake};
 use anchor_lang::prelude::*;
-use mplx_staking_states::{error::VsrError, state::COOLDOWN_SECS};
+use mplx_staking_states::{error::MplStakingError, state::COOLDOWN_SECS};
 
 pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()> {
     let voter = &mut ctx.accounts.voter.load_mut()?;
@@ -11,11 +11,11 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
     // Check whether unlock request is allowed
     require!(
         !deposit_entry.lockup.cooldown_requested,
-        VsrError::UnlockAlreadyRequested
+        MplStakingError::UnlockAlreadyRequested
     );
     require!(
         curr_ts >= deposit_entry.lockup.end_ts,
-        VsrError::DepositStillLocked
+        MplStakingError::DepositStillLocked
     );
 
     ctx.accounts.verify_delegate_and_its_mining(deposit_entry)?;
@@ -23,7 +23,7 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
     deposit_entry.lockup.cooldown_requested = true;
     deposit_entry.lockup.cooldown_ends_at = curr_ts
         .checked_add(COOLDOWN_SECS)
-        .ok_or(VsrError::InvalidTimestampArguments)?;
+        .ok_or(MplStakingError::InvalidTimestampArguments)?;
 
     let rewards_program = ctx.accounts.rewards_program.to_account_info();
     let reward_pool = ctx.accounts.reward_pool.to_account_info();

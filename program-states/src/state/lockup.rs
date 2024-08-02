@@ -42,12 +42,12 @@ impl Lockup {
         require!(
             (kind == LockupKind::None && period == LockupPeriod::None)
                 || (kind == LockupKind::Constant && period != LockupPeriod::None),
-            VsrError::InvalidLockupKind
+            MplStakingError::InvalidLockupKind
         );
 
         let end_ts = start_ts
             .checked_add(period.to_secs())
-            .ok_or(VsrError::InvalidTimestampArguments)?;
+            .ok_or(MplStakingError::InvalidTimestampArguments)?;
 
         Ok(Self {
             kind,
@@ -117,7 +117,11 @@ impl Lockup {
         }
 
         let lockup_secs = self.seconds_left(self.start_ts);
-        require_eq!(lockup_secs % period_secs, 0, VsrError::InvalidLockupPeriod);
+        require_eq!(
+            lockup_secs % period_secs,
+            0,
+            MplStakingError::InvalidLockupPeriod
+        );
 
         Ok(lockup_secs.checked_div(period_secs).unwrap())
     }
@@ -131,14 +135,18 @@ impl Lockup {
             .checked_add(
                 periods
                     .checked_mul(period_secs)
-                    .ok_or(VsrError::InvalidTimestampArguments)?,
+                    .ok_or(MplStakingError::InvalidTimestampArguments)?,
             )
             .unwrap();
-        require_gte!(self.end_ts, self.start_ts, VsrError::InternalProgramError);
+        require_gte!(
+            self.end_ts,
+            self.start_ts,
+            MplStakingError::InternalProgramError
+        );
         require_eq!(
             self.period_current(curr_ts)?,
             0,
-            VsrError::InternalProgramError
+            MplStakingError::InternalProgramError
         );
         Ok(())
     }

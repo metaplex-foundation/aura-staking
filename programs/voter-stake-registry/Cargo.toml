@@ -1,7 +1,7 @@
 cargo-features = ["workspace-inheritance"]
 [package]
-name = "voter-stake-registry"
-version = "0.2.4"
+name = "mpl-staking"
+version = "0.1.0"
 description = "a voter weight plugin for spl-governance"
 license = "GPL-3.0-or-later"
 homepage = "https://github.com/blockworks-foundation/voter-stake-registry"
@@ -9,7 +9,7 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "voter_stake_registry"
+name = "mpl_staking"
 doctest = false
 
 [features]

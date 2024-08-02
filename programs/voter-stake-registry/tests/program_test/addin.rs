@@ -49,11 +49,9 @@ impl AddinCookie {
         // params
         deposit_entry_index: u8,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::ChangeDelegate {
-                deposit_entry_index,
-            },
-        );
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::ChangeDelegate {
+            deposit_entry_index,
+        });
 
         let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
             &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
@@ -70,7 +68,7 @@ impl AddinCookie {
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::ChangeDelegate {
+            &mpl_staking::accounts::ChangeDelegate {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter.authority.pubkey(),
@@ -115,13 +113,11 @@ impl AddinCookie {
             &self.program_id,
         );
 
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::CreateRegistrar {
-                registrar_bump,
-                fill_authority: *fill_authority,
-                distribution_authority: *distribution_authority,
-            },
-        );
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::CreateRegistrar {
+            registrar_bump,
+            fill_authority: *fill_authority,
+            distribution_authority: *distribution_authority,
+        });
 
         let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
             &["reward_pool".as_bytes(), &registrar.key().to_bytes()],
@@ -138,7 +134,7 @@ impl AddinCookie {
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::CreateRegistrar {
+            &mpl_staking::accounts::CreateRegistrar {
                 registrar,
                 governance_program_id: realm.governance.program_id,
                 realm: realm.realm,
@@ -191,7 +187,7 @@ impl AddinCookie {
         target_deposit_entry_index: u8,
         amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Stake {
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::Stake {
             source_deposit_entry_index,
             target_deposit_entry_index,
             amount,
@@ -209,7 +205,7 @@ impl AddinCookie {
             find_deposit_mining_addr(rewards_program, &delegate, &reward_pool);
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::Stake {
+            &mpl_staking::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter.authority.pubkey(),
@@ -246,15 +242,14 @@ impl AddinCookie {
     ) -> VotingMintConfigCookie {
         let deposit_mint = mint.pubkey.unwrap();
 
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::ConfigureVotingMint {
+        let data =
+            anchor_lang::InstructionData::data(&mpl_staking::instruction::ConfigureVotingMint {
                 idx: index,
                 grant_authority,
-            },
-        );
+            });
 
         let mut accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::ConfigureVotingMint {
+            &mpl_staking::accounts::ConfigureVotingMint {
                 mint: deposit_mint,
                 registrar: registrar.address,
                 realm_authority: authority.pubkey(),
@@ -313,14 +308,13 @@ impl AddinCookie {
             &self.program_id,
         );
 
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::CreateVoter {
-                voter_bump,
-                voter_weight_record_bump,
-            });
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::CreateVoter {
+            voter_bump,
+            voter_weight_record_bump,
+        });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::CreateVoter {
+            &mpl_staking::accounts::CreateVoter {
                 voter,
                 voter_weight_record,
                 registrar: registrar.address,
@@ -370,16 +364,15 @@ impl AddinCookie {
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::CreateDepositEntry {
+        let data =
+            anchor_lang::InstructionData::data(&mpl_staking::instruction::CreateDepositEntry {
                 deposit_entry_index,
                 kind: lockup_kind,
                 period,
-            },
-        );
+            });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::CreateDepositEntry {
+            &mpl_staking::accounts::CreateDepositEntry {
                 vault,
                 registrar: registrar.address,
                 voter: voter.address,
@@ -418,14 +411,13 @@ impl AddinCookie {
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Deposit {
-                deposit_entry_index,
-                amount,
-            });
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::Deposit {
+            deposit_entry_index,
+            amount,
+        });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::Deposit {
+            &mpl_staking::accounts::Deposit {
                 registrar: registrar.address,
                 voter: voter.address,
                 vault,
@@ -462,13 +454,12 @@ impl AddinCookie {
         new_lockup_period: LockupPeriod,
         additional_amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::ExtendStake {
-                source_deposit_entry_index,
-                target_deposit_entry_index,
-                new_lockup_period,
-                additional_amount,
-            });
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::ExtendStake {
+            source_deposit_entry_index,
+            target_deposit_entry_index,
+            new_lockup_period,
+            additional_amount,
+        });
 
         let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
             &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
@@ -482,7 +473,7 @@ impl AddinCookie {
             find_deposit_mining_addr(rewards_program, delegate, &reward_pool);
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::Stake {
+            &mpl_staking::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter_authority.pubkey(),
@@ -516,10 +507,9 @@ impl AddinCookie {
         reward_pool: &Pubkey,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::UnlockTokens {
-                deposit_entry_index,
-            });
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::UnlockTokens {
+            deposit_entry_index,
+        });
 
         let (deposit_mining, _) =
             find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), reward_pool);
@@ -531,7 +521,7 @@ impl AddinCookie {
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::Stake {
+            &mpl_staking::accounts::Stake {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter.authority.pubkey(),
@@ -568,14 +558,13 @@ impl AddinCookie {
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Withdraw {
-                deposit_entry_index,
-                amount,
-            });
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::Withdraw {
+            deposit_entry_index,
+            amount,
+        });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::Withdraw {
+            &mpl_staking::accounts::Withdraw {
                 registrar: registrar.address,
                 voter: voter.address,
                 token_owner_record: voter.token_owner_record,
@@ -617,11 +606,10 @@ impl AddinCookie {
         let (deposit_mining, _) =
             find_deposit_mining_addr(rewards_program, &voter_authority.pubkey(), &reward_pool);
 
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::CloseVoter {});
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::CloseVoter {});
 
         let mut accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::CloseVoter {
+            &mpl_staking::accounts::CloseVoter {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_authority: voter_authority.pubkey(),
@@ -652,11 +640,11 @@ impl AddinCookie {
         voter: &VoterCookie,
     ) -> Instruction {
         let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::UpdateVoterWeightRecord {},
+            &mpl_staking::instruction::UpdateVoterWeightRecord {},
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::UpdateVoterWeightRecord {
+            &mpl_staking::accounts::UpdateVoterWeightRecord {
                 registrar: registrar.address,
                 voter: voter.address,
                 voter_weight_record: voter.voter_weight_record,
@@ -676,16 +664,14 @@ impl AddinCookie {
         &self,
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-    ) -> std::result::Result<voter_stake_registry::voter::VoterWeightRecord, BanksClientError> {
+    ) -> std::result::Result<mpl_staking::voter::VoterWeightRecord, BanksClientError> {
         let instructions = vec![self.update_voter_weight_record_instruction(registrar, voter)];
 
         self.solana.process_transaction(&instructions, None).await?;
 
         Ok(self
             .solana
-            .get_account::<voter_stake_registry::voter::VoterWeightRecord>(
-                voter.voter_weight_record,
-            )
+            .get_account::<mpl_staking::voter::VoterWeightRecord>(voter.voter_weight_record)
             .await)
     }
 
@@ -695,14 +681,13 @@ impl AddinCookie {
         authority: &Keypair,
         deposit_entry_index: u8,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = anchor_lang::InstructionData::data(
-            &voter_stake_registry::instruction::CloseDepositEntry {
+        let data =
+            anchor_lang::InstructionData::data(&mpl_staking::instruction::CloseDepositEntry {
                 deposit_entry_index,
-            },
-        );
+            });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::CloseDepositEntry {
+            &mpl_staking::accounts::CloseDepositEntry {
                 voter: voter.address,
                 voter_authority: authority.pubkey(),
             },
@@ -726,14 +711,13 @@ impl AddinCookie {
         voter: &VoterCookie,
         deposit_entry_begin: u8,
     ) {
-        let data =
-            anchor_lang::InstructionData::data(&voter_stake_registry::instruction::LogVoterInfo {
-                deposit_entry_begin,
-                deposit_entry_count: 8,
-            });
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::LogVoterInfo {
+            deposit_entry_begin,
+            deposit_entry_count: 8,
+        });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::LogVoterInfo {
+            &mpl_staking::accounts::LogVoterInfo {
                 registrar: registrar.address,
                 voter: voter.address,
             },
@@ -786,7 +770,7 @@ impl AddinCookie {
         rewards_program: &Pubkey,
         registrar: &RegistrarCookie,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = anchor_lang::InstructionData::data(&voter_stake_registry::instruction::Claim {
+        let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::Claim {
             realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
             registrar_bump: registrar.registrar_bump,
             realm_pubkey: registrar.realm_pubkey,
@@ -802,7 +786,7 @@ impl AddinCookie {
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &voter_stake_registry::accounts::Claim {
+            &mpl_staking::accounts::Claim {
                 reward_pool: *reward_pool,
                 reward_mint: *reward_mint,
                 vault: vault_pubkey,

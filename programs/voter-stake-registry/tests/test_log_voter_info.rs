@@ -18,7 +18,7 @@ fn deserialize_event<T: anchor_lang::Event>(event: &str) -> Option<T> {
 async fn test_print_event() -> Result<(), TransportError> {
     println!(
         "{:#?}",
-        deserialize_event::<voter_stake_registry::events::DepositEntryInfo>(
+        deserialize_event::<mpl_staking::events::DepositEntryInfo>(
             "LP4gbyknBZQAABhzAQAAAAAAGHMBAAAAAAAYcwEAAAAAAAEAAAAAAAAAAAGK6hx3fgEAAAA="
         )
         .ok_or(())
@@ -153,19 +153,18 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
     let data_log = context.solana.program_output().data;
     assert_eq!(data_log.len(), 3);
 
-    let voter_event =
-        deserialize_event::<voter_stake_registry::events::VoterInfo>(&data_log[0]).unwrap();
+    let voter_event = deserialize_event::<mpl_staking::events::VoterInfo>(&data_log[0]).unwrap();
     assert_eq!(voter_event.voting_power_baseline, 12000);
     assert_eq!(voter_event.voting_power, 12000);
 
     let deposit_event =
-        deserialize_event::<voter_stake_registry::events::DepositEntryInfo>(&data_log[1]).unwrap();
+        deserialize_event::<mpl_staking::events::DepositEntryInfo>(&data_log[1]).unwrap();
     assert_eq!(deposit_event.deposit_entry_index, 0);
     assert_eq!(deposit_event.voting_mint_config_index, 0);
     assert_eq!(deposit_event.unlocked, 0);
 
     let deposit_event =
-        deserialize_event::<voter_stake_registry::events::DepositEntryInfo>(&data_log[2]).unwrap();
+        deserialize_event::<mpl_staking::events::DepositEntryInfo>(&data_log[2]).unwrap();
     assert_eq!(deposit_event.voting_power, voter_event.voting_power);
     assert_eq!(
         deposit_event.voting_power_baseline,

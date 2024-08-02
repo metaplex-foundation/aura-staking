@@ -1,7 +1,7 @@
 use anchor_spl::token::TokenAccount;
 use assert_custom_on_chain_error::AssertCustomOnChainErr;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{LockupKind, LockupPeriod},
 };
 use program_test::*;
@@ -224,7 +224,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
 
     withdraw(5001)
         .await
-        .assert_on_chain_err(VsrError::InsufficientUnlockedTokens);
+        .assert_on_chain_err(MplStakingError::InsufficientUnlockedTokens);
 
     withdraw(5000).await.unwrap();
 
@@ -238,11 +238,11 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     addin
         .close_deposit_entry(&voter, voter_authority, 2)
         .await
-        .assert_on_chain_err(VsrError::UnusedDepositEntryIndex);
+        .assert_on_chain_err(MplStakingError::UnusedDepositEntryIndex);
     addin
         .close_deposit_entry(&voter, voter_authority, 1)
         .await
-        .assert_on_chain_err(VsrError::VotingTokenNonZero);
+        .assert_on_chain_err(MplStakingError::VotingTokenNonZero);
     addin
         .close_deposit_entry(&voter, voter_authority, 0)
         .await

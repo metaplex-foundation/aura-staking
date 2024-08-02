@@ -1,7 +1,7 @@
 use crate::{clock_unix_timestamp, cpi_instructions, Stake};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{LockupKind, LockupPeriod},
 };
 
@@ -29,22 +29,22 @@ pub fn extend_stake(
     let source_available_tokens = source.amount_unlocked();
     require!(
         source.lockup.kind == LockupKind::None,
-        VsrError::LockingIsForbidded
+        MplStakingError::LockingIsForbidded
     );
     source.amount_deposited_native = source
         .amount_deposited_native
         .checked_sub(additional_amount)
-        .ok_or(VsrError::ArithmeticOverflow)?;
+        .ok_or(MplStakingError::ArithmeticOverflow)?;
 
     let target = voter.active_deposit_mut(target_deposit_entry_index)?;
     require_gte!(
         source_available_tokens,
         additional_amount,
-        VsrError::InsufficientUnlockedTokens
+        MplStakingError::InsufficientUnlockedTokens
     );
     require!(
         target.lockup.period != LockupPeriod::None && target.lockup.kind != LockupKind::None,
-        VsrError::ExtendDepositIsNotAllowed
+        MplStakingError::ExtendDepositIsNotAllowed
     );
 
     let start_ts = target.lockup.start_ts;
@@ -59,25 +59,25 @@ pub fn extend_stake(
     // the current deposit has expired
     require!(
         new_lockup_period >= current_lockup_period,
-        VsrError::ExtendDepositIsNotAllowed
+        MplStakingError::ExtendDepositIsNotAllowed
     );
 
     // Check target compatibility
     require_eq!(
         target.voting_mint_config_idx,
         source_mint_idx,
-        VsrError::InvalidMint
+        MplStakingError::InvalidMint
     );
     ctx.accounts.verify_delegate_and_its_mining(target)?;
 
     target.amount_deposited_native = target
         .amount_deposited_native
         .checked_add(additional_amount)
-        .ok_or(VsrError::ArithmeticOverflow)?;
+        .ok_or(MplStakingError::ArithmeticOverflow)?;
     target.lockup.start_ts = curr_ts;
     target.lockup.end_ts = curr_ts
         .checked_add(new_lockup_period.to_secs())
-        .ok_or(VsrError::InvalidTimestampArguments)?;
+        .ok_or(MplStakingError::InvalidTimestampArguments)?;
     target.lockup.period = new_lockup_period;
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();

@@ -1,7 +1,7 @@
 use anchor_spl::token::TokenAccount;
 use assert_custom_on_chain_error::AssertCustomOnChainErr;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{LockupKind, LockupPeriod},
 };
 use program_test::*;
@@ -453,7 +453,7 @@ async fn stake_is_too_little() -> Result<(), TransportError> {
             1,
         )
         .await
-        .assert_on_chain_err(VsrError::InsufficientWeightedStake);
+        .assert_on_chain_err(MplStakingError::InsufficientWeightedStake);
 
     Ok(())
 }
@@ -605,7 +605,7 @@ async fn delegate_is_the_same() -> Result<(), TransportError> {
             1,
         )
         .await
-        .assert_on_chain_err(VsrError::SameDelegate);
+        .assert_on_chain_err(MplStakingError::SameDelegate);
 
     Ok(())
 }

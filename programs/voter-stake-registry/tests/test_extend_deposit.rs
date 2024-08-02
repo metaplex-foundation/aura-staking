@@ -1,7 +1,7 @@
 use anchor_spl::token::TokenAccount;
 use assert_custom_on_chain_error::AssertCustomOnChainErr;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{LockupKind, LockupPeriod},
 };
 use program_test::*;
@@ -802,7 +802,7 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
             50,
         )
         .await
-        .assert_on_chain_err(VsrError::ArithmeticOverflow);
+        .assert_on_chain_err(MplStakingError::ArithmeticOverflow);
 
     Ok(())
 }

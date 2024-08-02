@@ -38,7 +38,7 @@ impl Voter {
     /// The extra lockup vote weight that the user is guaranteed to have at `at_ts`, assuming
     /// they withdraw and unlock as much as possible starting from `curr_ts`.
     pub fn weight_locked_guaranteed(&self, curr_ts: i64, at_ts: i64) -> Result<u64> {
-        require_gte!(at_ts, curr_ts, VsrError::InvalidTimestampArguments);
+        require_gte!(at_ts, curr_ts, MplStakingError::InvalidTimestampArguments);
         self.deposits
             .iter()
             .filter(|d| d.is_used)
@@ -50,10 +50,10 @@ impl Voter {
         require_gt!(
             self.deposits.len(),
             index,
-            VsrError::OutOfBoundsDepositEntryIndex
+            MplStakingError::OutOfBoundsDepositEntryIndex
         );
         let d = &mut self.deposits[index];
-        require!(d.is_used, VsrError::UnusedDepositEntryIndex);
+        require!(d.is_used, MplStakingError::UnusedDepositEntryIndex);
         Ok(d)
     }
 
@@ -62,10 +62,10 @@ impl Voter {
         require_gt!(
             self.deposits.len(),
             index,
-            VsrError::OutOfBoundsDepositEntryIndex
+            MplStakingError::OutOfBoundsDepositEntryIndex
         );
         let d = &self.deposits[index];
-        require!(d.is_used, VsrError::UnusedDepositEntryIndex);
+        require!(d.is_used, MplStakingError::UnusedDepositEntryIndex);
         Ok(d)
     }
 }

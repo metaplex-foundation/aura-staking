@@ -1,6 +1,6 @@
 use crate::{cpi_instructions, Stake};
 use anchor_lang::prelude::*;
-use mplx_staking_states::{error::VsrError, state::LockupKind};
+use mplx_staking_states::{error::MplStakingError, state::LockupKind};
 
 /// Transfers unlocked tokens from the source deposit entry to the target deposit entry.
 ///
@@ -20,32 +20,32 @@ pub fn stake(
     let source_mint_idx = source.voting_mint_config_idx;
     require!(
         source.lockup.kind == LockupKind::None,
-        VsrError::LockingIsForbidded
+        MplStakingError::LockingIsForbidded
     );
 
     // Reduce source amounts
     require_gte!(
         source.amount_unlocked(),
         amount,
-        VsrError::InsufficientUnlockedTokens
+        MplStakingError::InsufficientUnlockedTokens
     );
     source.amount_deposited_native = source
         .amount_deposited_native
         .checked_sub(amount)
-        .ok_or(VsrError::ArithmeticOverflow)?;
+        .ok_or(MplStakingError::ArithmeticOverflow)?;
 
     // Check target compatibility
     let target = voter.active_deposit_mut(target_deposit_entry_index)?;
     require_eq!(
         target.voting_mint_config_idx,
         source_mint_idx,
-        VsrError::InvalidMint
+        MplStakingError::InvalidMint
     );
 
     // Checks that target doesn't have any stored tokens yet
     require!(
         target.amount_deposited_native == 0,
-        VsrError::DepositEntryIsOld
+        MplStakingError::DepositEntryIsOld
     );
     ctx.accounts.verify_delegate_and_its_mining(target)?;
 
@@ -53,7 +53,7 @@ pub fn stake(
     target.amount_deposited_native = target
         .amount_deposited_native
         .checked_add(amount)
-        .ok_or(VsrError::ArithmeticOverflow)?;
+        .ok_or(MplStakingError::ArithmeticOverflow)?;
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();

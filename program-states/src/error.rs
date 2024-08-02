@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum VsrError {
+pub enum MplStakingError {
     // 6000 / 0x1770
     #[msg("")]
     VotingMintNotFound,

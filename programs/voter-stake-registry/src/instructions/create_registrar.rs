@@ -1,7 +1,7 @@
 use crate::cpi_instructions;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token};
-use mplx_staking_states::{error::VsrError, state::Registrar};
+use mplx_staking_states::{error::MplStakingError, state::Registrar};
 use spl_governance::state::realm;
 use std::mem::size_of;
 
@@ -92,7 +92,7 @@ pub fn create_registrar(
         require_keys_eq!(
             realm.authority.unwrap(),
             ctx.accounts.realm_authority.key(),
-            VsrError::InvalidRealmAuthority
+            MplStakingError::InvalidRealmAuthority
         );
     }
 

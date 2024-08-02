@@ -1,7 +1,7 @@
 use anchor_spl::token::TokenAccount;
 use assert_custom_on_chain_error::AssertCustomOnChainErr;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{LockupKind, LockupPeriod},
 };
 use program_test::*;
@@ -385,7 +385,7 @@ async fn close_voter_with_locked_tokens_should_fail() -> Result<(), TransportErr
             &context.rewards.program_id,
         )
         .await
-        .assert_on_chain_err(VsrError::DepositStillLocked);
+        .assert_on_chain_err(MplStakingError::DepositStillLocked);
 
     Ok(())
 }

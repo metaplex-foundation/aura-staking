@@ -3,7 +3,7 @@ use crate::{
 };
 use anchor_lang::prelude::*;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{Registrar, Voter},
 };
 use solana_program::clock::SECONDS_PER_DAY;
@@ -67,34 +67,38 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     let voter = &mut ctx.accounts.voter.load_mut()?;
     let voter_authority = voter.voter_authority;
     let target = voter.active_deposit_mut(deposit_entry_index)?;
+    let curr_ts = clock_unix_timestamp();
+
+    let delegate_last_update_diff = curr_ts
+        .checked_sub(target.delegate_last_update_ts)
+        .ok_or(MplStakingError::ArithmeticOverflow)?;
+
+    require!(
+        delegate_last_update_diff > DELEGATE_UPDATE_DIFF_THRESHOLD,
+        MplStakingError::DelegateUpdateIsTooSoon
+    );
 
     if &ctx.accounts.voter.key() == &ctx.accounts.delegate_voter.key() {
-        require!(target.delegate != voter_authority, VsrError::SameDelegate);
+        require!(
+            target.delegate != voter_authority,
+            MplStakingError::SameDelegate
+        );
         target.delegate = voter_authority;
     } else {
         let delegate_voter = &ctx.accounts.delegate_voter.load()?;
         require!(
             &ctx.accounts.voter.key() != &ctx.accounts.delegate_voter.key()
                 && delegate_voter.voter_authority != target.delegate,
-            VsrError::SameDelegate
+            MplStakingError::SameDelegate
         );
 
-        let curr_ts = clock_unix_timestamp();
         let delegate_voter_weighted_stake = delegate_voter
             .deposits
             .iter()
             .fold(0, |acc, d| acc + d.weighted_stake(curr_ts));
         require!(
             delegate_voter_weighted_stake >= Voter::MIN_OWN_WEIGHTED_STAKE,
-            VsrError::InsufficientWeightedStake
-        );
-        let delegate_last_update_diff = curr_ts
-            .checked_sub(target.delegate_last_update_ts)
-            .ok_or(VsrError::ArithmeticOverflow)?;
-
-        require!(
-            delegate_last_update_diff > DELEGATE_UPDATE_DIFF_THRESHOLD,
-            VsrError::DelegateUpdateIsTooSoon
+            MplStakingError::InsufficientWeightedStake
         );
 
         let (reward_pool, _) = find_reward_pool_address(
@@ -109,7 +113,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
 
         require!(
             delegate_mining == ctx.accounts.new_delegate_mining.key(),
-            VsrError::InvalidMining
+            MplStakingError::InvalidMining
         );
         target.delegate = delegate_voter.voter_authority;
     }

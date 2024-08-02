@@ -108,15 +108,15 @@ pub async fn advance_clock_by_ts(context: &mut ProgramTestContext, ts: i64) {
 
 pub mod assert_custom_on_chain_error {
     use super::*;
-    use mplx_staking_states::error::VsrError;
+    use mplx_staking_states::error::MplStakingError;
     use std::fmt::Debug;
 
     pub trait AssertCustomOnChainErr {
-        fn assert_on_chain_err(self, expected_err: VsrError);
+        fn assert_on_chain_err(self, expected_err: MplStakingError);
     }
 
     impl<T: Debug> AssertCustomOnChainErr for Result<T, BanksClientError> {
-        fn assert_on_chain_err(self, expected_err: VsrError) {
+        fn assert_on_chain_err(self, expected_err: MplStakingError) {
             assert!(self.is_err());
             match self.unwrap_err() {
                 BanksClientError::TransactionError(TransactionError::InstructionError(

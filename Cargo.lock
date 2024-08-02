@@ -1978,6 +1978,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "mpl-staking"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "base64 0.13.0",
+ "bytemuck",
+ "env_logger",
+ "log",
+ "mplx-staking-states",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "spl-associated-token-account",
+ "spl-governance",
+ "spl-governance-addin-api",
+ "spl-token",
+ "static_assertions",
+]
+
+[[package]]
 name = "mplx-staking-states"
 version = "0.0.1"
 dependencies = [
@@ -4715,27 +4736,6 @@ name = "void"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
-
-[[package]]
-name = "voter-stake-registry"
-version = "0.2.4"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "base64 0.13.0",
- "bytemuck",
- "env_logger",
- "log",
- "mplx-staking-states",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-associated-token-account",
- "spl-governance",
- "spl-governance-addin-api",
- "spl-token",
- "static_assertions",
-]
 
 [[package]]
 name = "walkdir"

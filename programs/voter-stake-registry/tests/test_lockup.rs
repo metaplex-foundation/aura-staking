@@ -1,7 +1,7 @@
 use anchor_spl::token::TokenAccount;
 use assert_custom_on_chain_error::AssertCustomOnChainErr;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{LockupKind, LockupPeriod},
 };
 use program_test::*;
@@ -154,7 +154,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             &context.rewards.program_id,
         )
         .await
-        .assert_on_chain_err(VsrError::DepositStillLocked);
+        .assert_on_chain_err(MplStakingError::DepositStillLocked);
 
     context
         .addin
@@ -168,7 +168,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             10000,
         )
         .await
-        .assert_on_chain_err(VsrError::UnlockMustBeCalledFirst);
+        .assert_on_chain_err(MplStakingError::UnlockMustBeCalledFirst);
 
     Ok(())
 }
@@ -338,7 +338,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             10000,
         )
         .await
-        .assert_on_chain_err(VsrError::InvalidTimestampArguments);
+        .assert_on_chain_err(MplStakingError::InvalidTimestampArguments);
 
     Ok(())
 }

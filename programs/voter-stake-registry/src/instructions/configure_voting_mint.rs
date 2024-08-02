@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{Registrar, VotingMintConfig},
 };
 
@@ -43,7 +43,7 @@ pub fn configure_voting_mint(
     require_gt!(
         registrar.voting_mints.len(),
         idx,
-        VsrError::OutOfBoundsVotingMintConfigIndex
+        MplStakingError::OutOfBoundsVotingMintConfigIndex
     );
 
     // Either it's reconfiguring an existing mint with the correct index,
@@ -52,11 +52,11 @@ pub fn configure_voting_mint(
         Ok(existing_idx) => require_eq!(
             existing_idx,
             idx,
-            VsrError::VotingMintConfiguredWithDifferentIndex
+            MplStakingError::VotingMintConfiguredWithDifferentIndex
         ),
         Err(_) => require!(
             !registrar.voting_mints[idx].in_use(),
-            VsrError::VotingMintConfigIndexAlreadyInUse
+            MplStakingError::VotingMintConfigIndexAlreadyInUse
         ),
     };
 

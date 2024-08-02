@@ -113,9 +113,9 @@ impl TestContext {
         }));
 
         let mut test = ProgramTest::new(
-            "voter_stake_registry",
-            voter_stake_registry::id(),
-            processor!(voter_stake_registry::entry),
+            "mpl_staking",
+            mpl_staking::id(),
+            processor!(mpl_staking::entry),
         );
         // intentionally set to half the limit, to catch potential problems early
         test.set_compute_max_units(120000);
@@ -235,7 +235,7 @@ impl TestContext {
             },
             addin: AddinCookie {
                 solana: solana.clone(),
-                program_id: voter_stake_registry::id(),
+                program_id: mpl_staking::id(),
                 time_offset: RefCell::new(0),
             },
             rewards: RewardsCookie {

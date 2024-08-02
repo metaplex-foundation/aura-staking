@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount, Transfer};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{Registrar, Voter},
     voter_seeds,
 };
@@ -62,7 +62,7 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
         let voter = ctx.accounts.voter.load()?;
 
         let any_locked = voter.deposits.iter().any(|d| d.amount_locked() > 0);
-        require!(!any_locked, VsrError::DepositStillLocked);
+        require!(!any_locked, MplStakingError::DepositStillLocked);
 
         let active_deposit_entries = voter.deposits.iter().filter(|d| d.is_used).count();
         require_eq!(ctx.remaining_accounts.len(), active_deposit_entries);
@@ -82,10 +82,10 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
             require_keys_eq!(
                 token.owner,
                 ctx.accounts.voter.key(),
-                VsrError::InvalidAuthority
+                MplStakingError::InvalidAuthority
             );
             require_keys_eq!(token.mint, *mint);
-            require_eq!(token.amount, 0, VsrError::VaultTokenNonZero);
+            require_eq!(token.amount, 0, MplStakingError::VaultTokenNonZero);
 
             // transfer to target_account
             let cpi_transfer_accounts = Transfer {

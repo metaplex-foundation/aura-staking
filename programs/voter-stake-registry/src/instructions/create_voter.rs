@@ -1,7 +1,7 @@
 use crate::{cpi_instructions, voter::VoterWeightRecord};
 use anchor_lang::{prelude::*, solana_program::sysvar::instructions as tx_instructions};
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{Registrar, Voter},
 };
 use std::mem::size_of;
@@ -85,7 +85,7 @@ pub fn create_voter(
         require_keys_eq!(
             current_ixn.program_id,
             *ctx.program_id,
-            VsrError::ForbiddenCpi
+            MplStakingError::ForbiddenCpi
         );
     }
 

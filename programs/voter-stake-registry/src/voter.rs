@@ -1,6 +1,6 @@
 use crate::vote_weight_record;
 use anchor_lang::prelude::*;
-use mplx_staking_states::{error::VsrError, state::Registrar};
+use mplx_staking_states::{error::MplStakingError, state::Registrar};
 use spl_governance::state::token_owner_record;
 
 pub fn load_token_owner_record(
@@ -17,7 +17,7 @@ pub fn load_token_owner_record(
     require_keys_eq!(
         record.governing_token_owner,
         *voter_authority,
-        VsrError::InvalidTokenOwnerRecord
+        MplStakingError::InvalidTokenOwnerRecord
     );
     Ok(record)
 }

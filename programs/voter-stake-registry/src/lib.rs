@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use instructions::*;
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{
         lockup::{LockupKind, LockupPeriod},
         DepositEntry, Registrar, Voter,
@@ -61,7 +61,7 @@ declare_id!("9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8");
 /// Note that the above also implies that the `max_vote_weight` must fit into
 /// a u64.
 #[program]
-pub mod voter_stake_registry {
+pub mod mpl_staking {
     use super::*;
 
     pub fn create_registrar(
@@ -230,7 +230,7 @@ impl Stake<'_> {
         require_eq!(
             deposit_entry.delegate,
             *self.delegate.to_account_info().key,
-            VsrError::InvalidDelegate
+            MplStakingError::InvalidDelegate
         );
 
         let (reward_pool, _) = find_reward_pool_address(
@@ -245,7 +245,7 @@ impl Stake<'_> {
         require_eq!(
             calculated_delegate_mining,
             self.delegate_mining.to_account_info().key(),
-            VsrError::InvalidMining
+            MplStakingError::InvalidMining
         );
 
         Ok(())

@@ -5,7 +5,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{DepositEntry, Lockup, LockupKind, LockupPeriod, Registrar, Voter},
 };
 
@@ -70,7 +70,7 @@ pub fn create_deposit_entry(
             .fold(0, |acc, d| acc + d.weighted_stake(curr_ts));
         require!(
             delegate_voter_weighted_stake >= Voter::MIN_OWN_WEIGHTED_STAKE,
-            VsrError::InsufficientUnlockedTokens
+            MplStakingError::InsufficientUnlockedTokens
         );
 
         delegate_voter.voter_authority.key()
@@ -84,7 +84,7 @@ pub fn create_deposit_entry(
     if period == LockupPeriod::None && kind == LockupKind::None {
         require!(
             delegate == voter.voter_authority.key(),
-            VsrError::InvalidDelegate
+            MplStakingError::InvalidDelegate
         );
     }
 
@@ -95,10 +95,10 @@ pub fn create_deposit_entry(
     require_gt!(
         voter.deposits.len(),
         deposit_entry_index as usize,
-        VsrError::OutOfBoundsDepositEntryIndex
+        MplStakingError::OutOfBoundsDepositEntryIndex
     );
     let d_entry = &mut voter.deposits[deposit_entry_index as usize];
-    require!(!d_entry.is_used, VsrError::UnusedDepositEntryIndex);
+    require!(!d_entry.is_used, MplStakingError::UnusedDepositEntryIndex);
 
     let start_ts = clock_unix_timestamp();
     *d_entry = DepositEntry::default();

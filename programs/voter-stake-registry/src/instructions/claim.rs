@@ -1,7 +1,7 @@
 use crate::{borsh::BorshDeserialize, cpi_instructions};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
-use mplx_staking_states::error::VsrError;
+use mplx_staking_states::error::MplStakingError;
 use solana_program::program::get_return_data;
 use std::borrow::Borrow;
 
@@ -86,6 +86,6 @@ pub fn claim(
         msg!("Rewards are clamed {:?}", claimed_rewards);
         Ok(claimed_rewards)
     } else {
-        Err(VsrError::CpiReturnDataIsAbsent.into())
+        Err(MplStakingError::CpiReturnDataIsAbsent.into())
     }
 }

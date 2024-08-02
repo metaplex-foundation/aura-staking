@@ -2,7 +2,7 @@ use crate::clock_unix_timestamp;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
 use mplx_staking_states::{
-    error::VsrError,
+    error::MplStakingError,
     state::{LockupKind, LockupPeriod, Registrar, Voter},
 };
 
@@ -70,7 +70,7 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
         d_entry.lockup.kind == LockupKind::None
             && d_entry.lockup.period == LockupPeriod::None
             && d_entry.is_used,
-        VsrError::DepositingIsForbidded,
+        MplStakingError::DepositingIsForbidded,
     );
 
     // Get the exchange rate entry associated with this deposit.
@@ -78,7 +78,7 @@ pub fn deposit(ctx: Context<Deposit>, deposit_entry_index: u8, amount: u64) -> R
     require_eq!(
         mint_idx,
         d_entry.voting_mint_config_idx as usize,
-        VsrError::InvalidMint
+        MplStakingError::InvalidMint
     );
 
     // Deposit tokens into the vault and increase the lockup amount too.

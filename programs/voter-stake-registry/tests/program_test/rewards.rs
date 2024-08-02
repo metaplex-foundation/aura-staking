@@ -11,7 +11,7 @@ use solana_sdk::{
     system_program,
 };
 use std::rc::Rc;
-use voter_stake_registry::cpi_instructions::RewardsInstruction;
+use mpl_staking::cpi_instructions::RewardsInstruction;
 
 pub struct RewardsCookie {
     pub solana: Rc<SolanaCookie>,
