@@ -1,12 +1,14 @@
 use crate::*;
-use anchor_lang::Key;
 use mplx_staking_states::state::Voter;
 use solana_sdk::{
     instruction::Instruction,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
+    system_instruction::create_account,
 };
 use std::{cell::RefCell, rc::Rc};
+
+pub const WRAPPED_POOL_SIZE: usize = 64480;
 
 #[derive(Clone)]
 pub struct AddinCookie {
@@ -18,6 +20,7 @@ pub struct AddinCookie {
 pub struct RegistrarCookie {
     pub address: Pubkey,
     pub authority: Pubkey,
+    pub reward_pool: Pubkey,
     pub mint: MintCookie,
     pub registrar_bump: u8,
     pub realm_pubkey: Pubkey,
@@ -53,18 +56,16 @@ impl AddinCookie {
             deposit_entry_index,
         });
 
-        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
-            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+        let (deposit_mining, _) = find_deposit_mining_addr(
             rewards_program,
+            &voter.authority.pubkey(),
+            &registrar.reward_pool,
         );
-
-        let (deposit_mining, _) =
-            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), &reward_pool);
 
         let (new_delegate_mining, _) = find_deposit_mining_addr(
             rewards_program,
             &delegate_voter.authority.pubkey(),
-            &reward_pool,
+            &registrar.reward_pool,
         );
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
@@ -75,7 +76,7 @@ impl AddinCookie {
                 delegate_voter: delegate_voter.address,
                 old_delegate_mining: *old_delegate_mining,
                 new_delegate_mining,
-                reward_pool,
+                reward_pool: registrar.reward_pool,
                 deposit_mining,
                 rewards_program: *rewards_program,
             },
@@ -104,6 +105,18 @@ impl AddinCookie {
     ) -> (RegistrarCookie, Pubkey) {
         let community_token_mint = realm.community_token_mint.pubkey.unwrap();
 
+        let rent = self.solana.rent;
+        let lamports = rent.minimum_balance(WRAPPED_POOL_SIZE);
+        let space = WRAPPED_POOL_SIZE as u64;
+        let reward_pool = Keypair::new();
+        let create_reward_pool_ix = create_account(
+            &payer.pubkey(),
+            &reward_pool.pubkey(),
+            lamports,
+            space,
+            rewards_program,
+        );
+
         let (registrar, registrar_bump) = Pubkey::find_program_address(
             &[
                 &realm.realm.to_bytes(),
@@ -119,15 +132,10 @@ impl AddinCookie {
             distribution_authority: *distribution_authority,
         });
 
-        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
-            &["reward_pool".as_bytes(), &registrar.key().to_bytes()],
-            rewards_program,
-        );
-
         let (reward_vault, _reward_vault_bump) = Pubkey::find_program_address(
             &[
                 "vault".as_bytes(),
-                &reward_pool.key().to_bytes(),
+                &reward_pool.pubkey().to_bytes(),
                 &community_token_mint.to_bytes(),
             ],
             rewards_program,
@@ -143,7 +151,7 @@ impl AddinCookie {
                 payer: payer.pubkey(),
                 system_program: solana_sdk::system_program::id(),
                 rent: solana_program::sysvar::rent::id(),
-                reward_pool,
+                reward_pool: reward_pool.pubkey(),
                 reward_vault,
                 token_program: spl_token::id(),
                 rewards_program: *rewards_program,
@@ -151,14 +159,17 @@ impl AddinCookie {
             None,
         );
 
-        let instructions = vec![Instruction {
-            program_id: self.program_id,
-            accounts,
-            data,
-        }];
+        let instructions = vec![
+            create_reward_pool_ix,
+            Instruction {
+                program_id: self.program_id,
+                accounts,
+                data,
+            },
+        ];
 
         self.solana
-            .process_transaction(&instructions, Some(&[payer, authority]))
+            .process_transaction(&instructions, Some(&[payer, authority, &reward_pool]))
             .await
             .unwrap();
 
@@ -168,10 +179,11 @@ impl AddinCookie {
             mint: realm.community_token_mint.clone(),
             registrar_bump,
             realm_pubkey: realm.realm,
+            reward_pool: reward_pool.pubkey(),
             realm_governing_token_mint_pubkey: community_token_mint,
         };
 
-        (registrar_cookie, reward_pool)
+        (registrar_cookie, reward_pool.pubkey())
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -193,16 +205,14 @@ impl AddinCookie {
             amount,
         });
 
-        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
-            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+        let (deposit_mining, _) = find_deposit_mining_addr(
             rewards_program,
+            &voter.authority.pubkey(),
+            &registrar.reward_pool,
         );
 
-        let (deposit_mining, _) =
-            find_deposit_mining_addr(rewards_program, &voter.authority.pubkey(), &reward_pool);
-
         let (delegate_mining, _) =
-            find_deposit_mining_addr(rewards_program, &delegate, &reward_pool);
+            find_deposit_mining_addr(rewards_program, &delegate, &registrar.reward_pool);
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Stake {
@@ -211,7 +221,7 @@ impl AddinCookie {
                 voter_authority: voter.authority.pubkey(),
                 delegate,
                 delegate_mining,
-                reward_pool,
+                reward_pool: registrar.reward_pool,
                 deposit_mining,
                 rewards_program: *rewards_program,
             },
@@ -461,16 +471,14 @@ impl AddinCookie {
             additional_amount,
         });
 
-        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
-            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+        let (deposit_mining, _) = find_deposit_mining_addr(
             rewards_program,
+            &voter_authority.pubkey(),
+            &registrar.reward_pool,
         );
 
-        let (deposit_mining, _) =
-            find_deposit_mining_addr(rewards_program, &voter_authority.pubkey(), &reward_pool);
-
         let (delegate_mining, _) =
-            find_deposit_mining_addr(rewards_program, delegate, &reward_pool);
+            find_deposit_mining_addr(rewards_program, delegate, &registrar.reward_pool);
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Stake {
@@ -479,7 +487,7 @@ impl AddinCookie {
                 voter_authority: voter_authority.pubkey(),
                 delegate: *delegate,
                 delegate_mining,
-                reward_pool,
+                reward_pool: registrar.reward_pool,
                 deposit_mining,
                 rewards_program: *rewards_program,
             },
@@ -598,13 +606,11 @@ impl AddinCookie {
     ) -> std::result::Result<(), BanksClientError> {
         let vault = voter.vault_address(voting_mint);
 
-        let (reward_pool, _reward_pool_bump) = Pubkey::find_program_address(
-            &["reward_pool".as_bytes(), &registrar.address.to_bytes()],
+        let (deposit_mining, _) = find_deposit_mining_addr(
             rewards_program,
+            &voter_authority.pubkey(),
+            &registrar.reward_pool,
         );
-
-        let (deposit_mining, _) =
-            find_deposit_mining_addr(rewards_program, &voter_authority.pubkey(), &reward_pool);
 
         let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::CloseVoter {});
 
@@ -614,7 +620,7 @@ impl AddinCookie {
                 voter: voter.address,
                 voter_authority: voter_authority.pubkey(),
                 deposit_mining,
-                reward_pool,
+                reward_pool: registrar.reward_pool,
                 sol_destination: voter_authority.pubkey(),
                 token_program: spl_token::id(),
                 rewards_program: *rewards_program,

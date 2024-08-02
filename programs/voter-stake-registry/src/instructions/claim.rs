@@ -1,14 +1,16 @@
 use crate::{borsh::BorshDeserialize, cpi_instructions};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
-use mplx_staking_states::error::MplStakingError;
+use mplx_staking_states::{error::MplStakingError, state::Registrar};
 use solana_program::program::get_return_data;
 use std::borrow::Borrow;
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority[aka registrar in our case]], rewards_program)
+    /// CHECK:
+    /// Ownership of the account will be checked in the rewards contract
+    /// It's the core account for the rewards contract, which will
+    /// keep track of all rewards and staking logic.
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: Rewards mint addr will be checked in the rewards contract
@@ -30,7 +32,7 @@ pub struct Claim<'info> {
 
     /// CHECK: Registrar plays the role of deposit_authority on the Rewards Contract,
     /// therefore their PDA that should sign the CPI call
-    pub registrar: UncheckedAccount<'info>,
+    pub registrar: AccountLoader<'info, Registrar>,
 
     #[account(mut)]
     pub user_reward_token_account: Account<'info, TokenAccount>,
@@ -52,6 +54,13 @@ pub fn claim(
     realm_governing_mint_pubkey: Pubkey,
     realm_pubkey: Pubkey,
 ) -> Result<u64> {
+    let registrar = ctx.accounts.registrar.load()?;
+
+    require!(
+        registrar.reward_pool == ctx.accounts.reward_pool.key(),
+        MplStakingError::InvalidRewardPool
+    );
+
     let rewards_program = ctx.accounts.rewards_program.to_account_info();
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let rewards_mint = ctx.accounts.reward_mint.to_account_info();

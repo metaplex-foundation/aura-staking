@@ -10,14 +10,14 @@ pub struct Registrar {
     pub realm: Pubkey,
     pub realm_governing_token_mint: Pubkey,
     pub realm_authority: Pubkey,
-
+    pub reward_pool: Pubkey,
     /// Storage for voting mints and their configuration.
     /// The length should be adjusted for one's use case.
     pub voting_mints: [VotingMintConfig; 2],
     pub bump: u8,
     pub padding: [u8; 7],
 }
-const_assert!(std::mem::size_of::<Registrar>() == 4 * 32 + 2 * 64 + 1 + 7);
+const_assert!(std::mem::size_of::<Registrar>() == 5 * 32 + 2 * 64 + 1 + 7);
 const_assert!(std::mem::size_of::<Registrar>() % 8 == 0);
 
 pub const REGISTRAR_DISCRIMINATOR: [u8; 8] = [193, 202, 205, 51, 78, 168, 150, 128];

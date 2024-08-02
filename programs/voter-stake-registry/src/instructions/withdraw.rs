@@ -92,6 +92,7 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
 
     // Load the accounts.
     let registrar = &ctx.accounts.registrar.load()?;
+
     let voter = &mut ctx.accounts.voter.load_mut()?;
 
     // Get the exchange rate for the token being withdrawn.

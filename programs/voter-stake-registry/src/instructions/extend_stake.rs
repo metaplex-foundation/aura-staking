@@ -19,11 +19,15 @@ pub fn extend_stake(
     new_lockup_period: LockupPeriod,
     additional_amount: u64,
 ) -> Result<()> {
-    let registrar = &ctx.accounts.registrar.load()?;
+    let registrar = ctx.accounts.registrar.load()?;
+
+    require!(
+        registrar.reward_pool == ctx.accounts.reward_pool.key(),
+        MplStakingError::InvalidRewardPool
+    );
+
     let curr_ts = clock_unix_timestamp();
-
     let voter = &mut ctx.accounts.voter.load_mut()?;
-
     let source = voter.active_deposit_mut(source_deposit_entry_index)?;
     let source_mint_idx = source.voting_mint_config_idx;
     let source_available_tokens = source.amount_unlocked();

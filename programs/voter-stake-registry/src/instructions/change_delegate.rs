@@ -1,6 +1,4 @@
-use crate::{
-    clock_unix_timestamp, cpi_instructions, find_mining_address, find_reward_pool_address,
-};
+use crate::{clock_unix_timestamp, cpi_instructions, find_mining_address};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{
     error::MplStakingError,
@@ -40,9 +38,10 @@ pub struct ChangeDelegate<'info> {
     #[account(mut)]
     pub new_delegate_mining: UncheckedAccount<'info>,
 
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
-    /// reward_program)
+    /// CHECK:
+    /// Ownership of the account will be checked in the rewards contract
+    /// It's the core account for the rewards contract, which will
+    /// keep track of all rewards and staking logic.
     #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
 
@@ -68,6 +67,11 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     let voter_authority = voter.voter_authority;
     let target = voter.active_deposit_mut(deposit_entry_index)?;
     let curr_ts = clock_unix_timestamp();
+
+    require!(
+        registrar.reward_pool == ctx.accounts.reward_pool.key(),
+        MplStakingError::InvalidRewardPool
+    );
 
     let delegate_last_update_diff = curr_ts
         .checked_sub(target.delegate_last_update_ts)
@@ -101,14 +105,10 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
             MplStakingError::InsufficientWeightedStake
         );
 
-        let (reward_pool, _) = find_reward_pool_address(
-            &ctx.accounts.rewards_program.key(),
-            &ctx.accounts.registrar.key(),
-        );
         let (delegate_mining, _) = find_mining_address(
             &ctx.accounts.rewards_program.key(),
             &delegate_voter.voter_authority,
-            &reward_pool,
+            &ctx.accounts.reward_pool.key(),
         );
 
         require!(

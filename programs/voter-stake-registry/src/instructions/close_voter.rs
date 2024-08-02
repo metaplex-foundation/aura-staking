@@ -36,8 +36,10 @@ pub struct CloseVoter<'info> {
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority[aka registrar in our case]], rewards_program)
+    /// CHECK:
+    /// Ownership of the account will be checked in the rewards contract
+    /// It's the core account for the rewards contract, which will
+    /// keep track of all rewards and staking logic.
     pub reward_pool: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -58,6 +60,12 @@ pub fn close_voter<'key, 'accounts, 'remaining, 'info>(
     ctx: Context<'key, 'accounts, 'remaining, 'info, CloseVoter<'info>>,
 ) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
+
+    require!(
+        registrar.reward_pool == ctx.accounts.reward_pool.key(),
+        MplStakingError::InvalidRewardPool
+    );
+
     {
         let voter = ctx.accounts.voter.load()?;
 

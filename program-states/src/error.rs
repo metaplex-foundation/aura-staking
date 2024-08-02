@@ -104,4 +104,7 @@ pub enum MplStakingError {
     // 6033 / 0x1791
     #[msg("Rewards: Cannot change delegate to the same delegate")]
     SameDelegate,
+    // 6034 / 0x1792
+    #[msg("Rewards: Invalid reward pool account")]
+    InvalidRewardPool,
 }
