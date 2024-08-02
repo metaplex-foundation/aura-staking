@@ -23,7 +23,11 @@ pub struct CloseDepositEntry<'info> {
 pub fn close_deposit_entry(ctx: Context<CloseDepositEntry>, deposit_entry_index: u8) -> Result<()> {
     let voter = &mut ctx.accounts.voter.load_mut()?;
     let d = voter.active_deposit_mut(deposit_entry_index)?;
-    require_eq!(d.amount_deposited_native, 0, MplStakingError::VotingTokenNonZero);
+    require_eq!(
+        d.amount_deposited_native,
+        0,
+        MplStakingError::VotingTokenNonZero
+    );
 
     *d = DepositEntry::default();
     d.is_used = false;
