@@ -82,7 +82,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
         MplStakingError::DelegateUpdateIsTooSoon
     );
 
-    if &ctx.accounts.voter.key() == &ctx.accounts.delegate_voter.key() {
+    if ctx.accounts.voter.key() == ctx.accounts.delegate_voter.key() {
         require!(
             target.delegate != voter_authority,
             MplStakingError::SameDelegate
@@ -91,7 +91,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     } else {
         let delegate_voter = &ctx.accounts.delegate_voter.load()?;
         require!(
-            &ctx.accounts.voter.key() != &ctx.accounts.delegate_voter.key()
+            ctx.accounts.voter.key() != ctx.accounts.delegate_voter.key()
                 && delegate_voter.voter_authority != target.delegate,
             MplStakingError::SameDelegate
         );
