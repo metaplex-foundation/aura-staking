@@ -1058,14 +1058,14 @@ export type MplStaking = {
             "name": "InitializePool",
             "fields": [
               {
-                "name": "fill_authority",
+                "name": "fillAuthority",
                 "docs": [
                   "Account can fill the reward vault"
                 ],
                 "type": "publicKey"
               },
               {
-                "name": "distribution_authority",
+                "name": "distributionAuthority",
                 "docs": [
                   "Account can distribute rewards for stakers"
                 ],
@@ -1084,7 +1084,7 @@ export type MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "distribution_ends_at",
+                "name": "distributionEndsAt",
                 "docs": [
                   "Rewards distribution ends at given date"
                 ],
@@ -1096,7 +1096,7 @@ export type MplStaking = {
             "name": "InitializeMining",
             "fields": [
               {
-                "name": "mining_owner",
+                "name": "miningOwner",
                 "docs": [
                   "Represent the end-user, owner of the mining"
                 ],
@@ -1115,7 +1115,7 @@ export type MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "lockup_period",
+                "name": "lockupPeriod",
                 "docs": [
                   "Lockup Period"
                 ],
@@ -1158,7 +1158,7 @@ export type MplStaking = {
             "name": "ExtendStake",
             "fields": [
               {
-                "name": "old_lockup_period",
+                "name": "oldLockupPeriod",
                 "docs": [
                   "Lockup period before restaking. Actually it's only needed",
                   "for Flex to AnyPeriod edge case"
@@ -1168,7 +1168,7 @@ export type MplStaking = {
                 }
               },
               {
-                "name": "new_lockup_period",
+                "name": "newLockupPeriod",
                 "docs": [
                   "Requested lockup period for restaking"
                 ],
@@ -1177,14 +1177,14 @@ export type MplStaking = {
                 }
               },
               {
-                "name": "deposit_start_ts",
+                "name": "depositStartTs",
                 "docs": [
                   "Deposit start_ts"
                 ],
                 "type": "u64"
               },
               {
-                "name": "base_amount",
+                "name": "baseAmount",
                 "docs": [
                   "Amount of tokens to be restaked, this",
                   "number cannot be decreased. It reflects the number of staked tokens",
@@ -1193,7 +1193,7 @@ export type MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "additional_amount",
+                "name": "additionalAmount",
                 "docs": [
                   "In case user wants to increase it's staked number of tokens,",
                   "the addition amount might be provided"
@@ -1201,7 +1201,7 @@ export type MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "mining_owner",
+                "name": "miningOwner",
                 "docs": [
                   "The wallet who owns the mining account"
                 ],
@@ -2349,14 +2349,14 @@ export const IDL: MplStaking = {
             "name": "InitializePool",
             "fields": [
               {
-                "name": "fill_authority",
+                "name": "fillAuthority",
                 "docs": [
                   "Account can fill the reward vault"
                 ],
                 "type": "publicKey"
               },
               {
-                "name": "distribution_authority",
+                "name": "distributionAuthority",
                 "docs": [
                   "Account can distribute rewards for stakers"
                 ],
@@ -2375,7 +2375,7 @@ export const IDL: MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "distribution_ends_at",
+                "name": "distributionEndsAt",
                 "docs": [
                   "Rewards distribution ends at given date"
                 ],
@@ -2387,7 +2387,7 @@ export const IDL: MplStaking = {
             "name": "InitializeMining",
             "fields": [
               {
-                "name": "mining_owner",
+                "name": "miningOwner",
                 "docs": [
                   "Represent the end-user, owner of the mining"
                 ],
@@ -2406,7 +2406,7 @@ export const IDL: MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "lockup_period",
+                "name": "lockupPeriod",
                 "docs": [
                   "Lockup Period"
                 ],
@@ -2449,7 +2449,7 @@ export const IDL: MplStaking = {
             "name": "ExtendStake",
             "fields": [
               {
-                "name": "old_lockup_period",
+                "name": "oldLockupPeriod",
                 "docs": [
                   "Lockup period before restaking. Actually it's only needed",
                   "for Flex to AnyPeriod edge case"
@@ -2459,7 +2459,7 @@ export const IDL: MplStaking = {
                 }
               },
               {
-                "name": "new_lockup_period",
+                "name": "newLockupPeriod",
                 "docs": [
                   "Requested lockup period for restaking"
                 ],
@@ -2468,14 +2468,14 @@ export const IDL: MplStaking = {
                 }
               },
               {
-                "name": "deposit_start_ts",
+                "name": "depositStartTs",
                 "docs": [
                   "Deposit start_ts"
                 ],
                 "type": "u64"
               },
               {
-                "name": "base_amount",
+                "name": "baseAmount",
                 "docs": [
                   "Amount of tokens to be restaked, this",
                   "number cannot be decreased. It reflects the number of staked tokens",
@@ -2484,7 +2484,7 @@ export const IDL: MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "additional_amount",
+                "name": "additionalAmount",
                 "docs": [
                   "In case user wants to increase it's staked number of tokens,",
                   "the addition amount might be provided"
@@ -2492,7 +2492,7 @@ export const IDL: MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "mining_owner",
+                "name": "miningOwner",
                 "docs": [
                   "The wallet who owns the mining account"
                 ],

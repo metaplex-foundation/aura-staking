@@ -1,10 +1,10 @@
 use crate::{clock_unix_timestamp, cpi_instructions, Stake};
+use crate::{error::MplStakingError, state::LockupKind};
 use anchor_lang::prelude::*;
-use mplx_staking_states::{error::MplStakingError, state::LockupKind};
 
 /// Transfers unlocked tokens from the source deposit entry to the target deposit entry.
 ///
-/// Transfers token from one DepositEntry that is not LockupKind::None to another that is
+/// Transfers token from one DepositEntry trhat is not LockupKind::None to another that is
 /// LockupKind::Constant. In terms of business logic that means we want to deposit some tokens on
 /// DAO, then we want to lock them up in order to receice rewards
 pub fn stake(
