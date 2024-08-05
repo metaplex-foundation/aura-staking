@@ -1364,14 +1364,14 @@ export type MplStaking = {
             "name": "InitializePool",
             "fields": [
               {
-                "name": "fillAuthority",
+                "name": "fill_authority",
                 "docs": [
                   "Account can fill the reward vault"
                 ],
                 "type": "publicKey"
               },
               {
-                "name": "distributionAuthority",
+                "name": "distribution_authority",
                 "docs": [
                   "Account can distribute rewards for stakers"
                 ],
@@ -1390,7 +1390,7 @@ export type MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "distributionEndsAt",
+                "name": "distribution_ends_at",
                 "docs": [
                   "Rewards distribution ends at given date"
                 ],
@@ -1402,7 +1402,7 @@ export type MplStaking = {
             "name": "InitializeMining",
             "fields": [
               {
-                "name": "miningOwner",
+                "name": "mining_owner",
                 "docs": [
                   "Represent the end-user, owner of the mining"
                 ],
@@ -1421,7 +1421,7 @@ export type MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "lockupPeriod",
+                "name": "lockup_period",
                 "docs": [
                   "Lockup Period"
                 ],
@@ -1464,7 +1464,7 @@ export type MplStaking = {
             "name": "ExtendStake",
             "fields": [
               {
-                "name": "oldLockupPeriod",
+                "name": "old_lockup_period",
                 "docs": [
                   "Lockup period before restaking. Actually it's only needed",
                   "for Flex to AnyPeriod edge case"
@@ -1474,7 +1474,7 @@ export type MplStaking = {
                 }
               },
               {
-                "name": "newLockupPeriod",
+                "name": "new_lockup_period",
                 "docs": [
                   "Requested lockup period for restaking"
                 ],
@@ -1483,14 +1483,14 @@ export type MplStaking = {
                 }
               },
               {
-                "name": "depositStartTs",
+                "name": "deposit_start_ts",
                 "docs": [
                   "Deposit start_ts"
                 ],
                 "type": "u64"
               },
               {
-                "name": "baseAmount",
+                "name": "base_amount",
                 "docs": [
                   "Amount of tokens to be restaked, this",
                   "number cannot be decreased. It reflects the number of staked tokens",
@@ -1499,7 +1499,7 @@ export type MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "additionalAmount",
+                "name": "additional_amount",
                 "docs": [
                   "In case user wants to increase it's staked number of tokens,",
                   "the addition amount might be provided"
@@ -1507,7 +1507,7 @@ export type MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "miningOwner",
+                "name": "mining_owner",
                 "docs": [
                   "The wallet who owns the mining account"
                 ],
@@ -1525,7 +1525,7 @@ export type MplStaking = {
             "name": "ChangeDelegate",
             "fields": [
               {
-                "name": "stakedAmount",
+                "name": "staked_amount",
                 "docs": [
                   "Amount of staked tokens"
                 ],
@@ -1791,6 +1791,16 @@ export type MplStaking = {
       "code": 6034,
       "name": "InvalidRewardPool",
       "msg": "Rewards: Invalid reward pool account"
+    },
+    {
+      "code": 6035,
+      "name": "RemainingAccountsIsEmpty",
+      "msg": "Rewards: To claim rewards user must interact with DAO. It's impossible to check with that number of remaining accounts"
+    },
+    {
+      "code": 6036,
+      "name": "NoDaoInteractionFound",
+      "msg": "Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found"
     }
   ]
 };
@@ -3161,14 +3171,14 @@ export const IDL: MplStaking = {
             "name": "InitializePool",
             "fields": [
               {
-                "name": "fillAuthority",
+                "name": "fill_authority",
                 "docs": [
                   "Account can fill the reward vault"
                 ],
                 "type": "publicKey"
               },
               {
-                "name": "distributionAuthority",
+                "name": "distribution_authority",
                 "docs": [
                   "Account can distribute rewards for stakers"
                 ],
@@ -3187,7 +3197,7 @@ export const IDL: MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "distributionEndsAt",
+                "name": "distribution_ends_at",
                 "docs": [
                   "Rewards distribution ends at given date"
                 ],
@@ -3199,7 +3209,7 @@ export const IDL: MplStaking = {
             "name": "InitializeMining",
             "fields": [
               {
-                "name": "miningOwner",
+                "name": "mining_owner",
                 "docs": [
                   "Represent the end-user, owner of the mining"
                 ],
@@ -3218,7 +3228,7 @@ export const IDL: MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "lockupPeriod",
+                "name": "lockup_period",
                 "docs": [
                   "Lockup Period"
                 ],
@@ -3261,7 +3271,7 @@ export const IDL: MplStaking = {
             "name": "ExtendStake",
             "fields": [
               {
-                "name": "oldLockupPeriod",
+                "name": "old_lockup_period",
                 "docs": [
                   "Lockup period before restaking. Actually it's only needed",
                   "for Flex to AnyPeriod edge case"
@@ -3271,7 +3281,7 @@ export const IDL: MplStaking = {
                 }
               },
               {
-                "name": "newLockupPeriod",
+                "name": "new_lockup_period",
                 "docs": [
                   "Requested lockup period for restaking"
                 ],
@@ -3280,14 +3290,14 @@ export const IDL: MplStaking = {
                 }
               },
               {
-                "name": "depositStartTs",
+                "name": "deposit_start_ts",
                 "docs": [
                   "Deposit start_ts"
                 ],
                 "type": "u64"
               },
               {
-                "name": "baseAmount",
+                "name": "base_amount",
                 "docs": [
                   "Amount of tokens to be restaked, this",
                   "number cannot be decreased. It reflects the number of staked tokens",
@@ -3296,7 +3306,7 @@ export const IDL: MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "additionalAmount",
+                "name": "additional_amount",
                 "docs": [
                   "In case user wants to increase it's staked number of tokens,",
                   "the addition amount might be provided"
@@ -3304,7 +3314,7 @@ export const IDL: MplStaking = {
                 "type": "u64"
               },
               {
-                "name": "miningOwner",
+                "name": "mining_owner",
                 "docs": [
                   "The wallet who owns the mining account"
                 ],
@@ -3322,7 +3332,7 @@ export const IDL: MplStaking = {
             "name": "ChangeDelegate",
             "fields": [
               {
-                "name": "stakedAmount",
+                "name": "staked_amount",
                 "docs": [
                   "Amount of staked tokens"
                 ],
@@ -3588,6 +3598,16 @@ export const IDL: MplStaking = {
       "code": 6034,
       "name": "InvalidRewardPool",
       "msg": "Rewards: Invalid reward pool account"
+    },
+    {
+      "code": 6035,
+      "name": "RemainingAccountsIsEmpty",
+      "msg": "Rewards: To claim rewards user must interact with DAO. It's impossible to check with that number of remaining accounts"
+    },
+    {
+      "code": 6036,
+      "name": "NoDaoInteractionFound",
+      "msg": "Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found"
     }
   ]
 };
