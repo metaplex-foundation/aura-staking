@@ -26,7 +26,7 @@ pub struct DepositEntry {
     pub _reserved0: [u8; 32],
     pub _reserved1: [u8; 6],
 }
-const_assert!(std::mem::size_of::<DepositEntry>() == 48 + 32 + 32 + 8 + 8 + 1 + 1 + 6);
+const_assert!(std::mem::size_of::<DepositEntry>() == 48 + 32 + 8 + 8 + 1 + 1 + 32 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {

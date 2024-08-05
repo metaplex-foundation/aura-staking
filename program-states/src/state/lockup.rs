@@ -29,7 +29,7 @@ pub struct Lockup {
 
     /// Type of lockup
     pub period: LockupPeriod,
-    /// Padding after period to align the struct size to 8 bytes
+    /// Reserved for future use
     pub _reserved0: [u8; 16],
     /// Padding after period to align the struct size to 8 bytes
     pub _reserved1: [u8; 5],
