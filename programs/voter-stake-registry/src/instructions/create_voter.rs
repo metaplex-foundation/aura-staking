@@ -48,9 +48,10 @@ pub struct CreateVoter<'info> {
     #[account(address = tx_instructions::ID)]
     pub instructions: UncheckedAccount<'info>,
 
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
-    /// reward_program)
+    /// CHECK:
+    /// Ownership of the account will be checked in the rewards contract
+    /// It's the core account for the rewards contract, which will
+    /// keep track of all rewards and staking logic.
     #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
 
@@ -96,7 +97,13 @@ pub fn create_voter(
     );
 
     // Load accounts.
-    let registrar = &ctx.accounts.registrar.load()?;
+    let registrar = ctx.accounts.registrar.load()?;
+
+    require!(
+        registrar.reward_pool == ctx.accounts.reward_pool.key(),
+        MplStakingError::InvalidRewardPool
+    );
+
     let voter_authority = ctx.accounts.voter_authority.key();
 
     let voter = &mut ctx.accounts.voter.load_init()?;

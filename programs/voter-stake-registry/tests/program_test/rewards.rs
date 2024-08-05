@@ -1,5 +1,6 @@
 use crate::SolanaCookie;
 use anchor_lang::{prelude::*, AnchorDeserialize};
+use mpl_staking::cpi_instructions::RewardsInstruction;
 use mplx_staking_states::state::LockupPeriod;
 use solana_program_test::*;
 use solana_sdk::{
@@ -11,7 +12,6 @@ use solana_sdk::{
     system_program,
 };
 use std::rc::Rc;
-use mpl_staking::cpi_instructions::RewardsInstruction;
 
 pub struct RewardsCookie {
     pub solana: Rc<SolanaCookie>,

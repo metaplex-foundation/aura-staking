@@ -207,9 +207,10 @@ pub struct Stake<'info> {
     #[account(mut)]
     pub delegate_mining: UncheckedAccount<'info>,
 
-    /// CHECK: Reward Pool PDA will be checked in the rewards contract
-    /// PDA(["reward_pool", deposit_authority <aka registrar in our case>, fill_authority],
-    /// reward_program)
+    /// CHECK:
+    /// Ownership of the account will be checked in the rewards contract
+    /// It's the core account for the rewards contract, which will
+    /// keep track of all rewards and staking logic.
     #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
 
@@ -233,14 +234,10 @@ impl Stake<'_> {
             MplStakingError::InvalidDelegate
         );
 
-        let (reward_pool, _) = find_reward_pool_address(
-            &self.rewards_program.to_account_info().key(),
-            &self.registrar.to_account_info().key(),
-        );
         let (calculated_delegate_mining, _) = find_mining_address(
             &self.rewards_program.to_account_info().key(),
             &self.delegate.to_account_info().key(),
-            &reward_pool,
+            &self.reward_pool.key(),
         );
         require_eq!(
             calculated_delegate_mining,

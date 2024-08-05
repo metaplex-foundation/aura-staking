@@ -13,7 +13,13 @@ pub fn stake(
     target_deposit_entry_index: u8,
     amount: u64,
 ) -> Result<()> {
-    let registrar = &ctx.accounts.registrar.load()?;
+    let registrar = ctx.accounts.registrar.load()?;
+
+    require!(
+        registrar.reward_pool == ctx.accounts.reward_pool.key(),
+        MplStakingError::InvalidRewardPool
+    );
+
     let voter = &mut ctx.accounts.voter.load_mut()?;
 
     let source = voter.active_deposit_mut(source_deposit_entry_index)?;

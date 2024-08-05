@@ -29,11 +29,12 @@ pub struct Lockup {
 
     /// Type of lockup
     pub period: LockupPeriod,
-
+    /// Reserved for future use
+    pub _reserved0: [u8; 16],
     /// Padding after period to align the struct size to 8 bytes
     pub _reserved1: [u8; 5],
 }
-const_assert!(std::mem::size_of::<Lockup>() == 3 * 8 + 1 + 1 + 1 + 5);
+const_assert!(std::mem::size_of::<Lockup>() == 3 * 8 + 1 + 1 + 1 + 16 + 5);
 const_assert!(std::mem::size_of::<Lockup>() % 8 == 0);
 
 impl Lockup {
@@ -57,6 +58,7 @@ impl Lockup {
             // 0 means cooldown hasn't been requested
             cooldown_ends_at: 0,
             cooldown_requested: false,
+            _reserved0: [0; 16],
             _reserved1: [0; 5],
         })
     }

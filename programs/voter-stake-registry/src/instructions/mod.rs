@@ -50,11 +50,3 @@ pub fn find_mining_address(
         program_id,
     )
 }
-
-/// Generates reward pool address
-pub fn find_reward_pool_address(program_id: &Pubkey, registrar: &Pubkey) -> (Pubkey, u8) {
-    Pubkey::find_program_address(
-        &["reward_pool".as_bytes(), &registrar.to_bytes()],
-        program_id,
-    )
-}

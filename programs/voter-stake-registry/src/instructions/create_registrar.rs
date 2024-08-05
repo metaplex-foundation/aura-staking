@@ -35,11 +35,10 @@ pub struct CreateRegistrar<'info> {
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 
-    /// CHECK: any address is allowed
-    /// Account that will be created via CPI to the rewards,
-    /// it's responsible for being a "root" for all entities
-    /// inside rewards contract
-    /// PDA(["reward_pool", deposit_authority[aka registrar in our case]], rewards_program)
+    /// CHECK:
+    /// Ownership of the account will be checked in the rewards contract
+    /// It's the core account for the rewards contract, which will
+    /// keep track of all rewards and staking logic.
     #[account(mut)]
     reward_pool: UncheckedAccount<'info>,
 
@@ -80,6 +79,7 @@ pub fn create_registrar(
         registrar.realm = ctx.accounts.realm.key();
         registrar.realm_governing_token_mint = ctx.accounts.realm_governing_token_mint.key();
         registrar.realm_authority = ctx.accounts.realm_authority.key();
+        registrar.reward_pool = ctx.accounts.reward_pool.key();
 
         // Verify that "realm_authority" is the expected authority on "realm"
         // and that the mint matches one of the realm mints too.
