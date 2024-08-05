@@ -1250,6 +1250,9 @@ export type MplStaking = {
           },
           {
             "name": "reserved0",
+            "docs": [
+              "Reserved for future use"
+            ],
             "type": {
               "array": [
                 "u8",
@@ -3009,6 +3012,9 @@ export const IDL: MplStaking = {
           },
           {
             "name": "reserved0",
+            "docs": [
+              "Reserved for future use"
+            ],
             "type": {
               "array": [
                 "u8",
