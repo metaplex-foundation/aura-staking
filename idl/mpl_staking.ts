@@ -1,6 +1,6 @@
-export type VoterStakeRegistry = {
-  "version": "0.2.4",
-  "name": "voter_stake_registry",
+export type MplStaking = {
+  "version": "0.1.0",
+  "name": "mpl_staking",
   "docs": [
     "# Introduction",
     "",
@@ -107,10 +107,9 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Account that will be created via CPI to the rewards,",
-            "it's responsible for being a \"root\" for all entities",
-            "inside rewards contract",
-            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -252,8 +251,9 @@ export type VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
-            "reward_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -306,6 +306,11 @@ export type VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "delegateVoter",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "payer",
           "isMut": true,
           "isSigner": true
@@ -347,10 +352,6 @@ export type VoterStakeRegistry = {
           "type": {
             "defined": "LockupPeriod"
           }
-        },
-        {
-          "name": "delegate",
-          "type": "publicKey"
         }
       ]
     },
@@ -534,14 +535,37 @@ export type VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "delegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards progra,",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)"
+          ]
+        },
+        {
           "name": "rewardPool",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
+          ]
         },
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
+          ]
         },
         {
           "name": "rewardsProgram",
@@ -588,7 +612,9 @@ export type VoterStakeRegistry = {
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -653,12 +679,27 @@ export type VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "delegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards progra,",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)"
+          ]
+        },
+        {
           "name": "rewardPool",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
-            "reward_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -710,12 +751,27 @@ export type VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "delegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards progra,",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)"
+          ]
+        },
+        {
           "name": "rewardPool",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
-            "reward_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -762,7 +818,9 @@ export type VoterStakeRegistry = {
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -832,6 +890,81 @@ export type VoterStakeRegistry = {
         }
       ],
       "returns": "u64"
+    },
+    {
+      "name": "changeDelegate",
+      "accounts": [
+        {
+          "name": "registrar",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "voter",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "voterAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "delegateVoter",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "oldDelegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards program",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)",
+            "Seeds derivation will be checked on the rewards contract"
+          ]
+        },
+        {
+          "name": "newDelegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards program",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)",
+            "Seeds derivation will be checked on the rewards contract"
+          ]
+        },
+        {
+          "name": "rewardPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
+          ]
+        },
+        {
+          "name": "depositMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
+          ]
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "depositEntryIndex",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -857,6 +990,10 @@ export type VoterStakeRegistry = {
           },
           {
             "name": "realmAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "rewardPool",
             "type": "publicKey"
           },
           {
@@ -1013,7 +1150,7 @@ export type VoterStakeRegistry = {
           {
             "name": "delegate",
             "docs": [
-              "Delegated staker"
+              "Delegated staker. It's an address of a Delegate."
             ],
             "type": "publicKey"
           },
@@ -1022,9 +1159,15 @@ export type VoterStakeRegistry = {
             "docs": [
               "Amount in deposited, in native currency. Withdraws of vested tokens",
               "directly reduce this amount.",
-              "",
               "This directly tracks the total amount added by the user. They may",
               "never withdraw more than this amount."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "delegateLastUpdateTs",
+            "docs": [
+              "The last time when the delegate was updated"
             ],
             "type": "u64"
           },
@@ -1035,6 +1178,15 @@ export type VoterStakeRegistry = {
           {
             "name": "isUsed",
             "type": "bool"
+          },
+          {
+            "name": "reserved0",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
           },
           {
             "name": "reserved1",
@@ -1094,6 +1246,15 @@ export type VoterStakeRegistry = {
             ],
             "type": {
               "defined": "LockupPeriod"
+            }
+          },
+          {
+            "name": "reserved0",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
             }
           },
           {
@@ -1304,6 +1465,18 @@ export type VoterStakeRegistry = {
           },
           {
             "name": "CloseMining"
+          },
+          {
+            "name": "ChangeDelegate",
+            "fields": [
+              {
+                "name": "stakedAmount",
+                "docs": [
+                  "Amount of staked tokens"
+                ],
+                "type": "u64"
+              }
+            ]
           }
         ]
       }
@@ -1550,13 +1723,43 @@ export type VoterStakeRegistry = {
       "code": 6028,
       "name": "ArithmeticOverflow",
       "msg": "Arithmetic operation has beed overflowed"
+    },
+    {
+      "code": 6029,
+      "name": "InsufficientWeightedStake",
+      "msg": "Rewards: Delegate must have at least 15_000_000 of own weighted stake"
+    },
+    {
+      "code": 6030,
+      "name": "InvalidDelegate",
+      "msg": "Rewards: Invalid delegate account"
+    },
+    {
+      "code": 6031,
+      "name": "InvalidMining",
+      "msg": "Rewards: Invalid mining account"
+    },
+    {
+      "code": 6032,
+      "name": "DelegateUpdateIsTooSoon",
+      "msg": "Rewards: Updating delegate is sooner than 5 days"
+    },
+    {
+      "code": 6033,
+      "name": "SameDelegate",
+      "msg": "Rewards: Cannot change delegate to the same delegate"
+    },
+    {
+      "code": 6034,
+      "name": "InvalidRewardPool",
+      "msg": "Rewards: Invalid reward pool account"
     }
   ]
 };
 
-export const IDL: VoterStakeRegistry = {
-  "version": "0.2.4",
-  "name": "voter_stake_registry",
+export const IDL: MplStaking = {
+  "version": "0.1.0",
+  "name": "mpl_staking",
   "docs": [
     "# Introduction",
     "",
@@ -1663,10 +1866,9 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Account that will be created via CPI to the rewards,",
-            "it's responsible for being a \"root\" for all entities",
-            "inside rewards contract",
-            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -1808,8 +2010,9 @@ export const IDL: VoterStakeRegistry = {
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
-            "reward_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -1862,6 +2065,11 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "delegateVoter",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "payer",
           "isMut": true,
           "isSigner": true
@@ -1903,10 +2111,6 @@ export const IDL: VoterStakeRegistry = {
           "type": {
             "defined": "LockupPeriod"
           }
-        },
-        {
-          "name": "delegate",
-          "type": "publicKey"
         }
       ]
     },
@@ -2090,14 +2294,37 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "delegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards progra,",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)"
+          ]
+        },
+        {
           "name": "rewardPool",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
+          ]
         },
         {
           "name": "depositMining",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
+          ]
         },
         {
           "name": "rewardsProgram",
@@ -2144,7 +2371,9 @@ export const IDL: VoterStakeRegistry = {
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -2209,12 +2438,27 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "delegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards progra,",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)"
+          ]
+        },
+        {
           "name": "rewardPool",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
-            "reward_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -2266,12 +2510,27 @@ export const IDL: VoterStakeRegistry = {
           "isSigner": true
         },
         {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "delegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards progra,",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)"
+          ]
+        },
+        {
           "name": "rewardPool",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority <aka registrar in our case>, fill_authority],",
-            "reward_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -2318,7 +2577,9 @@ export const IDL: VoterStakeRegistry = {
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "PDA([\"reward_pool\", deposit_authority[aka registrar in our case]], rewards_program)"
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
           ]
         },
         {
@@ -2388,6 +2649,81 @@ export const IDL: VoterStakeRegistry = {
         }
       ],
       "returns": "u64"
+    },
+    {
+      "name": "changeDelegate",
+      "accounts": [
+        {
+          "name": "registrar",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "voter",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "voterAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "delegateVoter",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "oldDelegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards program",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)",
+            "Seeds derivation will be checked on the rewards contract"
+          ]
+        },
+        {
+          "name": "newDelegateMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The address of the mining account on the rewards program",
+            "derived from PDA([\"mining\", delegate wallet addr, reward_pool], rewards_program)",
+            "Seeds derivation will be checked on the rewards contract"
+          ]
+        },
+        {
+          "name": "rewardPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Ownership of the account will be checked in the rewards contract",
+            "It's the core account for the rewards contract, which will",
+            "keep track of all rewards and staking logic."
+          ]
+        },
+        {
+          "name": "depositMining",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "PDA([\"mining\", mining owner <aka voter_authority in our case>, reward_pool],",
+            "reward_program)"
+          ]
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "depositEntryIndex",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -2413,6 +2749,10 @@ export const IDL: VoterStakeRegistry = {
           },
           {
             "name": "realmAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "rewardPool",
             "type": "publicKey"
           },
           {
@@ -2569,7 +2909,7 @@ export const IDL: VoterStakeRegistry = {
           {
             "name": "delegate",
             "docs": [
-              "Delegated staker"
+              "Delegated staker. It's an address of a Delegate."
             ],
             "type": "publicKey"
           },
@@ -2578,9 +2918,15 @@ export const IDL: VoterStakeRegistry = {
             "docs": [
               "Amount in deposited, in native currency. Withdraws of vested tokens",
               "directly reduce this amount.",
-              "",
               "This directly tracks the total amount added by the user. They may",
               "never withdraw more than this amount."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "delegateLastUpdateTs",
+            "docs": [
+              "The last time when the delegate was updated"
             ],
             "type": "u64"
           },
@@ -2591,6 +2937,15 @@ export const IDL: VoterStakeRegistry = {
           {
             "name": "isUsed",
             "type": "bool"
+          },
+          {
+            "name": "reserved0",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
           },
           {
             "name": "reserved1",
@@ -2650,6 +3005,15 @@ export const IDL: VoterStakeRegistry = {
             ],
             "type": {
               "defined": "LockupPeriod"
+            }
+          },
+          {
+            "name": "reserved0",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
             }
           },
           {
@@ -2860,6 +3224,18 @@ export const IDL: VoterStakeRegistry = {
           },
           {
             "name": "CloseMining"
+          },
+          {
+            "name": "ChangeDelegate",
+            "fields": [
+              {
+                "name": "stakedAmount",
+                "docs": [
+                  "Amount of staked tokens"
+                ],
+                "type": "u64"
+              }
+            ]
           }
         ]
       }
@@ -3106,6 +3482,36 @@ export const IDL: VoterStakeRegistry = {
       "code": 6028,
       "name": "ArithmeticOverflow",
       "msg": "Arithmetic operation has beed overflowed"
+    },
+    {
+      "code": 6029,
+      "name": "InsufficientWeightedStake",
+      "msg": "Rewards: Delegate must have at least 15_000_000 of own weighted stake"
+    },
+    {
+      "code": 6030,
+      "name": "InvalidDelegate",
+      "msg": "Rewards: Invalid delegate account"
+    },
+    {
+      "code": 6031,
+      "name": "InvalidMining",
+      "msg": "Rewards: Invalid mining account"
+    },
+    {
+      "code": 6032,
+      "name": "DelegateUpdateIsTooSoon",
+      "msg": "Rewards: Updating delegate is sooner than 5 days"
+    },
+    {
+      "code": 6033,
+      "name": "SameDelegate",
+      "msg": "Rewards: Cannot change delegate to the same delegate"
+    },
+    {
+      "code": 6034,
+      "name": "InvalidRewardPool",
+      "msg": "Rewards: Invalid reward pool account"
     }
   ]
 };
