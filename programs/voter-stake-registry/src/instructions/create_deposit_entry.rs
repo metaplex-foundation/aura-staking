@@ -101,13 +101,14 @@ pub fn create_deposit_entry(
     require!(!d_entry.is_used, MplStakingError::UnusedDepositEntryIndex);
 
     let start_ts = clock_unix_timestamp();
-    *d_entry = DepositEntry::default();
 
-    d_entry.delegate = delegate;
-    d_entry.is_used = true;
-    d_entry.voting_mint_config_idx = mint_idx as u8;
-    d_entry.amount_deposited_native = 0;
-    d_entry.lockup = Lockup::new(kind, start_ts, period)?;
+    *d_entry = DepositEntry {
+        delegate,
+        is_used: true,
+        voting_mint_config_idx: mint_idx as u8,
+        lockup: Lockup::new(kind, start_ts, period)?,
+        ..Default::default()
+    };
 
     Ok(())
 }
