@@ -56,9 +56,7 @@ pub struct CloseVoter<'info> {
 /// Closes the voter account, transfers all funds from token accounts and closes vaults.
 /// Only accounts with no remaining lockups can be closed.
 /// remaining_accounts: All voter vaults followed by target token accounts, in order.
-pub fn close_voter<'info>(
-    ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>,
-) -> Result<()> {
+pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
 
     require!(
