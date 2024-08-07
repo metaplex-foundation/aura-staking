@@ -4,11 +4,11 @@ use anchor_spl::token::{Token, TokenAccount};
 use mplx_staking_states::{error::MplStakingError, state::Registrar};
 use solana_program::program::get_return_data;
 use spl_governance::state::{
-    legacy::GovernanceV1, proposal::ProposalV2, realm::RealmV2, vote_record::VoteRecordV2,
+    governance::GovernanceV2, proposal::ProposalV2, realm::RealmV2, vote_record::VoteRecordV2,
 };
 use std::{borrow::Borrow, slice::Iter, str::FromStr};
 
-pub const DAO_PUBKEY: &str = "89wVNeyqqDaWKWtS4rbunYdsxxbe5V3VRx6g8GWNMTMt";
+pub const DAO_PUBKEY: &str = "some_dao_pubkey";
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
@@ -62,7 +62,7 @@ pub fn claim(
     let mut remaining_accounts_iter = ctx.remaining_accounts.iter();
 
     let (_, realm_addr) = deserialize::<RealmV2>(&mut remaining_accounts_iter)?;
-    let (governance, governance_addr) = deserialize::<GovernanceV1>(&mut remaining_accounts_iter)?;
+    let (governance, governance_addr) = deserialize::<GovernanceV2>(&mut remaining_accounts_iter)?;
     let (proposal, _) = deserialize::<ProposalV2>(&mut remaining_accounts_iter)?;
     let (vote_record, _) = deserialize::<VoteRecordV2>(&mut remaining_accounts_iter)?;
 
