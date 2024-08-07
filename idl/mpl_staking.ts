@@ -860,6 +860,30 @@ export type MplStaking = {
           ]
         },
         {
+          "name": "governance",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Can't be Account<'_, T> because doesn't implement AnchorDeserialize"
+          ]
+        },
+        {
+          "name": "proposal",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Can't be Account<'_, T> because doesn't implement AnchorDeserialize"
+          ]
+        },
+        {
+          "name": "voteRecord",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Can't be Account<'_, T> because doesn't implement AnchorDeserialize"
+          ]
+        },
+        {
           "name": "userRewardTokenAccount",
           "isMut": true,
           "isSigner": false
@@ -967,114 +991,6 @@ export type MplStaking = {
       ]
     }
   ],
-  "accounts": [
-    {
-      "name": "registrar",
-      "docs": [
-        "Instance of a voting rights distributor."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "governanceProgramId",
-            "type": "publicKey"
-          },
-          {
-            "name": "realm",
-            "type": "publicKey"
-          },
-          {
-            "name": "realmGoverningTokenMint",
-            "type": "publicKey"
-          },
-          {
-            "name": "realmAuthority",
-            "type": "publicKey"
-          },
-          {
-            "name": "rewardPool",
-            "type": "publicKey"
-          },
-          {
-            "name": "votingMints",
-            "docs": [
-              "Storage for voting mints and their configuration.",
-              "The length should be adjusted for one's use case."
-            ],
-            "type": {
-              "array": [
-                {
-                  "defined": "VotingMintConfig"
-                },
-                2
-              ]
-            }
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "voter",
-      "docs": [
-        "User account for minting voting rights."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "deposits",
-            "type": {
-              "array": [
-                {
-                  "defined": "DepositEntry"
-                },
-                32
-              ]
-            }
-          },
-          {
-            "name": "voterAuthority",
-            "type": "publicKey"
-          },
-          {
-            "name": "registrar",
-            "type": "publicKey"
-          },
-          {
-            "name": "voterBump",
-            "type": "u8"
-          },
-          {
-            "name": "voterWeightRecordBump",
-            "type": "u8"
-          },
-          {
-            "name": "reserved1",
-            "type": {
-              "array": [
-                "u8",
-                14
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ],
   "types": [
     {
       "name": "VestingInfo",
@@ -1129,176 +1045,6 @@ export type MplStaking = {
                 "defined": "VestingInfo"
               }
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "DepositEntry",
-      "docs": [
-        "Bookkeeping for a single deposit for a given mint and lockup schedule."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "lockup",
-            "type": {
-              "defined": "Lockup"
-            }
-          },
-          {
-            "name": "delegate",
-            "docs": [
-              "Delegated staker. It's an address of a Delegate."
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "amountDepositedNative",
-            "docs": [
-              "Amount in deposited, in native currency. Withdraws of vested tokens",
-              "directly reduce this amount.",
-              "This directly tracks the total amount added by the user. They may",
-              "never withdraw more than this amount."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "delegateLastUpdateTs",
-            "docs": [
-              "The last time when the delegate was updated"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "votingMintConfigIdx",
-            "type": "u8"
-          },
-          {
-            "name": "isUsed",
-            "type": "bool"
-          },
-          {
-            "name": "reserved0",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "reserved1",
-            "type": {
-              "array": [
-                "u8",
-                6
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Lockup",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "startTs",
-            "docs": [
-              "Start of the lockup."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "endTs",
-            "docs": [
-              "End of the lockup."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "cooldownEndsAt",
-            "docs": [
-              "End of the cooldown."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "cooldownRequested",
-            "type": "bool"
-          },
-          {
-            "name": "kind",
-            "docs": [
-              "Type of lockup."
-            ],
-            "type": {
-              "defined": "LockupKind"
-            }
-          },
-          {
-            "name": "period",
-            "docs": [
-              "Type of lockup"
-            ],
-            "type": {
-              "defined": "LockupPeriod"
-            }
-          },
-          {
-            "name": "reserved0",
-            "docs": [
-              "Reserved for future use"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
-            "name": "reserved1",
-            "docs": [
-              "Padding after period to align the struct size to 8 bytes"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                5
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "VotingMintConfig",
-      "docs": [
-        "Exchange rate for an asset that can be used to mint voting rights.",
-        "",
-        "See documentation of configure_voting_mint for details on how",
-        "native token amounts convert to vote weight."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "mint",
-            "docs": [
-              "Mint for this entry."
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "grantAuthority",
-            "docs": [
-              "The authority that is allowed to push grants into voters"
-            ],
-            "type": "publicKey"
           }
         ]
       }
@@ -1483,46 +1229,6 @@ export type MplStaking = {
           }
         ]
       }
-    },
-    {
-      "name": "LockupPeriod",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Test"
-          },
-          {
-            "name": "Flex"
-          },
-          {
-            "name": "ThreeMonths"
-          },
-          {
-            "name": "SixMonths"
-          },
-          {
-            "name": "OneYear"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockupKind",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Constant"
-          }
-        ]
-      }
     }
   ],
   "events": [
@@ -1579,193 +1285,6 @@ export type MplStaking = {
           "index": false
         }
       ]
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "VotingMintNotFound",
-      "msg": ""
-    },
-    {
-      "code": 6001,
-      "name": "VotingTokenNonZero",
-      "msg": ""
-    },
-    {
-      "code": 6002,
-      "name": "OutOfBoundsDepositEntryIndex",
-      "msg": ""
-    },
-    {
-      "code": 6003,
-      "name": "UnusedDepositEntryIndex",
-      "msg": ""
-    },
-    {
-      "code": 6004,
-      "name": "InsufficientUnlockedTokens",
-      "msg": ""
-    },
-    {
-      "code": 6005,
-      "name": "InvalidLockupPeriod",
-      "msg": ""
-    },
-    {
-      "code": 6006,
-      "name": "VotingMintConfigIndexAlreadyInUse",
-      "msg": ""
-    },
-    {
-      "code": 6007,
-      "name": "OutOfBoundsVotingMintConfigIndex",
-      "msg": ""
-    },
-    {
-      "code": 6008,
-      "name": "ForbiddenCpi",
-      "msg": ""
-    },
-    {
-      "code": 6009,
-      "name": "InvalidMint",
-      "msg": ""
-    },
-    {
-      "code": 6010,
-      "name": "DepositStillLocked",
-      "msg": ""
-    },
-    {
-      "code": 6011,
-      "name": "InvalidAuthority",
-      "msg": ""
-    },
-    {
-      "code": 6012,
-      "name": "InvalidTokenOwnerRecord",
-      "msg": ""
-    },
-    {
-      "code": 6013,
-      "name": "InvalidRealmAuthority",
-      "msg": ""
-    },
-    {
-      "code": 6014,
-      "name": "VoterWeightOverflow",
-      "msg": ""
-    },
-    {
-      "code": 6015,
-      "name": "LockupSaturationMustBePositive",
-      "msg": ""
-    },
-    {
-      "code": 6016,
-      "name": "VotingMintConfiguredWithDifferentIndex",
-      "msg": ""
-    },
-    {
-      "code": 6017,
-      "name": "InternalProgramError",
-      "msg": ""
-    },
-    {
-      "code": 6018,
-      "name": "InvalidLockupKind",
-      "msg": ""
-    },
-    {
-      "code": 6019,
-      "name": "VaultTokenNonZero",
-      "msg": ""
-    },
-    {
-      "code": 6020,
-      "name": "InvalidTimestampArguments",
-      "msg": ""
-    },
-    {
-      "code": 6021,
-      "name": "UnlockMustBeCalledFirst",
-      "msg": ""
-    },
-    {
-      "code": 6022,
-      "name": "UnlockAlreadyRequested",
-      "msg": ""
-    },
-    {
-      "code": 6023,
-      "name": "ExtendDepositIsNotAllowed",
-      "msg": ""
-    },
-    {
-      "code": 6024,
-      "name": "DepositingIsForbidded",
-      "msg": "To deposit additional tokens, extend the deposit"
-    },
-    {
-      "code": 6025,
-      "name": "CpiReturnDataIsAbsent",
-      "msg": "Cpi call must return data, but data is absent"
-    },
-    {
-      "code": 6026,
-      "name": "LockingIsForbidded",
-      "msg": "The source for the transfer only can be a deposit on DAO"
-    },
-    {
-      "code": 6027,
-      "name": "DepositEntryIsOld",
-      "msg": "Locking up tokens is only allowed for freshly-deposited deposit entry"
-    },
-    {
-      "code": 6028,
-      "name": "ArithmeticOverflow",
-      "msg": "Arithmetic operation has beed overflowed"
-    },
-    {
-      "code": 6029,
-      "name": "InsufficientWeightedStake",
-      "msg": "Rewards: Delegate must have at least 15_000_000 of own weighted stake"
-    },
-    {
-      "code": 6030,
-      "name": "InvalidDelegate",
-      "msg": "Rewards: Invalid delegate account"
-    },
-    {
-      "code": 6031,
-      "name": "InvalidMining",
-      "msg": "Rewards: Invalid mining account"
-    },
-    {
-      "code": 6032,
-      "name": "DelegateUpdateIsTooSoon",
-      "msg": "Rewards: Updating delegate is sooner than 5 days"
-    },
-    {
-      "code": 6033,
-      "name": "SameDelegate",
-      "msg": "Rewards: Cannot change delegate to the same delegate"
-    },
-    {
-      "code": 6034,
-      "name": "InvalidRewardPool",
-      "msg": "Rewards: Invalid reward pool account"
-    },
-    {
-      "code": 6035,
-      "name": "RemainingAccountsIsEmpty",
-      "msg": "Rewards: To claim rewards user must interact with DAO. It's impossible to check with that number of remaining accounts"
-    },
-    {
-      "code": 6036,
-      "name": "NoDaoInteractionFound",
-      "msg": "Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found"
     }
   ]
 };
@@ -2632,6 +2151,30 @@ export const IDL: MplStaking = {
           ]
         },
         {
+          "name": "governance",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Can't be Account<'_, T> because doesn't implement AnchorDeserialize"
+          ]
+        },
+        {
+          "name": "proposal",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Can't be Account<'_, T> because doesn't implement AnchorDeserialize"
+          ]
+        },
+        {
+          "name": "voteRecord",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Can't be Account<'_, T> because doesn't implement AnchorDeserialize"
+          ]
+        },
+        {
           "name": "userRewardTokenAccount",
           "isMut": true,
           "isSigner": false
@@ -2739,114 +2282,6 @@ export const IDL: MplStaking = {
       ]
     }
   ],
-  "accounts": [
-    {
-      "name": "registrar",
-      "docs": [
-        "Instance of a voting rights distributor."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "governanceProgramId",
-            "type": "publicKey"
-          },
-          {
-            "name": "realm",
-            "type": "publicKey"
-          },
-          {
-            "name": "realmGoverningTokenMint",
-            "type": "publicKey"
-          },
-          {
-            "name": "realmAuthority",
-            "type": "publicKey"
-          },
-          {
-            "name": "rewardPool",
-            "type": "publicKey"
-          },
-          {
-            "name": "votingMints",
-            "docs": [
-              "Storage for voting mints and their configuration.",
-              "The length should be adjusted for one's use case."
-            ],
-            "type": {
-              "array": [
-                {
-                  "defined": "VotingMintConfig"
-                },
-                2
-              ]
-            }
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "padding",
-            "type": {
-              "array": [
-                "u8",
-                7
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "voter",
-      "docs": [
-        "User account for minting voting rights."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "deposits",
-            "type": {
-              "array": [
-                {
-                  "defined": "DepositEntry"
-                },
-                32
-              ]
-            }
-          },
-          {
-            "name": "voterAuthority",
-            "type": "publicKey"
-          },
-          {
-            "name": "registrar",
-            "type": "publicKey"
-          },
-          {
-            "name": "voterBump",
-            "type": "u8"
-          },
-          {
-            "name": "voterWeightRecordBump",
-            "type": "u8"
-          },
-          {
-            "name": "reserved1",
-            "type": {
-              "array": [
-                "u8",
-                14
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ],
   "types": [
     {
       "name": "VestingInfo",
@@ -2901,176 +2336,6 @@ export const IDL: MplStaking = {
                 "defined": "VestingInfo"
               }
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "DepositEntry",
-      "docs": [
-        "Bookkeeping for a single deposit for a given mint and lockup schedule."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "lockup",
-            "type": {
-              "defined": "Lockup"
-            }
-          },
-          {
-            "name": "delegate",
-            "docs": [
-              "Delegated staker. It's an address of a Delegate."
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "amountDepositedNative",
-            "docs": [
-              "Amount in deposited, in native currency. Withdraws of vested tokens",
-              "directly reduce this amount.",
-              "This directly tracks the total amount added by the user. They may",
-              "never withdraw more than this amount."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "delegateLastUpdateTs",
-            "docs": [
-              "The last time when the delegate was updated"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "votingMintConfigIdx",
-            "type": "u8"
-          },
-          {
-            "name": "isUsed",
-            "type": "bool"
-          },
-          {
-            "name": "reserved0",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "reserved1",
-            "type": {
-              "array": [
-                "u8",
-                6
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Lockup",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "startTs",
-            "docs": [
-              "Start of the lockup."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "endTs",
-            "docs": [
-              "End of the lockup."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "cooldownEndsAt",
-            "docs": [
-              "End of the cooldown."
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "cooldownRequested",
-            "type": "bool"
-          },
-          {
-            "name": "kind",
-            "docs": [
-              "Type of lockup."
-            ],
-            "type": {
-              "defined": "LockupKind"
-            }
-          },
-          {
-            "name": "period",
-            "docs": [
-              "Type of lockup"
-            ],
-            "type": {
-              "defined": "LockupPeriod"
-            }
-          },
-          {
-            "name": "reserved0",
-            "docs": [
-              "Reserved for future use"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
-            "name": "reserved1",
-            "docs": [
-              "Padding after period to align the struct size to 8 bytes"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                5
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "VotingMintConfig",
-      "docs": [
-        "Exchange rate for an asset that can be used to mint voting rights.",
-        "",
-        "See documentation of configure_voting_mint for details on how",
-        "native token amounts convert to vote weight."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "mint",
-            "docs": [
-              "Mint for this entry."
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "grantAuthority",
-            "docs": [
-              "The authority that is allowed to push grants into voters"
-            ],
-            "type": "publicKey"
           }
         ]
       }
@@ -3255,46 +2520,6 @@ export const IDL: MplStaking = {
           }
         ]
       }
-    },
-    {
-      "name": "LockupPeriod",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Test"
-          },
-          {
-            "name": "Flex"
-          },
-          {
-            "name": "ThreeMonths"
-          },
-          {
-            "name": "SixMonths"
-          },
-          {
-            "name": "OneYear"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockupKind",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Constant"
-          }
-        ]
-      }
     }
   ],
   "events": [
@@ -3351,193 +2576,6 @@ export const IDL: MplStaking = {
           "index": false
         }
       ]
-    }
-  ],
-  "errors": [
-    {
-      "code": 6000,
-      "name": "VotingMintNotFound",
-      "msg": ""
-    },
-    {
-      "code": 6001,
-      "name": "VotingTokenNonZero",
-      "msg": ""
-    },
-    {
-      "code": 6002,
-      "name": "OutOfBoundsDepositEntryIndex",
-      "msg": ""
-    },
-    {
-      "code": 6003,
-      "name": "UnusedDepositEntryIndex",
-      "msg": ""
-    },
-    {
-      "code": 6004,
-      "name": "InsufficientUnlockedTokens",
-      "msg": ""
-    },
-    {
-      "code": 6005,
-      "name": "InvalidLockupPeriod",
-      "msg": ""
-    },
-    {
-      "code": 6006,
-      "name": "VotingMintConfigIndexAlreadyInUse",
-      "msg": ""
-    },
-    {
-      "code": 6007,
-      "name": "OutOfBoundsVotingMintConfigIndex",
-      "msg": ""
-    },
-    {
-      "code": 6008,
-      "name": "ForbiddenCpi",
-      "msg": ""
-    },
-    {
-      "code": 6009,
-      "name": "InvalidMint",
-      "msg": ""
-    },
-    {
-      "code": 6010,
-      "name": "DepositStillLocked",
-      "msg": ""
-    },
-    {
-      "code": 6011,
-      "name": "InvalidAuthority",
-      "msg": ""
-    },
-    {
-      "code": 6012,
-      "name": "InvalidTokenOwnerRecord",
-      "msg": ""
-    },
-    {
-      "code": 6013,
-      "name": "InvalidRealmAuthority",
-      "msg": ""
-    },
-    {
-      "code": 6014,
-      "name": "VoterWeightOverflow",
-      "msg": ""
-    },
-    {
-      "code": 6015,
-      "name": "LockupSaturationMustBePositive",
-      "msg": ""
-    },
-    {
-      "code": 6016,
-      "name": "VotingMintConfiguredWithDifferentIndex",
-      "msg": ""
-    },
-    {
-      "code": 6017,
-      "name": "InternalProgramError",
-      "msg": ""
-    },
-    {
-      "code": 6018,
-      "name": "InvalidLockupKind",
-      "msg": ""
-    },
-    {
-      "code": 6019,
-      "name": "VaultTokenNonZero",
-      "msg": ""
-    },
-    {
-      "code": 6020,
-      "name": "InvalidTimestampArguments",
-      "msg": ""
-    },
-    {
-      "code": 6021,
-      "name": "UnlockMustBeCalledFirst",
-      "msg": ""
-    },
-    {
-      "code": 6022,
-      "name": "UnlockAlreadyRequested",
-      "msg": ""
-    },
-    {
-      "code": 6023,
-      "name": "ExtendDepositIsNotAllowed",
-      "msg": ""
-    },
-    {
-      "code": 6024,
-      "name": "DepositingIsForbidded",
-      "msg": "To deposit additional tokens, extend the deposit"
-    },
-    {
-      "code": 6025,
-      "name": "CpiReturnDataIsAbsent",
-      "msg": "Cpi call must return data, but data is absent"
-    },
-    {
-      "code": 6026,
-      "name": "LockingIsForbidded",
-      "msg": "The source for the transfer only can be a deposit on DAO"
-    },
-    {
-      "code": 6027,
-      "name": "DepositEntryIsOld",
-      "msg": "Locking up tokens is only allowed for freshly-deposited deposit entry"
-    },
-    {
-      "code": 6028,
-      "name": "ArithmeticOverflow",
-      "msg": "Arithmetic operation has beed overflowed"
-    },
-    {
-      "code": 6029,
-      "name": "InsufficientWeightedStake",
-      "msg": "Rewards: Delegate must have at least 15_000_000 of own weighted stake"
-    },
-    {
-      "code": 6030,
-      "name": "InvalidDelegate",
-      "msg": "Rewards: Invalid delegate account"
-    },
-    {
-      "code": 6031,
-      "name": "InvalidMining",
-      "msg": "Rewards: Invalid mining account"
-    },
-    {
-      "code": 6032,
-      "name": "DelegateUpdateIsTooSoon",
-      "msg": "Rewards: Updating delegate is sooner than 5 days"
-    },
-    {
-      "code": 6033,
-      "name": "SameDelegate",
-      "msg": "Rewards: Cannot change delegate to the same delegate"
-    },
-    {
-      "code": 6034,
-      "name": "InvalidRewardPool",
-      "msg": "Rewards: Invalid reward pool account"
-    },
-    {
-      "code": 6035,
-      "name": "RemainingAccountsIsEmpty",
-      "msg": "Rewards: To claim rewards user must interact with DAO. It's impossible to check with that number of remaining accounts"
-    },
-    {
-      "code": 6036,
-      "name": "NoDaoInteractionFound",
-      "msg": "Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found"
     }
   ]
 };
