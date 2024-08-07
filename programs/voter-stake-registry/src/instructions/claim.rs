@@ -122,7 +122,7 @@ pub fn claim(
 fn deserialize<T: BorshDeserialize>(iter: &mut Iter<AccountInfo>) -> Result<(T, Pubkey)> {
     let item = iter
         .next()
-        .ok_or(MplStakingError::RemainingAccountsIsEmpty)?;
+        .ok_or(MplStakingError::RemainingAccountsIsNotLongEnough)?;
     let addr = *item.key;
     let obj = T::deserialize(&mut &item.try_borrow_mut_data()?[..])?;
     Ok((obj, addr))
