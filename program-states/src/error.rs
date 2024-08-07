@@ -107,4 +107,10 @@ pub enum MplStakingError {
     // 6034 / 0x1792
     #[msg("Rewards: Invalid reward pool account")]
     InvalidRewardPool,
+    // 6035 / 0x1793
+    #[msg("Rewards: To claim rewards user must interact with DAO. It's impossible to check with that number of remaining accounts")]
+    RemainingAccountsIsEmpty,
+    // 6036 / 0x1794
+    #[msg("Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found")]
+    NoDaoInteractionFound,
 }

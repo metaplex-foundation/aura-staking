@@ -3,7 +3,12 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 use mplx_staking_states::{error::MplStakingError, state::Registrar};
 use solana_program::program::get_return_data;
-use std::borrow::Borrow;
+use spl_governance::state::{
+    legacy::GovernanceV1, proposal::ProposalV2, realm::RealmV2, vote_record::VoteRecordV2,
+};
+use std::{borrow::Borrow, slice::Iter, str::FromStr};
+
+pub const DAO_PUBKEY: &str = "89wVNeyqqDaWKWtS4rbunYdsxxbe5V3VRx6g8GWNMTMt";
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
@@ -54,6 +59,21 @@ pub fn claim(
     realm_governing_mint_pubkey: Pubkey,
     realm_pubkey: Pubkey,
 ) -> Result<u64> {
+    let mut remaining_accounts_iter = ctx.remaining_accounts.iter();
+
+    let (_, realm_addr) = deserialize::<RealmV2>(&mut remaining_accounts_iter)?;
+    let (governance, governance_addr) = deserialize::<GovernanceV1>(&mut remaining_accounts_iter)?;
+    let (proposal, _) = deserialize::<ProposalV2>(&mut remaining_accounts_iter)?;
+    let (vote_record, _) = deserialize::<VoteRecordV2>(&mut remaining_accounts_iter)?;
+
+    require!(
+        realm_addr == Pubkey::from_str(DAO_PUBKEY).unwrap()
+            && governance.realm == realm_addr
+            && proposal.governance == governance_addr
+            && vote_record.governing_token_owner == *ctx.accounts.mining_owner.key,
+        MplStakingError::NoDaoInteractionFound
+    );
+
     let registrar = ctx.accounts.registrar.load()?;
 
     require!(
@@ -97,4 +117,13 @@ pub fn claim(
     } else {
         Err(MplStakingError::CpiReturnDataIsAbsent.into())
     }
+}
+
+fn deserialize<T: BorshDeserialize>(iter: &mut Iter<AccountInfo>) -> Result<(T, Pubkey)> {
+    let item = iter
+        .next()
+        .ok_or(MplStakingError::RemainingAccountsIsEmpty)?;
+    let addr = *item.key;
+    let obj = T::deserialize(&mut &item.try_borrow_mut_data()?[..])?;
+    Ok((obj, addr))
 }
