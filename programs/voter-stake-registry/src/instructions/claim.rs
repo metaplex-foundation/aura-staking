@@ -8,6 +8,7 @@ use spl_governance::state::{
 };
 use std::{borrow::Borrow, str::FromStr};
 
+// TODO: replace placeholder with the actual DAO pubkey
 pub const DAO_PUBKEY: &str = "some_dao_pubkey";
 
 #[derive(Accounts)]
