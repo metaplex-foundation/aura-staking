@@ -52,5 +52,10 @@ jobs:
           rustup override set ${{ env.RUST_STABLE_VERSION }}
           solana-install init ${{ env.SOLANA_VERSION }}
 
+      - name: Append to Cargo.toml
+        run: |
+          echo "[profile.dev]" >> Cargo.toml
+          echo "debug = 0" >> Cargo.toml    
+
       - name: Run tests
         run: cargo test-bpf
