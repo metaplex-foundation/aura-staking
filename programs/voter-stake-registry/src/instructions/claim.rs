@@ -1,7 +1,7 @@
-use crate::{borsh::BorshDeserialize, cpi_instructions};
+use crate::{borsh::BorshDeserialize, cpi_instructions, Registrar};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
-use mplx_staking_states::{error::MplStakingError, state::Registrar};
+use crate::error::{MplStakingError};
 use solana_program::program::get_return_data;
 use spl_governance::state::{
     governance::GovernanceV2, proposal::ProposalV2, vote_record::VoteRecordV2,
