@@ -1,0 +1,56 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  SOLANA_VERSION: "1.14.12"
+  RUST_STABLE_VERSION: "1.66.1"
+
+defaults:
+  run:
+    working-directory: ./
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev
+
+      - name: Install stable Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_STABLE_VERSION }}
+          cache: true
+
+      - name: Cache Solana binaries
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/solana
+          key: ${{ runner.os }}-${{ env.RUST_STABLE_VERSION }}
+
+      - name: Install Solana
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          solana --version
+          echo "Generating keypair..."
+          solana-keygen new -o "$HOME/.config/solana/id.json" --no-passphrase --silent
+
+      - name: Switch toolchain
+        run: |
+          rustup override set ${{ env.RUST_STABLE_VERSION }}
+          solana-install init ${{ env.SOLANA_VERSION }}
+
+      - name: Run tests
+        run: cargo test-bpf

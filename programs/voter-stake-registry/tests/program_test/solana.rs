@@ -46,6 +46,12 @@ impl SolanaCookie {
 
         transaction.sign(&all_signers, context.last_blockhash);
 
+        context.last_blockhash = context
+            .banks_client
+            .get_latest_blockhash()
+            .await
+            .expect("Cannot get latest blockhash!");
+
         context
             .banks_client
             .process_transaction_with_commitment(
