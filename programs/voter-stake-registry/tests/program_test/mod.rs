@@ -121,7 +121,7 @@ impl TestContext {
         test.set_compute_max_units(120000);
 
         let governance_program_id =
-            Pubkey::from_str("GovernanceProgramTest1111111111111111111111").unwrap();
+            Pubkey::from_str("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw").unwrap();
         test.add_program(
             "spl_governance_3_1_1",
             governance_program_id,
