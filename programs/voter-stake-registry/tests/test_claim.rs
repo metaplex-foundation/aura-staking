@@ -1,8 +1,13 @@
+use std::str::FromStr;
 use anchor_spl::token::TokenAccount;
+use solana_program::pubkey::Pubkey;
 use mpl_staking::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
+use spl_governance::state::governance::GovernanceV2;
+use spl_governance::state::proposal::ProposalV2;
+use spl_governance::state::vote_record::VoteRecordV2;
 
 mod program_test;
 
@@ -180,6 +185,10 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .distribute_rewards(&rewards_pool, &distribution_authority)
         .await?;
 
+    let governance = &Pubkey::from_str("89wVNeyqqDaWKWtS4rbunYdsxxbe5V3VRx6g8GWNMTMt").unwrap();
+    let proposal = &Pubkey::default();
+    let vote_record = &Pubkey::default();
+
     context
         .addin
         .claim(
@@ -190,6 +199,9 @@ async fn successeful_claim() -> Result<(), TransportError> {
             &voter_authority_ata,
             &context.rewards.program_id,
             &registrar,
+            governance,
+            proposal,
+            vote_record,
         )
         .await?;
 
