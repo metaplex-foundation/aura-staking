@@ -1,5 +1,4 @@
-use crate::{cpi_instructions, Stake};
-use crate::{error::MplStakingError, state::LockupKind};
+use crate::{cpi_instructions, error::MplStakingError, state::LockupKind, Stake};
 use anchor_lang::prelude::*;
 
 /// Transfers unlocked tokens from the source deposit entry to the target deposit entry.

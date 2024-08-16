@@ -1,7 +1,8 @@
-use crate::{clock_unix_timestamp, cpi_instructions, Stake};
 use crate::{
+    clock_unix_timestamp, cpi_instructions,
     error::MplStakingError,
     state::{LockupKind, LockupPeriod},
+    Stake,
 };
 use anchor_lang::prelude::*;
 

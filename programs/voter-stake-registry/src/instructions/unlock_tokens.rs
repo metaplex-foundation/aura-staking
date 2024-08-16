@@ -1,6 +1,10 @@
-use crate::state::LockupPeriod;
-use crate::{clock_unix_timestamp, cpi_instructions::withdraw_mining, Stake};
-use crate::{error::MplStakingError, state::COOLDOWN_SECS};
+use crate::{
+    clock_unix_timestamp,
+    cpi_instructions::withdraw_mining,
+    error::MplStakingError,
+    state::{LockupPeriod, COOLDOWN_SECS},
+    Stake,
+};
 use anchor_lang::prelude::*;
 
 pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()> {

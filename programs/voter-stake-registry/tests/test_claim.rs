@@ -1,15 +1,10 @@
-use std::str::FromStr;
-use anchor_spl::token::TokenAccount;
-use solana_program::msg;
-use solana_program::pubkey::Pubkey;
 use mpl_staking::state::{LockupKind, LockupPeriod};
 use program_test::*;
+use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
-use spl_governance::state::governance::GovernanceV2;
-use spl_governance::state::proposal::ProposalV2;
-use spl_governance::state::token_owner_record::get_token_owner_record_address;
-use spl_governance::state::vote_record::{get_vote_record_address, VoteRecordV2};
+use spl_governance::state::vote_record::get_vote_record_address;
+use std::str::FromStr;
 
 mod program_test;
 
@@ -187,7 +182,6 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .distribute_rewards(&rewards_pool, &distribution_authority)
         .await?;
 
-
     // create proposal `create_proposal`
     // vote for this proposal `cast_vote`
     let mint_governance = realm
@@ -197,49 +191,44 @@ async fn successeful_claim() -> Result<(), TransportError> {
             &voter,
             voter_authority,
             payer,
-            context.addin.update_voter_weight_record_instruction(&registrar, &voter),
+            context
+                .addin
+                .update_voter_weight_record_instruction(&registrar, &voter),
         )
         .await;
 
-    let governance = &Pubkey::from_str("GovernanceProgramTest1111111111111111111111").unwrap();
-    let proposal = realm.create_proposal(
-        mint_governance.address,
-        voter_authority,
-        &voter,
-        payer,
-        context.addin.update_voter_weight_record_instruction(&registrar, &voter),
-    ).await.unwrap();
-    let _ = realm.cast_vote(
-        mint_governance.address,
-        &proposal,
-        &voter,
-        voter_authority,
-        payer,
-        context.addin.update_voter_weight_record_instruction(&registrar, &voter),
-    ).await.unwrap();
+    let proposal = realm
+        .create_proposal(
+            mint_governance.address,
+            voter_authority,
+            &voter,
+            payer,
+            context
+                .addin
+                .update_voter_weight_record_instruction(&registrar, &voter),
+        )
+        .await
+        .unwrap();
+    realm
+        .cast_vote(
+            mint_governance.address,
+            &proposal,
+            &voter,
+            voter_authority,
+            payer,
+            context
+                .addin
+                .update_voter_weight_record_instruction(&registrar, &voter),
+        )
+        .await
+        .unwrap();
     let vote_record = {
-        let adrs = get_vote_record_address(
+        get_vote_record_address(
             &Pubkey::from_str("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw").unwrap(),
             &proposal.address,
             &proposal.owner_token_owner_record,
-        );
-
-        // let adrs = Pubkey::find_program_address(
-        //     &[
-        //         b"vote-record",
-        //         proposal.address.as_ref(),
-        //         voter_authority.as_ref(),
-        //     ],
-        //     &mint_governance.address, // SPL Governance Program ID
-        // ).0;
-        let vote_data = context.solana.get_account_data(adrs).await;
-        let mut data_slice: &[u8] = &vote_data;
-            let vote_record: spl_governance::state::vote_record::VoteRecordV2 =
-            anchor_lang::AnchorDeserialize::deserialize(&mut data_slice).unwrap();
-        // vote_record.governing_token_owner
-        adrs
+        )
     };
-
 
     context
         .addin

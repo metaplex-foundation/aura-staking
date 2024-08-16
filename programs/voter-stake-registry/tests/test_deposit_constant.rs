@@ -1,4 +1,3 @@
-use anchor_spl::token::TokenAccount;
 use assert_custom_on_chain_error::AssertCustomOnChainErr;
 use mpl_staking::{
     error::MplStakingError,

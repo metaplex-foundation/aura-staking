@@ -1,7 +1,6 @@
 use crate::SolanaCookie;
 use anchor_lang::{prelude::*, AnchorDeserialize};
-use mpl_staking::cpi_instructions::RewardsInstruction;
-use mpl_staking::state::LockupPeriod;
+use mpl_staking::{cpi_instructions::RewardsInstruction, state::LockupPeriod};
 use solana_program_test::*;
 use solana_sdk::{
     instruction::{AccountMeta, Instruction},

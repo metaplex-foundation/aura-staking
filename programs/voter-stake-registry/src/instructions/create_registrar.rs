@@ -1,5 +1,4 @@
-use crate::cpi_instructions;
-use crate::{error::MplStakingError, state::Registrar};
+use crate::{cpi_instructions, error::MplStakingError, state::Registrar};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token};
 use spl_governance::state::realm;

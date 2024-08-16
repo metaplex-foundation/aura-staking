@@ -1,5 +1,7 @@
-use crate::events::*;
-use crate::state::{Registrar, Voter};
+use crate::{
+    events::*,
+    state::{Registrar, Voter},
+};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]

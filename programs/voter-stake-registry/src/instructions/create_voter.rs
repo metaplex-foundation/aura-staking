@@ -1,7 +1,8 @@
-use crate::{cpi_instructions, voter::VoterWeightRecord};
 use crate::{
+    cpi_instructions,
     error::MplStakingError,
     state::{Registrar, Voter},
+    voter::VoterWeightRecord,
 };
 use anchor_lang::{prelude::*, solana_program::sysvar::instructions as tx_instructions};
 use std::mem::size_of;

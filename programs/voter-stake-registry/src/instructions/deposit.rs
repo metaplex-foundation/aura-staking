@@ -1,5 +1,5 @@
-use crate::clock_unix_timestamp;
 use crate::{
+    clock_unix_timestamp,
     error::MplStakingError,
     state::{LockupKind, LockupPeriod, Registrar, Voter},
 };

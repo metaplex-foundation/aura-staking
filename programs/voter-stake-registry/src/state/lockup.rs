@@ -1,5 +1,7 @@
-use crate::borsh::{BorshDeserialize, BorshSerialize};
-use crate::error::*;
+use crate::{
+    borsh::{BorshDeserialize, BorshSerialize},
+    error::*,
+};
 use anchor_lang::prelude::*;
 use static_assertions::const_assert;
 

@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
-use instructions::*;
-
 pub use error::MplStakingError;
+use instructions::*;
 pub use state::{
     lockup::{LockupKind, LockupPeriod},
     DepositEntry, Registrar, Voter,

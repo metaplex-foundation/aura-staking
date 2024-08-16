@@ -1,10 +1,8 @@
 use crate::{
     clock_unix_timestamp,
-    voter::{load_token_owner_record, VoterWeightRecord},
-};
-use crate::{
     error::MplStakingError,
     state::{DepositEntry, LockupKind, LockupPeriod, Registrar, Voter},
+    voter::{load_token_owner_record, VoterWeightRecord},
     voter_seeds,
 };
 use anchor_lang::prelude::*;

@@ -1,5 +1,5 @@
-use crate::cpi_instructions;
 use crate::{
+    cpi_instructions,
     error::MplStakingError,
     state::{Registrar, Voter},
     voter_seeds,

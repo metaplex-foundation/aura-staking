@@ -1,5 +1,7 @@
-use crate::state::{Registrar, Voter};
-use crate::voter::VoterWeightRecord;
+use crate::{
+    state::{Registrar, Voter},
+    voter::VoterWeightRecord,
+};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
