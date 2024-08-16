@@ -28,7 +28,8 @@ pub mod rewards;
 pub mod solana;
 pub mod utils;
 
-// TODO: Change values of this constants to derive correct PDA for `DAO_PUBKEY` constant in `claim.rs` file
+// TODO: Change values of this constants to derive correct PDA for `DAO_PUBKEY` constant in
+//  `claim.rs` file.
 // Link to ticket: https://linear.app/mplx/issue/MTG-546/replace-dao-pubkey-constant-with-actual-public-key-in-staking-contract
 pub const GOVERNANCE_PROGRAM_ID: &str = "GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw";
 pub const REALM_NAME: &str = "VSR Rewards 21";
