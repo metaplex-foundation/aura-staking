@@ -1,8 +1,11 @@
 use anchor_spl::token::TokenAccount;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
+use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
+use spl_governance::state::vote_record::get_vote_record_address;
+use std::str::FromStr;
 
 mod program_test;
 
@@ -15,7 +18,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            REALM_NAME,
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -180,6 +183,50 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .distribute_rewards(&rewards_pool, &distribution_authority)
         .await?;
 
+    let mint_governance = realm
+        .create_mint_governance(
+            context.mints[0].pubkey.unwrap(),
+            &context.mints[0].authority,
+            &voter,
+            voter_authority,
+            payer,
+            context
+                .addin
+                .update_voter_weight_record_instruction(&registrar, &voter),
+        )
+        .await;
+
+    let proposal = realm
+        .create_proposal(
+            mint_governance.address,
+            voter_authority,
+            &voter,
+            payer,
+            context
+                .addin
+                .update_voter_weight_record_instruction(&registrar, &voter),
+        )
+        .await
+        .unwrap();
+    realm
+        .cast_vote(
+            mint_governance.address,
+            &proposal,
+            &voter,
+            voter_authority,
+            payer,
+            context
+                .addin
+                .update_voter_weight_record_instruction(&registrar, &voter),
+        )
+        .await
+        .unwrap();
+    let vote_record = get_vote_record_address(
+        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &proposal.address,
+        &proposal.owner_token_owner_record,
+    );
+
     context
         .addin
         .claim(
@@ -190,6 +237,9 @@ async fn successeful_claim() -> Result<(), TransportError> {
             &voter_authority_ata,
             &context.rewards.program_id,
             &registrar,
+            &mint_governance.address,
+            &proposal.address,
+            &vote_record,
         )
         .await?;
 
