@@ -28,6 +28,9 @@ pub mod rewards;
 pub mod solana;
 pub mod utils;
 
+pub const GOVERNANCE_PROGRAM_ID: &str = "GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw";
+pub const REALM_NAME: &str = "VSR Rewards 21";
+
 trait AddPacked {
     fn add_packable_account<T: Pack>(
         &mut self,
@@ -120,8 +123,7 @@ impl TestContext {
         // intentionally set to half the limit, to catch potential problems early
         test.set_compute_max_units(120000);
 
-        let governance_program_id =
-            Pubkey::from_str("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw").unwrap();
+        let governance_program_id = Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap();
         test.add_program(
             "spl_governance_3_1_1",
             governance_program_id,

@@ -14,10 +14,12 @@ async fn successeful_claim() -> Result<(), TransportError> {
 
     let payer = &context.users[0].key;
     let realm_authority = Keypair::new();
+
+    // We need to use this realm name to derive governance PDA correctly.
     let realm = context
         .governance
         .create_realm(
-            "VSR Rewards 21",
+            REALM_NAME,
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -182,8 +184,6 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .distribute_rewards(&rewards_pool, &distribution_authority)
         .await?;
 
-    // create proposal `create_proposal`
-    // vote for this proposal `cast_vote`
     let mint_governance = realm
         .create_mint_governance(
             context.mints[0].pubkey.unwrap(),
@@ -222,13 +222,11 @@ async fn successeful_claim() -> Result<(), TransportError> {
         )
         .await
         .unwrap();
-    let vote_record = {
-        get_vote_record_address(
-            &Pubkey::from_str("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw").unwrap(),
-            &proposal.address,
-            &proposal.owner_token_owner_record,
-        )
-    };
+    let vote_record = get_vote_record_address(
+        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &proposal.address,
+        &proposal.owner_token_owner_record,
+    );
 
     context
         .addin
