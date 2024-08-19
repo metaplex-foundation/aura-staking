@@ -775,6 +775,9 @@ impl AddinCookie {
         owner_reward_ata: &Pubkey,
         rewards_program: &Pubkey,
         registrar: &RegistrarCookie,
+        governance: &Pubkey,
+        proposal: &Pubkey,
+        vote_record: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::Claim {
             realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
@@ -799,6 +802,9 @@ impl AddinCookie {
                 deposit_mining: *reward_mining,
                 mining_owner: mining_owner.pubkey(),
                 registrar: registrar.address,
+                governance: *governance,
+                proposal: *proposal,
+                vote_record: *vote_record,
                 user_reward_token_account: *owner_reward_ata,
                 token_program: spl_token::id(),
                 rewards_program: *rewards_program,
