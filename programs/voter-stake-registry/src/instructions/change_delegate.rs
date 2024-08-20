@@ -105,16 +105,6 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
             MplStakingError::InsufficientWeightedStake
         );
 
-        let (delegate_mining, _) = find_mining_address(
-            &ctx.accounts.rewards_program.key(),
-            &delegate_voter.voter_authority,
-            &ctx.accounts.reward_pool.key(),
-        );
-
-        require!(
-            delegate_mining == ctx.accounts.new_delegate_mining.key(),
-            MplStakingError::InvalidMining
-        );
         target.delegate = delegate_voter.voter_authority;
         target.delegate_last_update_ts = curr_ts;
     }

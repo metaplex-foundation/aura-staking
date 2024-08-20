@@ -75,6 +75,9 @@ pub enum RewardsInstruction {
         lockup_period: LockupPeriod,
         /// Specifies the owner of the Mining Account
         owner: Pubkey,
+        /// Wallet addres of delegate
+        delegate_wallet_addr: Pubkey,
+
     },
 
     /// Withdraws amount of supply to the mining account
@@ -89,6 +92,8 @@ pub enum RewardsInstruction {
         amount: u64,
         /// Specifies the owner of the Mining Account
         owner: Pubkey,
+        /// Wallet addres of delegate
+        delegate_wallet_addr: Pubkey,
     },
 
     /// Claims amount of rewards
@@ -129,6 +134,8 @@ pub enum RewardsInstruction {
         additional_amount: u64,
         /// The wallet who owns the mining account
         mining_owner: Pubkey,
+        /// Wallet addres of delegate
+        delegate_wallet_addr: Pubkey,
     },
 
     /// Distributes tokens among mining owners
@@ -255,6 +262,7 @@ pub fn deposit_mining<'a>(
     lockup_period: LockupPeriod,
     owner: &Pubkey,
     signers_seeds: &[&[u8]],
+    delegate_wallet_addr: &Pubkey,
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
@@ -269,6 +277,7 @@ pub fn deposit_mining<'a>(
             amount,
             lockup_period,
             owner: *owner,
+            delegate_wallet_addr: *delegate_wallet_addr,
         },
         accounts,
     );
@@ -301,6 +310,7 @@ pub fn extend_stake<'a>(
     additional_amount: u64,
     mining_owner: &Pubkey,
     signers_seeds: &[&[u8]],
+    delegate_wallet_addr: &Pubkey
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
@@ -318,6 +328,7 @@ pub fn extend_stake<'a>(
             base_amount,
             additional_amount,
             mining_owner: *mining_owner,
+            delegate_wallet_addr: *delegate_wallet_addr,
         },
         accounts,
     );
@@ -348,7 +359,9 @@ pub fn withdraw_mining<'a>(
     amount: u64,
     owner: &Pubkey,
     signers_seeds: &[&[u8]],
+    delegate_wallet_addr: &Pubkey
 ) -> ProgramResult {
+    // TODO: Maybe it necessary to put `delegate_wallet_addr` into metadata
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
@@ -361,6 +374,7 @@ pub fn withdraw_mining<'a>(
         &RewardsInstruction::WithdrawMining {
             amount,
             owner: *owner,
+            delegate_wallet_addr: *delegate_wallet_addr,
         },
         accounts,
     );

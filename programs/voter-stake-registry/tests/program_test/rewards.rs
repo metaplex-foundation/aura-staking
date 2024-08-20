@@ -129,6 +129,7 @@ impl RewardsCookie {
         Ok(mining)
     }
 
+    // TODO: Maybe we need to delete this function. It is not used anywhere
     #[allow(clippy::too_many_arguments)]
     pub async fn deposit_mining<'a>(
         &self,
@@ -159,6 +160,8 @@ impl RewardsCookie {
                 amount,
                 lockup_period,
                 owner: *owner,
+                // TODO: ?????
+                delegate_wallet_addr: Default::default(),
             },
             accounts,
         );
