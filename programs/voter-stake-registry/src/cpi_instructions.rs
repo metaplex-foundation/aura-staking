@@ -77,7 +77,6 @@ pub enum RewardsInstruction {
         owner: Pubkey,
         /// Wallet addres of delegate
         delegate_wallet_addr: Pubkey,
-
     },
 
     /// Withdraws amount of supply to the mining account
@@ -310,7 +309,7 @@ pub fn extend_stake<'a>(
     additional_amount: u64,
     mining_owner: &Pubkey,
     signers_seeds: &[&[u8]],
-    delegate_wallet_addr: &Pubkey
+    delegate_wallet_addr: &Pubkey,
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
@@ -359,7 +358,7 @@ pub fn withdraw_mining<'a>(
     amount: u64,
     owner: &Pubkey,
     signers_seeds: &[&[u8]],
-    delegate_wallet_addr: &Pubkey
+    delegate_wallet_addr: &Pubkey,
 ) -> ProgramResult {
     // TODO: Maybe it necessary to put `delegate_wallet_addr` into metadata
     let accounts = vec![
