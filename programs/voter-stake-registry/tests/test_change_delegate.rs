@@ -212,14 +212,13 @@ async fn change_from_own_delegate_to_new_delegate() -> Result<(), TransportError
         )
         .await?;
 
-    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400).await;
-
     let (old_delegate_mining, _) = find_deposit_mining_addr(
         &context.rewards.program_id,
         &voter.authority.pubkey(),
         &rewards_pool,
     );
 
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400 + 1).await;
     context
         .addin
         .change_delegate(
@@ -442,6 +441,7 @@ async fn stake_is_too_little() -> Result<(), TransportError> {
         &voter.authority.pubkey(),
         &rewards_pool,
     );
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400 + 1).await;
     context
         .addin
         .change_delegate(
@@ -594,6 +594,7 @@ async fn delegate_is_the_same() -> Result<(), TransportError> {
         &voter.authority.pubkey(),
         &rewards_pool,
     );
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400 + 1).await;
     context
         .addin
         .change_delegate(
@@ -818,7 +819,7 @@ async fn change_from_own_delegate_to_new_delegate_and_back_with_cooldown(
         &voter.authority.pubkey(),
         &rewards_pool,
     );
-
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400 + 1).await;
     context
         .addin
         .change_delegate(
@@ -832,7 +833,6 @@ async fn change_from_own_delegate_to_new_delegate_and_back_with_cooldown(
         .await?;
 
     advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400 + 1).await;
-
     context
         .addin
         .change_delegate(
@@ -1057,6 +1057,7 @@ async fn change_from_own_delegate_to_new_delegate_and_back_instantly() -> Result
         &rewards_pool,
     );
 
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400 + 1).await;
     context
         .addin
         .change_delegate(
