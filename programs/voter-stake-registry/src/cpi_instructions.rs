@@ -161,6 +161,7 @@ pub enum RewardsInstruction {
     ChangeDelegate {
         /// Amount of staked tokens
         staked_amount: u64,
+        new_delegate: Pubkey
     },
 }
 
@@ -479,6 +480,7 @@ pub fn change_delegate<'a>(
     mining_owner: AccountInfo<'a>,
     old_delegate_mining: AccountInfo<'a>,
     new_delegate_mining: AccountInfo<'a>,
+    new_delegate: Pubkey,
     staked_amount: u64,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
@@ -493,7 +495,7 @@ pub fn change_delegate<'a>(
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
-        &RewardsInstruction::ChangeDelegate { staked_amount },
+        &RewardsInstruction::ChangeDelegate { staked_amount, new_delegate },
         accounts,
     );
 

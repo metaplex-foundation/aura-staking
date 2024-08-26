@@ -122,6 +122,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     ];
     let staked_amount = target.amount_deposited_native;
     let mining_owner = ctx.accounts.voter_authority.to_account_info();
+    let new_delegate = target.delegate;
 
     cpi_instructions::change_delegate(
         ctx.accounts.rewards_program.to_account_info(),
@@ -131,6 +132,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
         mining_owner,
         old_delegate_mining,
         new_delegate_mining,
+        new_delegate,
         staked_amount,
         signers_seeds,
     )?;
