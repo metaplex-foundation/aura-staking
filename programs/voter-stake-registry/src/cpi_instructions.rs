@@ -161,7 +161,7 @@ pub enum RewardsInstruction {
     ChangeDelegate {
         /// Amount of staked tokens
         staked_amount: u64,
-        new_delegate: Pubkey
+        new_delegate: Pubkey,
     },
 }
 
@@ -495,7 +495,10 @@ pub fn change_delegate<'a>(
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
-        &RewardsInstruction::ChangeDelegate { staked_amount, new_delegate },
+        &RewardsInstruction::ChangeDelegate {
+            staked_amount,
+            new_delegate,
+        },
         accounts,
     );
 
