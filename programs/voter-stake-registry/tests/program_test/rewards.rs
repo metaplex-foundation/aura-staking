@@ -1,7 +1,6 @@
 use crate::SolanaCookie;
 use anchor_lang::{prelude::*, AnchorDeserialize};
 use mpl_staking::cpi_instructions::RewardsInstruction;
-use mplx_staking_states::state::LockupPeriod;
 use solana_program_test::*;
 use solana_sdk::{
     instruction::{AccountMeta, Instruction},
@@ -127,52 +126,6 @@ impl RewardsCookie {
             .await?;
 
         Ok(mining)
-    }
-
-    // TODO: Maybe we need to delete this function. It is not used anywhere
-    #[allow(clippy::too_many_arguments)]
-    pub async fn deposit_mining<'a>(
-        &self,
-        reward_pool: &Pubkey,
-        deposit_authority: &Keypair,
-        amount: u64,
-        lockup_period: LockupPeriod,
-        owner: &Pubkey,
-    ) -> std::result::Result<(), BanksClientError> {
-        let (mining, _bump) = Pubkey::find_program_address(
-            &[
-                "mining".as_bytes(),
-                &owner.key().to_bytes(),
-                &reward_pool.key().to_bytes(),
-            ],
-            &self.program_id,
-        );
-
-        let accounts = vec![
-            AccountMeta::new(*reward_pool, false),
-            AccountMeta::new(mining, false),
-            AccountMeta::new_readonly(deposit_authority.pubkey(), true),
-        ];
-
-        let ix = Instruction::new_with_borsh(
-            self.program_id,
-            &RewardsInstruction::DepositMining {
-                amount,
-                lockup_period,
-                owner: *owner,
-                // TODO: ?????
-                delegate: Default::default(),
-            },
-            accounts,
-        );
-
-        let signers = vec![deposit_authority];
-
-        self.solana
-            .process_transaction(&[ix], Some(&signers))
-            .await?;
-
-        Ok(())
     }
 }
 
