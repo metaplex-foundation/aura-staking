@@ -226,7 +226,7 @@ pub struct Stake<'info> {
 }
 
 impl Stake<'_> {
-    pub fn verify_delegate_and_its_mining(&self, deposit_entry: &DepositEntry) -> Result<()> {
+    pub fn verify_delegate(&self, deposit_entry: &DepositEntry) -> Result<()> {
         // check whether target delegate mining is the same as delegate mining from passed context
         require_eq!(
             deposit_entry.delegate,

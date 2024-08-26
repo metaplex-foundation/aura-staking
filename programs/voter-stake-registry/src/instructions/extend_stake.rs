@@ -72,7 +72,7 @@ pub fn extend_stake(
         source_mint_idx,
         MplStakingError::InvalidMint
     );
-    ctx.accounts.verify_delegate_and_its_mining(target)?;
+    ctx.accounts.verify_delegate(target)?;
 
     target.amount_deposited_native = target
         .amount_deposited_native

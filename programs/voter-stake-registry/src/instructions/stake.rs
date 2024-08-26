@@ -53,7 +53,7 @@ pub fn stake(
         target.amount_deposited_native == 0,
         MplStakingError::DepositEntryIsOld
     );
-    ctx.accounts.verify_delegate_and_its_mining(target)?;
+    ctx.accounts.verify_delegate(target)?;
 
     // Add target amounts
     target.amount_deposited_native = target

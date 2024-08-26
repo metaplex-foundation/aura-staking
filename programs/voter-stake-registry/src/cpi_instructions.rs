@@ -76,7 +76,7 @@ pub enum RewardsInstruction {
         /// Specifies the owner of the Mining Account
         owner: Pubkey,
         /// Wallet addres of delegate
-        delegate_wallet_addr: Pubkey,
+        delegate: Pubkey,
     },
 
     /// Withdraws amount of supply to the mining account
@@ -92,7 +92,7 @@ pub enum RewardsInstruction {
         /// Specifies the owner of the Mining Account
         owner: Pubkey,
         /// Wallet addres of delegate
-        delegate_wallet_addr: Pubkey,
+        delegate: Pubkey,
     },
 
     /// Claims amount of rewards
@@ -134,7 +134,7 @@ pub enum RewardsInstruction {
         /// The wallet who owns the mining account
         mining_owner: Pubkey,
         /// Wallet addres of delegate
-        delegate_wallet_addr: Pubkey,
+        delegate: Pubkey,
     },
 
     /// Distributes tokens among mining owners
@@ -276,7 +276,7 @@ pub fn deposit_mining<'a>(
             amount,
             lockup_period,
             owner: *owner,
-            delegate_wallet_addr: *delegate_wallet_addr,
+            delegate: *delegate_wallet_addr,
         },
         accounts,
     );
@@ -327,7 +327,7 @@ pub fn extend_stake<'a>(
             base_amount,
             additional_amount,
             mining_owner: *mining_owner,
-            delegate_wallet_addr: *delegate_wallet_addr,
+            delegate: *delegate_wallet_addr,
         },
         accounts,
     );
@@ -360,7 +360,6 @@ pub fn withdraw_mining<'a>(
     signers_seeds: &[&[u8]],
     delegate_wallet_addr: &Pubkey,
 ) -> ProgramResult {
-    // TODO: Maybe it necessary to put `delegate_wallet_addr` into metadata
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
@@ -373,7 +372,7 @@ pub fn withdraw_mining<'a>(
         &RewardsInstruction::WithdrawMining {
             amount,
             owner: *owner,
-            delegate_wallet_addr: *delegate_wallet_addr,
+            delegate: *delegate_wallet_addr,
         },
         accounts,
     );

@@ -161,7 +161,7 @@ impl RewardsCookie {
                 lockup_period,
                 owner: *owner,
                 // TODO: ?????
-                delegate_wallet_addr: Default::default(),
+                delegate: Default::default(),
             },
             accounts,
         );
