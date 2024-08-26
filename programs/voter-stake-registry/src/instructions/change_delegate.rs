@@ -1,10 +1,9 @@
-use crate::{clock_unix_timestamp, cpi_instructions, find_mining_address};
-use anchor_lang::prelude::*;
-use mplx_staking_states::{
-    error::MplStakingError,
-    state::{Registrar, Voter},
+use crate::{
+    clock_unix_timestamp, cpi_instructions, find_mining_address, MplStakingError, Registrar, Voter,
 };
+use anchor_lang::prelude::*;
 use solana_program::clock::SECONDS_PER_DAY;
+
 pub const DELEGATE_UPDATE_DIFF_THRESHOLD: u64 = 5 * SECONDS_PER_DAY;
 
 #[derive(Accounts)]
@@ -116,8 +115,8 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
             MplStakingError::InvalidMining
         );
         target.delegate = delegate_voter.voter_authority;
-        target.delegate_last_update_ts = curr_ts;
     }
+    target.delegate_last_update_ts = curr_ts;
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();
