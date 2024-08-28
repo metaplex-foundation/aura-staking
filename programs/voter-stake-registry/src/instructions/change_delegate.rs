@@ -116,8 +116,8 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
             MplStakingError::InvalidMining
         );
         target.delegate = delegate_voter.voter_authority;
-        target.delegate_last_update_ts = curr_ts;
     }
+    target.delegate_last_update_ts = curr_ts;
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();
