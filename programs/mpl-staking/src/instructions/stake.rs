@@ -1,4 +1,4 @@
-use crate::{cpi_instructions, Stake};
+use crate::{clock_unix_timestamp, cpi_instructions, Stake};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{error::MplStakingError, state::LockupKind};
 
@@ -60,6 +60,7 @@ pub fn stake(
         .amount_deposited_native
         .checked_add(amount)
         .ok_or(MplStakingError::ArithmeticOverflow)?;
+    target.delegate_last_update_ts = clock_unix_timestamp();
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();
