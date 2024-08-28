@@ -53,7 +53,7 @@ pub fn stake(
         target.amount_deposited_native == 0,
         MplStakingError::DepositEntryIsOld
     );
-    ctx.accounts.verify_delegate_and_its_mining(target)?;
+    ctx.accounts.verify_delegate(target)?;
 
     // Add target amounts
     target.amount_deposited_native = target
@@ -73,6 +73,7 @@ pub fn stake(
         &[registrar.bump][..],
     ];
     let owner = &ctx.accounts.voter_authority.key();
+    let delegate_wallet_addr = &ctx.accounts.delegate.key();
 
     cpi_instructions::deposit_mining(
         ctx.accounts.rewards_program.to_account_info(),
@@ -84,6 +85,7 @@ pub fn stake(
         target.lockup.period,
         owner,
         signers_seeds,
+        delegate_wallet_addr,
     )?;
 
     Ok(())

@@ -226,23 +226,12 @@ pub struct Stake<'info> {
 }
 
 impl Stake<'_> {
-    pub fn verify_delegate_and_its_mining(&self, deposit_entry: &DepositEntry) -> Result<()> {
+    pub fn verify_delegate(&self, deposit_entry: &DepositEntry) -> Result<()> {
         // check whether target delegate mining is the same as delegate mining from passed context
         require_eq!(
             deposit_entry.delegate,
             *self.delegate.to_account_info().key,
             MplStakingError::InvalidDelegate
-        );
-
-        let (calculated_delegate_mining, _) = find_mining_address(
-            &self.rewards_program.to_account_info().key(),
-            &self.delegate.to_account_info().key(),
-            &self.reward_pool.key(),
-        );
-        require_eq!(
-            calculated_delegate_mining,
-            self.delegate_mining.to_account_info().key(),
-            MplStakingError::InvalidMining
         );
 
         Ok(())

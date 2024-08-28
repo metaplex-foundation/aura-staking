@@ -25,7 +25,7 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
         MplStakingError::DepositStillLocked
     );
 
-    ctx.accounts.verify_delegate_and_its_mining(deposit_entry)?;
+    ctx.accounts.verify_delegate(deposit_entry)?;
 
     deposit_entry.lockup.cooldown_requested = true;
     deposit_entry.lockup.cooldown_ends_at = curr_ts
@@ -44,6 +44,7 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
         (registrar.realm_governing_token_mint.as_ref()),
         &[registrar.bump][..],
     ];
+    let delegate_wallet_addr = &ctx.accounts.delegate.key();
 
     withdraw_mining(
         rewards_program,
@@ -54,6 +55,7 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
         deposit_entry.amount_deposited_native,
         owner.key,
         signers_seeds,
+        delegate_wallet_addr,
     )?;
 
     Ok(())

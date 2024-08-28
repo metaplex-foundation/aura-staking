@@ -72,7 +72,7 @@ pub fn extend_stake(
         source_mint_idx,
         MplStakingError::InvalidMint
     );
-    ctx.accounts.verify_delegate_and_its_mining(target)?;
+    ctx.accounts.verify_delegate(target)?;
 
     target.amount_deposited_native = target
         .amount_deposited_native
@@ -95,6 +95,7 @@ pub fn extend_stake(
         &[registrar.bump][..],
     ];
     let mining_owner = &ctx.accounts.voter_authority.key();
+    let delegate_wallet_addr = &ctx.accounts.delegate.key();
 
     cpi_instructions::extend_stake(
         ctx.accounts.rewards_program.to_account_info(),
@@ -109,6 +110,7 @@ pub fn extend_stake(
         additional_amount,
         mining_owner,
         signers_seeds,
+        delegate_wallet_addr,
     )?;
 
     Ok(())

@@ -1,4 +1,4 @@
-use crate::{clock_unix_timestamp, cpi_instructions, find_mining_address};
+use crate::{clock_unix_timestamp, cpi_instructions};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{
     error::MplStakingError,
@@ -105,16 +105,6 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
             MplStakingError::InsufficientWeightedStake
         );
 
-        let (delegate_mining, _) = find_mining_address(
-            &ctx.accounts.rewards_program.key(),
-            &delegate_voter.voter_authority,
-            &ctx.accounts.reward_pool.key(),
-        );
-
-        require!(
-            delegate_mining == ctx.accounts.new_delegate_mining.key(),
-            MplStakingError::InvalidMining
-        );
         target.delegate = delegate_voter.voter_authority;
     }
     target.delegate_last_update_ts = curr_ts;
@@ -132,6 +122,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     ];
     let staked_amount = target.amount_deposited_native;
     let mining_owner = ctx.accounts.voter_authority.to_account_info();
+    let new_delegate = target.delegate;
 
     cpi_instructions::change_delegate(
         ctx.accounts.rewards_program.to_account_info(),
@@ -141,6 +132,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
         mining_owner,
         old_delegate_mining,
         new_delegate_mining,
+        new_delegate,
         staked_amount,
         signers_seeds,
     )?;
