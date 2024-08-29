@@ -163,6 +163,74 @@ pub enum RewardsInstruction {
         staked_amount: u64,
         new_delegate: Pubkey,
     },
+
+    /// Restricts claiming rewards from the specified mining account
+    ///
+    /// Accounts:
+    /// [RS] Deposit authority
+    /// [S] Reward pool account
+    /// [W] Mining
+    RestrictClaiming {},
+
+    /// Allows claiming rewards from the specified mining account
+    ///
+    /// Accounts:
+    /// [RS] Deposit authority
+    /// [S] Reward pool account
+    /// [W] Mining
+    AllowClaiming {},
+}
+
+pub fn restrict_claiming<'a>(
+    program_id: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::RestrictClaiming {},
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[deposit_authority, reward_pool, mining, program_id],
+        &[signers_seeds],
+    )
+}
+
+pub fn allow_claiming<'a>(
+    program_id: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::AllowClaiming {},
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[deposit_authority, reward_pool, mining, program_id],
+        &[signers_seeds],
+    )
 }
 
 /// This function initializes pool. Some sort of a "root"

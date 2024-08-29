@@ -180,6 +180,14 @@ pub mod mpl_staking {
     pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
         instructions::change_delegate(ctx, deposit_entry_index)
     }
+
+    pub fn restrict_claiming(ctx: Context<ClaimingAllowance>, registrar_bump: u8) -> Result<()> {
+        instructions::restrict_claiming(ctx, registrar_bump)
+    }
+
+    pub fn allow_claiming(ctx: Context<ClaimingAllowance>, registrar_bump: u8) -> Result<()> {
+        instructions::allow_claiming(ctx, registrar_bump)
+    }
 }
 
 #[derive(Accounts)]

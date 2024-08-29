@@ -138,8 +138,6 @@ impl SolanaCookie {
 
     #[allow(dead_code)]
     pub async fn create_spl_ata(&self, owner: &Pubkey, mint: &Pubkey, payer: &Keypair) -> Pubkey {
-        // let rent = self.rent.minimum_balance(spl_token::state::Account::LEN);
-
         let (ata_addr, _ata_bump) = Pubkey::find_program_address(
             &[
                 &owner.to_bytes(),
