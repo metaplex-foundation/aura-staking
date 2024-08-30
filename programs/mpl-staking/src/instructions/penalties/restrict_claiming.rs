@@ -5,7 +5,7 @@ use mplx_staking_states::error::MplStakingError;
 use super::ClaimingAllowance;
 
 /// Restricts claiming rewards from the specified mining account.
-pub fn restrict_claiming<'info>(ctx: Context<ClaimingAllowance>, registrar_bump: u8) -> Result<()> {
+pub fn restrict_claiming<'info>(ctx: Context<ClaimingAllowance>) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
 
     require_keys_eq!(
@@ -18,7 +18,7 @@ pub fn restrict_claiming<'info>(ctx: Context<ClaimingAllowance>, registrar_bump:
         &registrar.realm.key().to_bytes(),
         b"registrar".as_ref(),
         &registrar.realm_governing_token_mint.key().to_bytes(),
-        &[registrar_bump][..],
+        &[registrar.bump][..],
     ];
 
     cpi_instructions::restrict_claiming(

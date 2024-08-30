@@ -769,9 +769,7 @@ impl AddinCookie {
         realm_authority: &Keypair,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::RestrictClaiming {
-            registrar_bump: registrar.registrar_bump,
-        });
+        let data = InstructionData::data(&mpl_staking::instruction::RestrictClaiming {});
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::ClaimingAllowance {
@@ -803,9 +801,7 @@ impl AddinCookie {
         realm_authority: &Keypair,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::AllowClaiming {
-            registrar_bump: registrar.registrar_bump,
-        });
+        let data = InstructionData::data(&mpl_staking::instruction::AllowClaiming {});
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::ClaimingAllowance {
