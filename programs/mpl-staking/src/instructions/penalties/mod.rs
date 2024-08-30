@@ -1,9 +1,8 @@
+pub use allow_claiming::*;
 use anchor_lang::{
     prelude::{AccountLoader, Signer, ToAccountInfo, UncheckedAccount},
     Accounts,
 };
-
-pub use allow_claiming::*;
 pub use restrict_claiming::*;
 
 mod allow_claiming;
@@ -12,7 +11,7 @@ mod restrict_claiming;
 use mplx_staking_states::state::Registrar;
 
 #[derive(Accounts)]
-pub struct ClaimingAllowance<'info> {
+pub struct Penalty<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
 
     pub realm_authority: Signer<'info>,

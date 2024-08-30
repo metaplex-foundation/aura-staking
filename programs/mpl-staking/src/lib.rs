@@ -181,11 +181,11 @@ pub mod mpl_staking {
         instructions::change_delegate(ctx, deposit_entry_index)
     }
 
-    pub fn restrict_claiming(ctx: Context<ClaimingAllowance>) -> Result<()> {
+    pub fn restrict_claiming(ctx: Context<Penalty>) -> Result<()> {
         instructions::restrict_claiming(ctx)
     }
 
-    pub fn allow_claiming(ctx: Context<ClaimingAllowance>) -> Result<()> {
+    pub fn allow_claiming(ctx: Context<Penalty>) -> Result<()> {
         instructions::allow_claiming(ctx)
     }
 }

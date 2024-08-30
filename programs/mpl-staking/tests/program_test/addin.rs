@@ -772,7 +772,7 @@ impl AddinCookie {
         let data = InstructionData::data(&mpl_staking::instruction::RestrictClaiming {});
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &mpl_staking::accounts::ClaimingAllowance {
+            &mpl_staking::accounts::Penalty {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
                 reward_pool: *reward_pool,
@@ -804,7 +804,7 @@ impl AddinCookie {
         let data = InstructionData::data(&mpl_staking::instruction::AllowClaiming {});
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &mpl_staking::accounts::ClaimingAllowance {
+            &mpl_staking::accounts::Penalty {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
                 reward_pool: *reward_pool,
