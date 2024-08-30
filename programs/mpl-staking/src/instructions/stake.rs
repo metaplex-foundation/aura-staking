@@ -1,6 +1,6 @@
 use crate::{clock_unix_timestamp, cpi_instructions, Stake};
 use anchor_lang::prelude::*;
-use mplx_staking_states::{error::MplStakingError, state::LockupKind};
+use mplx_staking_states::{error::MplStakingError, registrar_seeds, state::LockupKind};
 
 /// Transfers unlocked tokens from the source deposit entry to the target deposit entry.
 ///
@@ -66,12 +66,7 @@ pub fn stake(
     let mining = ctx.accounts.deposit_mining.to_account_info();
     let deposit_authority = ctx.accounts.registrar.to_account_info();
     let delegate_mining = ctx.accounts.delegate_mining.to_account_info();
-    let signers_seeds = &[
-        &registrar.realm.key().to_bytes(),
-        b"registrar".as_ref(),
-        &registrar.realm_governing_token_mint.key().to_bytes(),
-        &[registrar.bump][..],
-    ];
+    let signers_seeds = registrar_seeds!(&registrar);
     let owner = &ctx.accounts.voter_authority.key();
     let delegate_wallet_addr = &ctx.accounts.delegate.key();
 

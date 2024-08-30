@@ -192,6 +192,22 @@ pub enum RewardsInstruction {
         /// Owner of the mining account
         mining_owner: Pubkey,
     },
+
+    /// Allows claiming rewards from the specified mining account
+    ///
+    /// Accounts:
+    /// [RS] Deposit authority
+    /// [W] Reward pool account
+    /// [W] Mining
+    Slash {
+        mining_owner: Pubkey,
+        // number of tokens that had been slashed
+        slash_amount_in_native: u64,
+        // weighted stake part for the slashed number of tokens multiplied by the period
+        slash_amount_multiplied_by_period: u64,
+        // None if it's Flex period, because it's already expired
+        stake_expiration_date: Option<u64>,
+    },
 }
 
 pub fn restrict_batch_minting<'a>(
@@ -631,6 +647,33 @@ pub fn change_delegate<'a>(
             new_delegate_mining,
             program_id,
         ],
+        &[signers_seeds],
+    )
+}
+
+pub fn slash<'a>(
+    program_id: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    amount: u64,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::Slash { amount },
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[reward_pool, mining, deposit_authority, program_id],
         &[signers_seeds],
     )
 }

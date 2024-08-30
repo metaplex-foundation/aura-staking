@@ -1,7 +1,7 @@
 use super::Penalty;
 use crate::cpi_instructions;
 use anchor_lang::prelude::*;
-use mplx_staking_states::error::MplStakingError;
+use mplx_staking_states::{error::MplStakingError, registrar_seeds};
 
 /// Restricts claiming rewards from the specified mining account.
 pub fn restrict_tokenflow(ctx: Context<Penalty>, mining_owner: Pubkey) -> Result<()> {
@@ -13,12 +13,7 @@ pub fn restrict_tokenflow(ctx: Context<Penalty>, mining_owner: Pubkey) -> Result
         MplStakingError::InvalidRealmAuthority
     );
 
-    let signers_seeds = &[
-        &registrar.realm.key().to_bytes(),
-        b"registrar".as_ref(),
-        &registrar.realm_governing_token_mint.key().to_bytes(),
-        &[registrar.bump][..],
-    ];
+    let signers_seeds = registrar_seeds!(&registrar);
 
     cpi_instructions::restrict_tokenflow(
         ctx.accounts.rewards_program.to_account_info(),

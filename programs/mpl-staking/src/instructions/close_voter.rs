@@ -4,6 +4,7 @@ use anchor_spl::token::{self, CloseAccount, Token, TokenAccount, Transfer};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
     error::MplStakingError,
+    registrar_seeds,
     state::{Registrar, Voter},
     voter_seeds,
 };
@@ -137,12 +138,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
     let mining_owner = &ctx.accounts.voter_authority;
     let deposit_authority = &ctx.accounts.registrar.to_account_info();
     let target_account = &ctx.accounts.sol_destination.to_account_info();
-    let signers_seeds = &[
-        &registrar.realm.key().to_bytes(),
-        b"registrar".as_ref(),
-        &registrar.realm_governing_token_mint.key().to_bytes(),
-        &[registrar.bump][..],
-    ];
+    let signers_seeds = registrar_seeds!(&registrar);
 
     cpi_instructions::close_mining(
         ctx.accounts.rewards_program.to_account_info(),

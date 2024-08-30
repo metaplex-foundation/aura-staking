@@ -9,6 +9,8 @@ pub use restrict_tokenflow::*;
 mod allow_tokenflow;
 mod restrict_batch_minting;
 mod restrict_tokenflow;
+pub use slash::*;
+mod slash;
 
 use mplx_staking_states::state::Registrar;
 

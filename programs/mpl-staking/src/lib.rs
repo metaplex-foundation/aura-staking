@@ -103,6 +103,7 @@ pub mod mpl_staking {
     }
 
     pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+        // instructions::withdraw(ctx, deposit_entry_index, amount);
         instructions::withdraw(ctx, deposit_entry_index, amount)
     }
 
@@ -195,6 +196,10 @@ pub mod mpl_staking {
         mining_owner: Pubkey,
     ) -> Result<()> {
         instructions::restrict_batch_minting(ctx, until_ts, mining_owner)
+    }
+
+    pub fn slash(ctx: Context<Slashing>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+        instructions::slash(ctx, deposit_entry_index, amount)
     }
 }
 
