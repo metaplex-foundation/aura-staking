@@ -188,6 +188,10 @@ pub mod mpl_staking {
     pub fn allow_tokenflow(ctx: Context<Penalty>, mining_owner: Pubkey) -> Result<()> {
         instructions::allow_tokenflow(ctx, mining_owner)
     }
+
+    pub fn restrict_batch_minting(ctx: Context<ClaimingAllowance>, until_ts: u64) -> Result<()> {
+        instructions::restrict_batch_minting(ctx, until_ts)
+    }
 }
 
 #[derive(Accounts)]
