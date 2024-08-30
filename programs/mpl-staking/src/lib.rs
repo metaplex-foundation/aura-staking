@@ -189,7 +189,7 @@ pub mod mpl_staking {
         instructions::allow_tokenflow(ctx, mining_owner)
     }
 
-    pub fn restrict_batch_minting(ctx: Context<ClaimingAllowance>, until_ts: u64) -> Result<()> {
+    pub fn restrict_batch_minting(ctx: Context<Penalty>, until_ts: u64) -> Result<()> {
         instructions::restrict_batch_minting(ctx, until_ts)
     }
 }
