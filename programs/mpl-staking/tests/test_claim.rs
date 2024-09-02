@@ -472,11 +472,12 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
 
     context
         .addin
-        .restrict_claiming(
+        .restrict_tokenflow(
             &rewards_pool,
             &deposit_mining,
             &registrar,
             &realm_authority,
+            &voter_authority.pubkey(),
             &context.rewards.program_id,
         )
         .await
@@ -722,11 +723,12 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
 
     context
         .addin
-        .restrict_claiming(
+        .restrict_tokenflow(
             &rewards_pool,
             &deposit_mining,
             &registrar,
             &realm_authority,
+            &voter_authority.pubkey(),
             &context.rewards.program_id,
         )
         .await?;
@@ -750,11 +752,12 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
 
     context
         .addin
-        .allow_claiming(
+        .allow_tokenflow(
             &rewards_pool,
             &deposit_mining,
             &registrar,
             &realm_authority,
+            &voter_authority.pubkey(),
             &context.rewards.program_id,
         )
         .await?;

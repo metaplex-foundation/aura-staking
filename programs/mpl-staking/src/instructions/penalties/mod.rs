@@ -1,12 +1,12 @@
-pub use allow_claiming::*;
+pub use allow_tokenflow::*;
 use anchor_lang::{
     prelude::{AccountLoader, Signer, ToAccountInfo, UncheckedAccount},
     Accounts,
 };
-pub use restrict_claiming::*;
+pub use restrict_tokenflow::*;
 
-mod allow_claiming;
-mod restrict_claiming;
+mod allow_tokenflow;
+mod restrict_tokenflow;
 
 use mplx_staking_states::state::Registrar;
 

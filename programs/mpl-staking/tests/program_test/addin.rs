@@ -761,15 +761,19 @@ impl AddinCookie {
         self.solana.context.borrow_mut().set_sysvar(&new_clock);
     }
 
-    pub async fn restrict_claiming(
+    pub async fn restrict_tokenflow(
         &self,
         reward_pool: &Pubkey,
         deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
+
+        mining_owner: &Pubkey,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::RestrictClaiming {});
+        let data = InstructionData::data(&mpl_staking::instruction::RestrictTokenflow {
+            mining_owner: *mining_owner,
+        });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Penalty {
@@ -793,15 +797,18 @@ impl AddinCookie {
             .await
     }
 
-    pub async fn allow_claiming(
+    pub async fn allow_tokenflow(
         &self,
         reward_pool: &Pubkey,
         deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
+        mining_owner: &Pubkey,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::AllowClaiming {});
+        let data = InstructionData::data(&mpl_staking::instruction::AllowTokenflow {
+            mining_owner: *mining_owner,
+        });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Penalty {

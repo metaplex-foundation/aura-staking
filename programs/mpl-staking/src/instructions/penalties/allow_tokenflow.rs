@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 use mplx_staking_states::error::MplStakingError;
 
 /// Restricts claiming rewards from the specified mining account.
-pub fn allow_claiming(ctx: Context<Penalty>) -> Result<()> {
+pub fn allow_tokenflow(ctx: Context<Penalty>, mining_owner: Pubkey) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
 
     require_keys_eq!(
@@ -20,11 +20,12 @@ pub fn allow_claiming(ctx: Context<Penalty>) -> Result<()> {
         &[registrar.bump][..],
     ];
 
-    cpi_instructions::allow_claiming(
+    cpi_instructions::allow_tokenflow(
         ctx.accounts.rewards_program.to_account_info(),
         ctx.accounts.registrar.to_account_info(),
         ctx.accounts.reward_pool.to_account_info(),
         ctx.accounts.deposit_mining.to_account_info(),
+        &mining_owner,
         signers_seeds,
     )?;
 

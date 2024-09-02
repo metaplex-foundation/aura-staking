@@ -170,7 +170,7 @@ pub enum RewardsInstruction {
     /// [RS] Deposit authority
     /// [S] Reward pool account
     /// [W] Mining
-    RestrictClaiming {},
+    RestrictTokenFlow { mining_owner: Pubkey },
 
     /// Allows claiming rewards from the specified mining account
     ///
@@ -178,14 +178,15 @@ pub enum RewardsInstruction {
     /// [RS] Deposit authority
     /// [S] Reward pool account
     /// [W] Mining
-    AllowClaiming {},
+    AllowTokenFlow { mining_owner: Pubkey },
 }
 
-pub fn restrict_claiming<'a>(
+pub fn restrict_tokenflow<'a>(
     program_id: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
+    mining_owner: &Pubkey,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
@@ -196,7 +197,9 @@ pub fn restrict_claiming<'a>(
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
-        &RewardsInstruction::RestrictClaiming {},
+        &RewardsInstruction::RestrictTokenFlow {
+            mining_owner: *mining_owner,
+        },
         accounts,
     );
 
@@ -207,11 +210,12 @@ pub fn restrict_claiming<'a>(
     )
 }
 
-pub fn allow_claiming<'a>(
+pub fn allow_tokenflow<'a>(
     program_id: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
+    mining_owner: &Pubkey,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
@@ -222,7 +226,9 @@ pub fn allow_claiming<'a>(
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
-        &RewardsInstruction::AllowClaiming {},
+        &RewardsInstruction::AllowTokenFlow {
+            mining_owner: *mining_owner,
+        },
         accounts,
     );
 
