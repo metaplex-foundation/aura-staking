@@ -189,6 +189,8 @@ pub enum RewardsInstruction {
     RestrictBatchMinting {
         /// Time until batch minting is restricted
         until_ts: u64,
+        /// Owner of the mining account
+        mining_owner: Pubkey,
     },
 }
 
@@ -197,6 +199,7 @@ pub fn restrict_batch_minting<'a>(
     deposit_authority: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
+    mining_owner: &Pubkey,
     until_ts: u64,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
@@ -208,7 +211,10 @@ pub fn restrict_batch_minting<'a>(
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
-        &RewardsInstruction::RestrictBatchMinting { until_ts },
+        &RewardsInstruction::RestrictBatchMinting {
+            until_ts,
+            mining_owner: *mining_owner,
+        },
         accounts,
     );
 
