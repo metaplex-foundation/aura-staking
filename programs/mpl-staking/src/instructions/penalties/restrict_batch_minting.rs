@@ -3,7 +3,7 @@ use crate::cpi_instructions;
 use anchor_lang::prelude::*;
 use mplx_staking_states::error::MplStakingError;
 
-/// Restricts claiming rewards from the specified mining account.
+/// Restricts batch minting operation for the account until the specified timestamp.
 pub fn restrict_batch_minting(ctx: Context<Penalty>, until_ts: u64) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
 
