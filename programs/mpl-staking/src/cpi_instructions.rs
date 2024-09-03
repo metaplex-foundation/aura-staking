@@ -179,6 +179,50 @@ pub enum RewardsInstruction {
     /// [S] Reward pool account
     /// [W] Mining
     AllowTokenFlow { mining_owner: Pubkey },
+
+    /// Restricts batch minting until the specified time
+    ///
+    /// Accounts:
+    /// [RS] Deposit authority
+    /// [S] Reward pool account
+    /// [W] Mining
+    RestrictBatchMinting {
+        /// Time until batch minting is restricted
+        until_ts: u64,
+        /// Owner of the mining account
+        mining_owner: Pubkey,
+    },
+}
+
+pub fn restrict_batch_minting<'a>(
+    program_id: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    mining_owner: &Pubkey,
+    until_ts: u64,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::RestrictBatchMinting {
+            until_ts,
+            mining_owner: *mining_owner,
+        },
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[deposit_authority, reward_pool, mining, program_id],
+        &[signers_seeds],
+    )
 }
 
 pub fn restrict_tokenflow<'a>(

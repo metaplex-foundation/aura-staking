@@ -3,9 +3,11 @@ use anchor_lang::{
     prelude::{AccountLoader, Signer, ToAccountInfo, UncheckedAccount},
     Accounts,
 };
+pub use restrict_batch_minting::*;
 pub use restrict_tokenflow::*;
 
 mod allow_tokenflow;
+mod restrict_batch_minting;
 mod restrict_tokenflow;
 
 use mplx_staking_states::state::Registrar;
