@@ -761,6 +761,7 @@ impl AddinCookie {
         self.solana.context.borrow_mut().set_sysvar(&new_clock);
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn restrict_batch_minting(
         &self,
         reward_pool: &Pubkey,
