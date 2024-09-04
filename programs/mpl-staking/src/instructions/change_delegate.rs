@@ -115,7 +115,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     let deposit_authority = ctx.accounts.registrar.to_account_info();
     let old_delegate_mining = ctx.accounts.old_delegate_mining.to_account_info();
     let new_delegate_mining = ctx.accounts.new_delegate_mining.to_account_info();
-    let signers_seeds = registrar_seeds!(&registrar);
+    let signers_seeds = registrar_seeds!(registrar);
     let staked_amount = target.amount_deposited_native;
     let mining_owner = ctx.accounts.voter_authority.to_account_info();
     let new_delegate = target.delegate;

@@ -651,6 +651,7 @@ pub fn change_delegate<'a>(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn slash<'a>(
     program_id: AccountInfo<'a>,
     deposit_authority: AccountInfo<'a>,
