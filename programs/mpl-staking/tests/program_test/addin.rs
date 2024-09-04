@@ -799,13 +799,68 @@ impl AddinCookie {
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
+    pub async fn slash(
+        &self,
+        registrar: &RegistrarCookie,
+        realm: &GovernanceRealmCookie,
+        voter: &VoterCookie,
+        voting_mint: &VotingMintConfigCookie,
+        realm_authority: &Keypair,
+        deposit_entry_index: u8,
+        amount: u64,
+        mining_owner: &Pubkey,
+        rewards_program: &Pubkey,
+    ) -> std::result::Result<(), BanksClientError> {
+        let vault = voter.vault_address(voting_mint);
+
+        let data = InstructionData::data(&mpl_staking::instruction::Slash {
+            deposit_entry_index,
+            amount,
+            mining_owner: *mining_owner,
+        });
+
+        let (deposit_mining, _) = find_deposit_mining_addr(
+            rewards_program,
+            &voter.authority.pubkey(),
+            &registrar.reward_pool,
+        );
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &mpl_staking::accounts::Slashing {
+                registrar: registrar.address,
+                voter: voter.address,
+                vault,
+                token_owner_record: voter.token_owner_record,
+                voter_weight_record: voter.voter_weight_record,
+                realm: realm.realm,
+                realm_treasury: realm.community_token_account,
+                realm_authority: realm_authority.pubkey(),
+                reward_pool: registrar.reward_pool,
+                token_program: spl_token::id(),
+                deposit_mining,
+                rewards_program: *rewards_program,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[realm_authority]))
+            .await
+    }
+
     pub async fn restrict_tokenflow(
         &self,
         reward_pool: &Pubkey,
         deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
-
         mining_owner: &Pubkey,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {

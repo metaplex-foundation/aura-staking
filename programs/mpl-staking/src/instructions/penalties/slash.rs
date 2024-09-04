@@ -1,5 +1,5 @@
 use crate::{
-    cpi_instructions,
+    clock_unix_timestamp, cpi_instructions,
     voter::{load_token_owner_record, VoterWeightRecord},
 };
 use anchor_lang::prelude::*;
@@ -58,6 +58,7 @@ pub struct Slashing<'info> {
     /// Ownership of the account will be checked in the rewards contract
     /// It's the core account for the rewards contract, which will
     /// keep track of all rewards and staking logic.
+    #[account(mut)]
     pub reward_pool: UncheckedAccount<'info>,
 
     /// CHECK: mining PDA will be checked in the rewards contract
@@ -89,81 +90,104 @@ impl<'info> Slashing<'info> {
 ///
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
-pub fn slash(ctx: Context<Slashing>, deposit_entry_index: u8, amount: u64) -> Result<()> {
+pub fn slash(
+    ctx: Context<Slashing>,
+    deposit_entry_index: u8,
+    amount: u64,
+    mining_owner: Pubkey,
+) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
-    require_keys_eq!(
-        registrar.realm_authority,
-        ctx.accounts.realm_authority.key(),
-        MplStakingError::InvalidRealmAuthority
-    );
 
-    let voter = ctx.accounts.voter.load_mut()?;
+    // this block is needed not to violate borrowing rules for the voter
+    {
+        require_keys_eq!(
+            registrar.realm_authority,
+            ctx.accounts.realm_authority.key(),
+            MplStakingError::InvalidRealmAuthority
+        );
+
+        let voter = &mut ctx.accounts.voter.load_mut()?;
+        // Governance may forbid withdraws, for example when engaged in a vote.
+        // Not applicable for tokens that don't contribute to voting power.
+        let token_owner_record = load_token_owner_record(
+            &voter.voter_authority,
+            &ctx.accounts.token_owner_record.to_account_info(),
+            &registrar,
+        )?;
+        token_owner_record.assert_can_withdraw_governing_tokens()?;
+
+        let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
+
+        let mint_idx = registrar.voting_mint_config_index(ctx.accounts.realm_treasury.mint)?;
+        require_eq!(
+            mint_idx,
+            deposit_entry.voting_mint_config_idx as usize,
+            MplStakingError::InvalidMint
+        );
+
+        // Bookkeeping for withdrawn funds.
+        require_gte!(
+            deposit_entry.amount_deposited_native,
+            amount,
+            MplStakingError::InternalProgramError
+        );
+
+        deposit_entry.amount_deposited_native = deposit_entry
+            .amount_deposited_native
+            .checked_sub(amount)
+            .ok_or(MplStakingError::ArithmeticOverflow)?;
+
+        // if deposit doesn't have tokens after withdrawal
+        // then is shouldn't be used
+        if deposit_entry.amount_deposited_native == 0 {
+            *deposit_entry = DepositEntry::default();
+            deposit_entry.is_used = false;
+        }
+
+        msg!(
+            "Slashed amount {} at deposit index {} with lockup kind {:?}",
+            amount,
+            deposit_entry_index,
+            deposit_entry.lockup.kind,
+        );
+
+        let slash_amount_multiplied_by_period = amount
+            .checked_mul(deposit_entry.lockup.period.multiplier())
+            .ok_or(MplStakingError::ArithmeticOverflow)?;
+        let amount = amount
+            .checked_mul(deposit_entry.lockup.period.multiplier())
+            .ok_or(MplStakingError::ArithmeticOverflow)?;
+        let curr_ts = clock_unix_timestamp();
+        let stake_expiration_date = if curr_ts > deposit_entry.lockup.end_ts {
+            None
+        } else {
+            Some(deposit_entry.lockup.end_ts)
+        };
+        let signers_seeds = registrar_seeds!(&registrar);
+
+        cpi_instructions::slash(
+            ctx.accounts.rewards_program.to_account_info(),
+            ctx.accounts.registrar.to_account_info(),
+            ctx.accounts.reward_pool.to_account_info(),
+            ctx.accounts.deposit_mining.to_account_info(),
+            &mining_owner,
+            amount,
+            slash_amount_multiplied_by_period,
+            stake_expiration_date,
+            signers_seeds,
+        )?;
+
+        // Update the voter weight record
+        let record = &mut ctx.accounts.voter_weight_record;
+        record.voter_weight = voter.weight()?;
+        record.voter_weight_expiry = Some(Clock::get()?.slot);
+    }
+
+    let voter = ctx.accounts.voter.load()?;
     let voter_seeds = voter_seeds!(voter);
     token::transfer(
         ctx.accounts.transfer_ctx().with_signer(&[voter_seeds]),
         amount,
-    )?;
-
-    let voter = &mut ctx.accounts.voter.load_mut()?;
-
-    // Governance may forbid withdraws, for example when engaged in a vote.
-    // Not applicable for tokens that don't contribute to voting power.
-    let token_owner_record = load_token_owner_record(
-        &voter.voter_authority,
-        &ctx.accounts.token_owner_record.to_account_info(),
-        &registrar,
-    )?;
-    token_owner_record.assert_can_withdraw_governing_tokens()?;
-
-    let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
-
-    let mint_idx = registrar.voting_mint_config_index(ctx.accounts.realm_treasury.mint)?;
-    require_eq!(
-        mint_idx,
-        deposit_entry.voting_mint_config_idx as usize,
-        MplStakingError::InvalidMint
-    );
-
-    // Bookkeeping for withdrawn funds.
-    require_gte!(
-        deposit_entry.amount_deposited_native,
-        amount,
-        MplStakingError::InternalProgramError
-    );
-
-    deposit_entry.amount_deposited_native = deposit_entry
-        .amount_deposited_native
-        .checked_sub(amount)
-        .ok_or(MplStakingError::ArithmeticOverflow)?;
-
-    // if deposit doesn't have tokens after withdrawal
-    // then is shouldn't be used
-    if deposit_entry.amount_deposited_native == 0 {
-        *deposit_entry = DepositEntry::default();
-        deposit_entry.is_used = false;
-    }
-
-    msg!(
-        "Slashed amount {} at deposit index {} with lockup kind {:?}",
-        amount,
-        deposit_entry_index,
-        deposit_entry.lockup.kind,
-    );
-
-    // Update the voter weight record
-    let record = &mut ctx.accounts.voter_weight_record;
-    record.voter_weight = voter.weight()?;
-    record.voter_weight_expiry = Some(Clock::get()?.slot);
-
-    let signers_seeds = registrar_seeds!(&registrar);
-
-    cpi_instructions::slash(
-        ctx.accounts.rewards_program.to_account_info(),
-        ctx.accounts.registrar.to_account_info(),
-        ctx.accounts.reward_pool.to_account_info(),
-        ctx.accounts.deposit_mining.to_account_info(),
-        amount,
-        signers_seeds,
     )?;
 
     Ok(())

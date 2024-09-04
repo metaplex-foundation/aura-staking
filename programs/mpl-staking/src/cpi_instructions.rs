@@ -656,18 +656,26 @@ pub fn slash<'a>(
     deposit_authority: AccountInfo<'a>,
     reward_pool: AccountInfo<'a>,
     mining: AccountInfo<'a>,
-    amount: u64,
+    mining_owner: &Pubkey,
+    slash_amount_in_native: u64,
+    slash_amount_multiplied_by_period: u64,
+    stake_expiration_date: Option<u64>,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
+        AccountMeta::new_readonly(deposit_authority.key(), true),
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
-        AccountMeta::new_readonly(deposit_authority.key(), true),
     ];
 
     let ix = Instruction::new_with_borsh(
         program_id.key(),
-        &RewardsInstruction::Slash { amount },
+        &RewardsInstruction::Slash {
+            mining_owner: *mining_owner,
+            slash_amount_in_native,
+            slash_amount_multiplied_by_period,
+            stake_expiration_date,
+        },
         accounts,
     );
 

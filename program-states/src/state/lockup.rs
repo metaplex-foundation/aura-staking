@@ -43,14 +43,18 @@ impl Lockup {
             MplStakingError::InvalidLockupKind
         );
 
+        let end_ts = start_ts
+            .checked_add(period.to_secs())
+            .ok_or(MplStakingError::ArithmeticOverflow)?;
+
         Ok(Self {
             kind,
             start_ts,
+            // end_ts will be finally determined at the moment of stake
+            end_ts,
             period,
             // 0 means cooldown hasn't been requested
             cooldown_ends_at: 0,
-            // end_ts will be defined at the moment of stake
-            end_ts: 0,
             cooldown_requested: false,
             _reserved0: [0; 16],
             _reserved1: [0; 5],

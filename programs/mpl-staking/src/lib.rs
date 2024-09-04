@@ -198,8 +198,13 @@ pub mod mpl_staking {
         instructions::restrict_batch_minting(ctx, until_ts, mining_owner)
     }
 
-    pub fn slash(ctx: Context<Slashing>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-        instructions::slash(ctx, deposit_entry_index, amount)
+    pub fn slash(
+        ctx: Context<Slashing>,
+        deposit_entry_index: u8,
+        amount: u64,
+        mining_owner: Pubkey,
+    ) -> Result<()> {
+        instructions::slash(ctx, deposit_entry_index, amount, mining_owner)
     }
 }
 
