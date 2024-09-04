@@ -42,8 +42,8 @@ pub struct Slashing<'info> {
 
     pub realm_authority: Signer<'info>,
 
-    /// Withdraws must update the voter weight record, to prevent a stale
-    /// record being used to vote after the withdraw.
+    /// Slashes must update the voter weight record, to prevent a stale
+    /// record being used to vote after the slashing.
     #[account(
         mut,
         seeds = [registrar.key().as_ref(), b"voter-weight-record".as_ref(), voter.load()?.voter_authority.key().as_ref()],
@@ -88,8 +88,9 @@ impl<'info> Slashing<'info> {
 
 /// Slashes the specified stake in transfers money to the treasury.
 ///
-/// `deposit_entry_index`: The deposit entry to withdraw from.
-/// `amount` is in units of the native currency being withdrawn.
+/// `deposit_entry_index`: The deposit entry to slash.
+/// `amount`: is in units of the native currency being slashed.
+/// `mining_owner`: The owner of the mining account.
 pub fn slash(
     ctx: Context<Slashing>,
     deposit_entry_index: u8,
@@ -107,7 +108,8 @@ pub fn slash(
         );
 
         let voter = &mut ctx.accounts.voter.load_mut()?;
-        // Governance may forbid withdraws, for example when engaged in a vote.
+        // We should forbid slashes for votes that are in active votings state.
+        // Otherwise consequences are unpredictable.
         // Not applicable for tokens that don't contribute to voting power.
         let token_owner_record = load_token_owner_record(
             &voter.voter_authority,
@@ -125,7 +127,7 @@ pub fn slash(
             MplStakingError::InvalidMint
         );
 
-        // Bookkeeping for withdrawn funds.
+        // Bookkeeping for slashed funds.
         require_gte!(
             deposit_entry.amount_deposited_native,
             amount,
@@ -137,8 +139,8 @@ pub fn slash(
             .checked_sub(amount)
             .ok_or(MplStakingError::ArithmeticOverflow)?;
 
-        // if deposit doesn't have tokens after withdrawal
-        // then is shouldn't be used
+        // if deposit doesn't have tokens after slashing
+        // then is shouldn't be used and may be closed freely
         if deposit_entry.amount_deposited_native == 0 {
             *deposit_entry = DepositEntry::default();
             deposit_entry.is_used = false;
