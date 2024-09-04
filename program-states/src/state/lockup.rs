@@ -45,7 +45,7 @@ impl Lockup {
 
         let end_ts = start_ts
             .checked_add(period.to_secs())
-            .ok_or(MplStakingError::ArithmeticOverflow)?;
+            .ok_or(MplStakingError::InvalidTimestampArguments)?;
 
         Ok(Self {
             kind,
