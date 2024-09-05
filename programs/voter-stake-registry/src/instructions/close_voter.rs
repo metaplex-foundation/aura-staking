@@ -60,6 +60,11 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
     let registrar = ctx.accounts.registrar.load()?;
 
     require!(
+        ctx.accounts.rewards_program.key() == registrar.rewards_program,
+        MplStakingError::InvalidRewardsProgram
+    );
+
+    require!(
         registrar.reward_pool == ctx.accounts.reward_pool.key(),
         MplStakingError::InvalidRewardPool
     );

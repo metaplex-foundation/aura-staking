@@ -69,6 +69,11 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     let curr_ts = clock_unix_timestamp();
 
     require!(
+        ctx.accounts.rewards_program.key() == registrar.rewards_program,
+        MplStakingError::InvalidRewardsProgram
+    );
+
+    require!(
         registrar.reward_pool == ctx.accounts.reward_pool.key(),
         MplStakingError::InvalidRewardPool
     );

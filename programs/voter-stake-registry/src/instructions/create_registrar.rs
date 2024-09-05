@@ -80,6 +80,7 @@ pub fn create_registrar(
         registrar.realm_governing_token_mint = ctx.accounts.realm_governing_token_mint.key();
         registrar.realm_authority = ctx.accounts.realm_authority.key();
         registrar.reward_pool = ctx.accounts.reward_pool.key();
+        registrar.rewards_program = ctx.accounts.rewards_program.key();
 
         // Verify that "realm_authority" is the expected authority on "realm"
         // and that the mint matches one of the realm mints too.

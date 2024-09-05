@@ -16,6 +16,11 @@ pub fn stake(
     let registrar = ctx.accounts.registrar.load()?;
 
     require!(
+        ctx.accounts.rewards_program.key() == registrar.rewards_program,
+        MplStakingError::InvalidRewardsProgram
+    );
+
+    require!(
         registrar.reward_pool == ctx.accounts.reward_pool.key(),
         MplStakingError::InvalidRewardPool
     );

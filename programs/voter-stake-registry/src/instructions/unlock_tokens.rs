@@ -6,6 +6,11 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
     let registrar = ctx.accounts.registrar.load()?;
 
     require!(
+        ctx.accounts.rewards_program.key() == registrar.rewards_program,
+        MplStakingError::InvalidRewardsProgram
+    );
+
+    require!(
         registrar.reward_pool == ctx.accounts.reward_pool.key(),
         MplStakingError::InvalidRewardPool
     );

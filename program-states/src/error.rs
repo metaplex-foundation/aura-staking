@@ -110,4 +110,7 @@ pub enum MplStakingError {
     // 6035 / 0x1793
     #[msg("Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found")]
     NoDaoInteractionFound,
+    // 6036 / 0x1794
+    #[msg("Rewards: Invalid rewards program account")]
+    InvalidRewardsProgram,
 }
