@@ -3,7 +3,7 @@ use crate::cpi_instructions;
 use anchor_lang::prelude::*;
 use mplx_staking_states::{error::MplStakingError, registrar_seeds};
 
-/// Slashes the specified stake in transfers money to the treasury.
+/// Reduces the weighted stake of the mining account wich leads to a decrease in rewards.
 ///
 /// - `decreased_weighted_stake_number`: weighted number to decrease by.
 /// - `mining_owner`: The owner of the mining account.
