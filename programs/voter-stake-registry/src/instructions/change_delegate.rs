@@ -91,8 +91,7 @@ pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) ->
     } else {
         let delegate_voter = &ctx.accounts.delegate_voter.load()?;
         require!(
-            ctx.accounts.voter.key() != ctx.accounts.delegate_voter.key()
-                && delegate_voter.voter_authority != target.delegate,
+            delegate_voter.voter_authority != target.delegate,
             MplStakingError::SameDelegate
         );
 
