@@ -206,6 +206,14 @@ pub mod mpl_staking {
     ) -> Result<()> {
         instructions::slash(ctx, deposit_entry_index, amount, mining_owner)
     }
+
+    pub fn decrease_rewards(
+        ctx: Context<Penalty>,
+        decreased_weighted_stake_number: u64,
+        mining_owner: Pubkey,
+    ) -> Result<()> {
+        instructions::decrease_rewards(ctx, decreased_weighted_stake_number, mining_owner)
+    }
 }
 
 #[derive(Accounts)]
