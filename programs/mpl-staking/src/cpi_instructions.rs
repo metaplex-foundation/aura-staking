@@ -193,7 +193,7 @@ pub enum RewardsInstruction {
         mining_owner: Pubkey,
     },
 
-    /// Allows claiming rewards from the specified mining account
+    /// Slashes the specified stake and transfers money to the treasury
     ///
     /// Accounts:
     /// [RS] Deposit authority
