@@ -79,7 +79,7 @@ impl<'info> Withdraw<'info> {
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
 pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-    // we need that block to free all references borrowed from registart/voter/etc,
+    // we need that block to free all references borrowed from registrar/voter/etc,
     // otherwise later, during transfer we would pass references that are already borrowed
     {
         let voter = ctx.accounts.voter.load()?;
