@@ -45,9 +45,6 @@ impl Registrar {
                 sum = sum
                     .checked_add(mint.supply)
                     .ok_or_else(|| error!(MplStakingError::VoterWeightOverflow))?;
-                sum = sum
-                    .checked_add(mint.supply)
-                    .ok_or_else(|| error!(MplStakingError::VoterWeightOverflow))?;
                 Ok(sum)
             })
     }
