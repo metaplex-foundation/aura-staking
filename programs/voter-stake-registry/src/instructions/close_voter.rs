@@ -71,7 +71,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
         require!(!any_locked, MplStakingError::DepositStillLocked);
 
         let active_deposit_entries = voter.deposits.iter().filter(|d| d.is_used).count();
-        require_eq!(ctx.remaining_accounts.len(), active_deposit_entries);
+        require_eq!(ctx.remaining_accounts.len(), active_deposit_entries * 2);
 
         let voter_seeds = voter_seeds!(voter);
 
