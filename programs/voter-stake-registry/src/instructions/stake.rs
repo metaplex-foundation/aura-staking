@@ -65,6 +65,11 @@ pub fn stake(
         .amount_deposited_native
         .checked_add(amount)
         .ok_or(MplStakingError::ArithmeticOverflow)?;
+    target.lockup.end_ts = target
+        .lockup
+        .start_ts
+        .checked_add(target.lockup.period.to_secs())
+        .ok_or(MplStakingError::InvalidTimestampArguments)?;
 
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let mining = ctx.accounts.deposit_mining.to_account_info();
