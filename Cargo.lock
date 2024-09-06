@@ -1978,6 +1978,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "mpl-common-constants"
+version = "0.1.0"
+source = "git+ssh://github.com/adm-metaex/mpl-common-constants#c057a6338e02c3a4b46e449dd7a0f25b9c4ffd5c"
+
+[[package]]
 name = "mpl-staking"
 version = "0.1.0"
 dependencies = [
@@ -1987,6 +1992,7 @@ dependencies = [
  "bytemuck",
  "env_logger",
  "log",
+ "mpl-common-constants",
  "mplx-staking-states",
  "solana-program",
  "solana-program-test",
