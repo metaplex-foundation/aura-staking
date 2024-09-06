@@ -103,7 +103,6 @@ pub mod mpl_staking {
     }
 
     pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-        // instructions::withdraw(ctx, deposit_entry_index, amount);
         instructions::withdraw(ctx, deposit_entry_index, amount)
     }
 
