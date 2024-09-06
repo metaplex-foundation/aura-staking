@@ -1,20 +1,13 @@
 use crate::{borsh::BorshDeserialize, cpi_instructions};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
+use mpl_common_constants::constants::DAO_PUBKEY;
 use mplx_staking_states::{error::MplStakingError, state::Registrar};
 use solana_program::program::get_return_data;
 use spl_governance::state::{
     governance::GovernanceV2, proposal::ProposalV2, vote_record::VoteRecordV2,
 };
 use std::{borrow::Borrow, str::FromStr};
-
-// TODO: Replace placeholder with the actual DAO pubkey.
-// TODO: Current `DAO_PUBKEY` is invalid and used only for `test_claim.rs` test,
-//  pls put actual DAO pubkey, when will we deploy.
-// TODO: Also don't forget to change `GOVERNANCE_PROGRAM_ID` and `REALM_NAME` constants in
-//  `program_test/mod.rs` to derive valid PDA.
-// Link to ticket: https://linear.app/mplx/issue/MTG-546/replace-dao-pubkey-constant-with-actual-public-key-in-staking-contract
-pub const DAO_PUBKEY: &str = "89wVNeyqqDaWKWtS4rbunYdsxxbe5V3VRx6g8GWNMTMt";
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
