@@ -159,6 +159,7 @@ async fn test_voting() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             voter_mngo,
+            realm.community_token_account,
             0,
             1,
         )
@@ -243,6 +244,7 @@ async fn test_voting() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter2_authority,
             voter_mngo,
+            realm.community_token_account,
             0,
             1,
         )
@@ -257,6 +259,7 @@ async fn test_voting() -> Result<(), TransportError> {
             &usdc_voting_mint,
             voter2_authority,
             voter_usdc,
+            realm.community_token_account,
             1,
             1,
         )
@@ -282,6 +285,7 @@ async fn test_voting() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter2_authority,
             voter_mngo,
+            realm.community_token_account,
             0,
             750,
         )

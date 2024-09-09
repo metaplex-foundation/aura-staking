@@ -152,6 +152,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             reference_account,
+            realm.community_token_account,
             0,
             amount,
         )

@@ -195,6 +195,7 @@ async fn test_basic() -> Result<(), TransportError> {
             &mngo_voting_mint,
             deposit_authority,
             reference_account,
+            realm.community_token_account,
             1,
             10000,
         )

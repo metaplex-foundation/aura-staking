@@ -240,6 +240,7 @@ async fn withdraw_is_restricted() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             voter_authority_ata,
+            realm.community_token_mint.pubkey.unwrap(),
             0,
             amount,
         )

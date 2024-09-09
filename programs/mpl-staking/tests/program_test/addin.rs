@@ -560,6 +560,7 @@ impl AddinCookie {
         voting_mint: &VotingMintConfigCookie,
         authority: &Keypair,
         token_address: Pubkey,
+        realm_treasury: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
@@ -577,6 +578,7 @@ impl AddinCookie {
                 token_owner_record: voter.token_owner_record,
                 voter_weight_record: voter.voter_weight_record,
                 vault,
+                realm_treasury,
                 destination: token_address,
                 voter_authority: authority.pubkey(),
                 token_program: spl_token::id(),
@@ -841,17 +843,13 @@ impl AddinCookie {
     pub async fn slash(
         &self,
         registrar: &RegistrarCookie,
-        realm: &GovernanceRealmCookie,
         voter: &VoterCookie,
-        voting_mint: &VotingMintConfigCookie,
         realm_authority: &Keypair,
         deposit_entry_index: u8,
         amount: u64,
         mining_owner: &Pubkey,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(voting_mint);
-
         let data = InstructionData::data(&mpl_staking::instruction::Slash {
             deposit_entry_index,
             amount,
@@ -868,14 +866,9 @@ impl AddinCookie {
             &mpl_staking::accounts::Slashing {
                 registrar: registrar.address,
                 voter: voter.address,
-                vault,
-                token_owner_record: voter.token_owner_record,
                 voter_weight_record: voter.voter_weight_record,
-                realm: realm.realm,
-                realm_treasury: realm.community_token_account,
                 realm_authority: realm_authority.pubkey(),
                 reward_pool: registrar.reward_pool,
-                token_program: spl_token::id(),
                 deposit_mining,
                 rewards_program: *rewards_program,
             },

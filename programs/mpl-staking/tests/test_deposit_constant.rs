@@ -131,6 +131,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             reference_account,
+            realm.community_token_account,
             d_entry_index,
             amount,
         )
@@ -308,6 +309,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             reference_account,
+            realm.community_token_account,
             0,
             amount,
         )
