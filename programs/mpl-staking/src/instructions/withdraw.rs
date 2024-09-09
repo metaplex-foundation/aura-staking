@@ -85,7 +85,7 @@ impl<'info> Withdraw<'info> {
 /// `deposit_entry_index`: The deposit entry to withdraw from.
 /// `amount` is in units of the native currency being withdrawn.
 pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) -> Result<()> {
-    {
+    let slashing_penalty = {
         // Load the accounts.
         let registrar = &ctx.accounts.registrar.load()?;
         let voter = &mut ctx.accounts.voter.load_mut()?;
@@ -105,6 +105,7 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
         // Get the deposit being withdrawn from.
         let curr_ts = clock_unix_timestamp();
         let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
+        let slashing_penalty = deposit_entry.slashing_penalty;
 
         // check whether funds are cooled down
         if deposit_entry.lockup.kind == LockupKind::Constant {
@@ -140,6 +141,10 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
             .amount_deposited_native
             .checked_sub(amount)
             .ok_or(MplStakingError::ArithmeticOverflow)?;
+        deposit_entry.slashing_penalty = deposit_entry
+            .slashing_penalty
+            .checked_sub(slashing_penalty)
+            .ok_or(MplStakingError::ArithmeticOverflow)?;
 
         msg!(
             "Withdrew amount {} at deposit index {} with lockup kind {:?} and {} seconds left",
@@ -149,11 +154,22 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
             deposit_entry.lockup.seconds_left(curr_ts),
         );
 
+        if deposit_entry.amount_deposited_native == 0
+            && deposit_entry.lockup.kind != LockupKind::None
+            && deposit_entry.lockup.period != LockupPeriod::None
+            && deposit_entry.slashing_penalty == 0
+        {
+            *deposit_entry = DepositEntry::default();
+            deposit_entry.is_used = false;
+        }
+
         // Update the voter weight record
         let record = &mut ctx.accounts.voter_weight_record;
         record.voter_weight = voter.weight()?;
         record.voter_weight_expiry = Some(Clock::get()?.slot);
-    }
+
+        slashing_penalty
+    };
 
     // Transfer the tokens
     {
@@ -166,33 +182,8 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
                 .with_signer(&[voter_seeds]),
             amount,
         )?;
-    }
-
-    // transfer slashed tokens to treasery if any had been slashed
-    {
-        let slashing_penalty = {
-            let mut voter = ctx.accounts.voter.load_mut()?;
-            let deposit_entry = voter.active_deposit_mut(deposit_entry_index)?;
-            let slashing_penalty = deposit_entry.slashing_penalty;
-            deposit_entry.slashing_penalty = deposit_entry
-                .slashing_penalty
-                .checked_sub(slashing_penalty)
-                .ok_or(MplStakingError::ArithmeticOverflow)?;
-
-            if deposit_entry.amount_deposited_native == 0
-                && deposit_entry.lockup.kind != LockupKind::None
-                && deposit_entry.lockup.period != LockupPeriod::None
-                && deposit_entry.slashing_penalty == 0
-            {
-                *deposit_entry = DepositEntry::default();
-                deposit_entry.is_used = false;
-            }
-            slashing_penalty
-        };
 
         if slashing_penalty > 0 {
-            let voter = ctx.accounts.voter.load()?;
-            let voter_seeds = voter_seeds!(voter);
             let realm_treasury = ctx.accounts.realm_treasury.to_account_info();
             token::transfer(
                 ctx.accounts
