@@ -205,6 +205,18 @@ pub enum RewardsInstruction {
         // None if it's Flex period, because it's already expired
         stake_expiration_date: Option<u64>,
     },
+
+    /// Decreaese miner's weighted stake by specified amount
+    ///
+    /// Accounts:
+    /// [RS] Deposit authority
+    /// [W] Reward pool account
+    /// [W] Mining
+    DecreaseRewards {
+        mining_owner: Pubkey,
+        // The number by which weighted stake should be decreased
+        decreased_weighted_stake_number: u64,
+    },
 }
 
 pub fn restrict_batch_minting<'a>(
@@ -680,6 +692,38 @@ pub fn slash<'a>(
     invoke_signed(
         &ix,
         &[reward_pool, mining, deposit_authority, program_id],
+        &[signers_seeds],
+    )
+}
+
+pub fn decrease_rewards<'a>(
+    program_id: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    decreased_weighted_stake_number: u64,
+    mining_owner: &Pubkey,
+
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::DecreaseRewards {
+            mining_owner: *mining_owner,
+            decreased_weighted_stake_number,
+        },
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[deposit_authority, reward_pool, mining, program_id],
         &[signers_seeds],
     )
 }

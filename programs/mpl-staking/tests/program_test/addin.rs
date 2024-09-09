@@ -800,6 +800,44 @@ impl AddinCookie {
     }
 
     #[allow(clippy::too_many_arguments)]
+    pub async fn decrease_rewards(
+        &self,
+        reward_pool: &Pubkey,
+        deposit_mining: &Pubkey,
+        registrar: &RegistrarCookie,
+        realm_authority: &Keypair,
+        mining_owner: &Pubkey,
+        decreased_weighted_stake_number: u64,
+        rewards_program: &Pubkey,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data = InstructionData::data(&mpl_staking::instruction::DecreaseRewards {
+            mining_owner: *mining_owner,
+            decreased_weighted_stake_number,
+        });
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &mpl_staking::accounts::Penalty {
+                registrar: registrar.address,
+                realm_authority: realm_authority.pubkey(),
+                reward_pool: *reward_pool,
+                deposit_mining: *deposit_mining,
+                rewards_program: *rewards_program,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[realm_authority]))
+            .await
+    }
+
+    #[allow(clippy::too_many_arguments)]
     pub async fn slash(
         &self,
         registrar: &RegistrarCookie,
