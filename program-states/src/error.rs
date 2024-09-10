@@ -99,21 +99,27 @@ pub enum MplStakingError {
     #[msg("Rewards: Invalid mining account")]
     InvalidMining,
     // 6032 / 0x1790
-    #[msg("Rewards: Updating delegate is sooner than 5 days")]
+    #[msg("Updating delegate is sooner than 5 days")]
     DelegateUpdateIsTooSoon,
     // 6033 / 0x1791
-    #[msg("Rewards: Cannot change delegate to the same delegate")]
+    #[msg("Cannot change delegate to the same delegate")]
     SameDelegate,
     // 6034 / 0x1792
-    #[msg("Rewards: Invalid reward pool account")]
+    #[msg("Invalid reward pool account")]
     InvalidRewardPool,
     // 6035 / 0x1793
-    #[msg("Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found")]
+    #[msg("Passed remaining accounts are invalid, interaction with dao was'nt found")]
     NoDaoInteractionFound,
     // 6036 / 0x1794
-    #[msg("Rewards: Invalid rewards program account")]
+    #[msg("Invalid rewards program account")]
     InvalidRewardsProgram,
     // 6037 / 0x1795
-    #[msg("Rewards: Invalid realm account")]
+    #[msg("Invalid realm account")]
     InvalidRealm,
+    // 6038 / 0x1796
+    #[msg("Deposit entries may not be the same")]
+    DepositEntriesMustDiffer,
+    // 6039 / 0x1797
+    #[msg("Amount for stake must be positive")]
+    AmountMustBePositive,
 }

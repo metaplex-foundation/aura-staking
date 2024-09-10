@@ -16,6 +16,13 @@ pub fn stake(
     let registrar = ctx.accounts.registrar.load()?;
 
     require!(
+        source_deposit_entry_index != target_deposit_entry_index,
+        MplStakingError::DepositEntriesMustDiffer
+    );
+
+    require!(amount > 0, MplStakingError::AmountMustBePositive);
+
+    require!(
         ctx.accounts.rewards_program.key() == registrar.rewards_program,
         MplStakingError::InvalidRewardsProgram
     );
@@ -31,7 +38,7 @@ pub fn stake(
     let source_mint_idx = source.voting_mint_config_idx;
     require!(
         source.lockup.kind == LockupKind::None,
-        MplStakingError::LockingIsForbidded
+        MplStakingError::InvalidLockupKind
     );
 
     // Reduce source amounts
@@ -47,6 +54,10 @@ pub fn stake(
 
     // Check target compatibility
     let target = voter.active_deposit_mut(target_deposit_entry_index)?;
+    require!(
+        target.lockup.kind == LockupKind::Constant,
+        MplStakingError::InvalidLockupKind
+    );
     require_eq!(
         target.voting_mint_config_idx,
         source_mint_idx,
