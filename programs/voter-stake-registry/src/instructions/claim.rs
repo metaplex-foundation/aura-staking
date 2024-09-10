@@ -42,12 +42,15 @@ pub struct Claim<'info> {
 
     /// CHECK: Can be an arbitrary account.
     /// Can't be Account<'_, T> because doesn't implement AnchorDeserialize
+    #[account(owner = registrar.load()?.governance_program_id)]
     pub governance: UncheckedAccount<'info>,
     /// CHECK: Can be an arbitrary account.
     /// Can't be Account<'_, T> because doesn't implement AnchorDeserialize
+    #[account(owner = registrar.load()?.governance_program_id)]
     pub proposal: UncheckedAccount<'info>,
     /// CHECK: Can be an arbitrary account.
     /// Can't be Account<'_, T> because doesn't implement AnchorDeserialize
+    #[account(owner = registrar.load()?.governance_program_id)]
     pub vote_record: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -64,12 +67,7 @@ pub struct Claim<'info> {
 ///
 /// Tokens will be transfered from Vault in Rewards account to User's user_reward_token_account.
 /// This call actually doesn't mutating Staking's accounts, only Reward's accounts will be mutated.
-pub fn claim(
-    ctx: Context<Claim>,
-    registrar_bump: u8,
-    realm_governing_mint_pubkey: Pubkey,
-    realm_pubkey: Pubkey,
-) -> Result<u64> {
+pub fn claim(ctx: Context<Claim>, realm_pubkey: Pubkey) -> Result<u64> {
     let governance =
         GovernanceV2::deserialize(&mut &ctx.accounts.governance.data.borrow_mut()[..])?;
     let proposal = ProposalV2::deserialize(&mut &ctx.accounts.proposal.data.borrow_mut()[..])?;
@@ -85,6 +83,11 @@ pub fn claim(
     );
 
     let registrar = ctx.accounts.registrar.load()?;
+
+    require!(
+        registrar.realm == realm_pubkey,
+        MplStakingError::InvalidRealm
+    );
 
     require!(
         ctx.accounts.rewards_program.key() == registrar.rewards_program,
@@ -108,8 +111,8 @@ pub fn claim(
     let signers_seeds = &[
         &realm_pubkey.key().to_bytes(),
         b"registrar".as_ref(),
-        &realm_governing_mint_pubkey.key().to_bytes(),
-        &[registrar_bump][..],
+        &registrar.realm_governing_token_mint.key().to_bytes(),
+        &[registrar.bump][..],
     ];
 
     cpi_instructions::claim(

@@ -113,4 +113,7 @@ pub enum MplStakingError {
     // 6036 / 0x1794
     #[msg("Rewards: Invalid rewards program account")]
     InvalidRewardsProgram,
+    // 6037 / 0x1795
+    #[msg("Rewards: Invalid realm account")]
+    InvalidRealm,
 }
