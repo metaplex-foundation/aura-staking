@@ -122,4 +122,10 @@ pub enum MplStakingError {
     // 6039 / 0x1797
     #[msg("Amount for stake must be positive")]
     AmountMustBePositive,
+    // 6040 / 0x1798
+    #[msg("Cannot close the deposit because it's still in use")]
+    DepositStillUsed,
+    // 6041 / 0x1799
+    #[msg("Cannot deserialize an account")]
+    DeserializationError,
 }

@@ -1,6 +1,6 @@
 use crate::cpi_instructions;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, CloseAccount, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
     error::MplStakingError,
@@ -53,9 +53,9 @@ pub struct CloseVoter<'info> {
     pub rewards_program: UncheckedAccount<'info>,
 }
 
-/// Closes the voter account, transfers all funds from token accounts and closes vaults.
-/// Only accounts with no remaining lockups can be closed.
-/// remaining_accounts: All voter vaults followed by target token accounts, in order.
+/// Closes the voter account, and specified token vault if any provided,
+/// allowing to retrieve rent examption SOL.
+/// Only accounts with no remaining stakes can be closed.
 pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
 
@@ -76,46 +76,28 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
         require!(!any_locked, MplStakingError::DepositStillLocked);
 
         let active_deposit_entries = voter.deposits.iter().filter(|d| d.is_used).count();
-        require_eq!(ctx.remaining_accounts.len(), active_deposit_entries * 2);
+        require_eq!(active_deposit_entries, 0, MplStakingError::DepositStillUsed);
 
         let voter_seeds = voter_seeds!(voter);
 
-        let active_deposits = voter.deposits.iter().filter(|d| d.is_used);
-        let deposit_vaults = &ctx.remaining_accounts[..active_deposit_entries];
-        let target_accounts = &ctx.remaining_accounts[active_deposit_entries..];
-
-        for ((deposit, deposit_vault), target_account) in
-            active_deposits.zip(deposit_vaults).zip(target_accounts)
-        {
-            let mint = &registrar.voting_mints[deposit.voting_mint_config_idx as usize].mint;
-
-            let token = Account::<TokenAccount>::try_from(&deposit_vault.clone()).unwrap();
+        // will close all the token accounts owned by the voter
+        for deposit_vault_raw in ctx.remaining_accounts {
+            let deposit_vault_ta = Account::<TokenAccount>::try_from(&deposit_vault_raw)
+                .map_err(|_| MplStakingError::DeserializationError)?;
             require_keys_eq!(
-                token.owner,
+                deposit_vault_ta.owner,
                 ctx.accounts.voter.key(),
                 MplStakingError::InvalidAuthority
             );
-            require_keys_eq!(token.mint, *mint);
-            require_eq!(token.amount, 0, MplStakingError::VaultTokenNonZero);
-
-            // transfer to target_account
-            let cpi_transfer_accounts = Transfer {
-                from: deposit_vault.to_account_info(),
-                to: target_account.to_account_info(),
-                authority: ctx.accounts.voter.to_account_info(),
-            };
-            token::transfer(
-                CpiContext::new_with_signer(
-                    ctx.accounts.token_program.to_account_info(),
-                    cpi_transfer_accounts,
-                    &[voter_seeds],
-                ),
-                token.amount,
-            )?;
+            require_eq!(
+                deposit_vault_ta.amount,
+                0,
+                MplStakingError::VaultTokenNonZero
+            );
 
             // close vault
             let cpi_close_accounts = CloseAccount {
-                account: deposit_vault.to_account_info(),
+                account: deposit_vault_ta.to_account_info(),
                 destination: ctx.accounts.sol_destination.to_account_info(),
                 authority: ctx.accounts.voter.to_account_info(),
             };
@@ -125,7 +107,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
                 &[voter_seeds],
             ))?;
 
-            deposit_vault.exit(ctx.program_id)?;
+            deposit_vault_ta.exit(ctx.program_id)?;
         }
     }
 

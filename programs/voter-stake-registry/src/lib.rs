@@ -163,18 +163,8 @@ pub mod mpl_staking {
         )
     }
 
-    pub fn claim(
-        ctx: Context<Claim>,
-        registrar_bump: u8,
-        realm_governing_mint_pubkey: Pubkey,
-        realm_pubkey: Pubkey,
-    ) -> Result<u64> {
-        instructions::claim(
-            ctx,
-            registrar_bump,
-            realm_governing_mint_pubkey,
-            realm_pubkey,
-        )
+    pub fn claim(ctx: Context<Claim>, realm_pubkey: Pubkey) -> Result<u64> {
+        instructions::claim(ctx, realm_pubkey)
     }
 
     pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
