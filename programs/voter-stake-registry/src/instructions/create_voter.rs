@@ -1,9 +1,10 @@
 use crate::{cpi_instructions, voter::VoterWeightRecord};
-use anchor_lang::{prelude::*, solana_program::sysvar::instructions as tx_instructions};
+use anchor_lang::prelude::*;
 use mplx_staking_states::{
     error::MplStakingError,
     state::{Registrar, Voter},
 };
+use solana_program::instruction::{get_stack_height, TRANSACTION_LEVEL_STACK_HEIGHT};
 use std::mem::size_of;
 
 #[derive(Accounts)]
@@ -43,11 +44,6 @@ pub struct CreateVoter<'info> {
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 
-    /// NOTE: this account is currently unused
-    /// CHECK: Address constraint is set
-    #[account(address = tx_instructions::ID)]
-    pub instructions: UncheckedAccount<'info>,
-
     /// CHECK:
     /// Ownership of the account will be checked in the rewards contract
     /// It's the core account for the rewards contract, which will
@@ -76,18 +72,9 @@ pub fn create_voter(
     voter_bump: u8,
     voter_weight_record_bump: u8,
 ) -> Result<()> {
-    // Forbid creating voter accounts from CPI. The goal is to make automation
-    // impossible that weakens some of the limitations intentionally imposed on
-    // locked tokens.
-    {
-        let ixns = ctx.accounts.instructions.to_account_info();
-        let current_index = tx_instructions::load_current_index_checked(&ixns)? as usize;
-        let current_ixn = tx_instructions::load_instruction_at_checked(current_index, &ixns)?;
-        require_keys_eq!(
-            current_ixn.program_id,
-            *ctx.program_id,
-            MplStakingError::ForbiddenCpi
-        );
+    // The current stack height must be the initial one. Otherwise, it's a CPI.
+    if get_stack_height() > TRANSACTION_LEVEL_STACK_HEIGHT {
+        return err!(MplStakingError::ForbiddenCpi);
     }
 
     require_eq!(voter_bump, *ctx.bumps.get("voter").unwrap());
