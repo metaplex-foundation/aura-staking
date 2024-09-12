@@ -27,7 +27,7 @@ pub struct ChangeDelegate<'info> {
     /// CHECK: Mining Account that belongs to Rewards Program and some delegate
     /// The address of the mining account on the rewards program
     /// derived from PDA(["mining", delegate wallet addr, reward_pool], rewards_program)
-    /// Seeds derivation will be checked on the rewards contract
+    /// Will be checked in the change_delegate()
     #[account(mut)]
     pub old_delegate_mining: UncheckedAccount<'info>,
 
@@ -78,6 +78,8 @@ pub fn change_delegate(
     let voter_authority = voter.voter_authority;
     let target = voter.active_deposit_mut(deposit_entry_index)?;
     let curr_ts = clock_unix_timestamp();
+    let new_delegate = ctx.accounts.delegate_voter.key();
+    let old_delegate = target.delegate;
 
     let (calculated_old_delegate_mining, _) = find_mining_address(
         &ctx.accounts.rewards_program.key(),
@@ -109,7 +111,7 @@ pub fn change_delegate(
         MplStakingError::DelegateUpdateIsTooSoon
     );
 
-    if ctx.accounts.voter.key() == ctx.accounts.delegate_voter.key() {
+    if ctx.accounts.voter.key() == new_delegate {
         require!(
             target.delegate != voter_authority,
             MplStakingError::SameDelegate
@@ -158,6 +160,7 @@ pub fn change_delegate(
     ];
     let staked_amount = target.amount_deposited_native;
     let mining_owner = ctx.accounts.voter_authority.to_account_info();
+    let new_delegate = target.delegate;
 
     cpi_instructions::change_delegate(
         ctx.accounts.rewards_program.to_account_info(),
@@ -167,6 +170,8 @@ pub fn change_delegate(
         mining_owner,
         old_delegate_mining,
         new_delegate_mining,
+        old_delegate,
+        new_delegate,
         staked_amount,
         signers_seeds,
     )?;
