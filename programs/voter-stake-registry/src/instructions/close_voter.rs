@@ -4,7 +4,7 @@ use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
     error::MplStakingError,
-    state::{Registrar, Voter},
+    state::{LockupKind, LockupPeriod, Registrar, Voter},
     voter_seeds,
 };
 use std::ops::DerefMut;
@@ -75,7 +75,15 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
         let any_locked = voter.deposits.iter().any(|d| d.amount_locked() > 0);
         require!(!any_locked, MplStakingError::DepositStillLocked);
 
-        let active_deposit_entries = voter.deposits.iter().filter(|d| d.is_used).count();
+        let active_deposit_entries = voter
+            .deposits
+            .iter()
+            .filter(|d| {
+                d.is_used
+                    && d.lockup.kind != LockupKind::None
+                    && d.lockup.period != LockupPeriod::None
+            })
+            .count();
         require_eq!(active_deposit_entries, 0, MplStakingError::DepositStillUsed);
 
         let voter_seeds = voter_seeds!(voter);
