@@ -2,7 +2,11 @@ use crate::error::*;
 use anchor_lang::prelude::*;
 use borsh::{BorshDeserialize, BorshSerialize};
 
+/// Seconds in one day.
 pub const SECONDS_PER_DAY: u64 = 86_400;
+
+/// Seconds in cooldown (5 days)
+pub const COOLDOWN_SECS: u64 = 86_400 * 5;
 
 #[zero_copy]
 #[derive(Default, Debug)]

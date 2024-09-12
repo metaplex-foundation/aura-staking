@@ -332,7 +332,6 @@ impl AddinCookie {
                 payer: payer.pubkey(),
                 system_program: solana_sdk::system_program::id(),
                 rent: solana_program::sysvar::rent::id(),
-                instructions: solana_program::sysvar::instructions::id(),
                 reward_pool: *reward_pool,
                 deposit_mining: *deposit_mining,
                 rewards_program: *rewards_program,
@@ -777,8 +776,6 @@ impl AddinCookie {
         registrar: &RegistrarCookie,
     ) -> std::result::Result<(), BanksClientError> {
         let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::Claim {
-            realm_governing_mint_pubkey: registrar.realm_governing_token_mint_pubkey,
-            registrar_bump: registrar.registrar_bump,
             realm_pubkey: registrar.realm_pubkey,
         });
 

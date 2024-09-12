@@ -34,8 +34,16 @@ pub struct ChangeDelegate<'info> {
     /// CHECK: Mining Account that belongs to Rewards Program and some delegate
     /// The address of the mining account on the rewards program
     /// derived from PDA(["mining", delegate wallet addr, reward_pool], rewards_program)
-    /// Seeds derivation will be checked on the rewards contract
-    #[account(mut)]
+    #[account(
+        mut, 
+        seeds = [
+            b"mining",
+            delegate_voter.load()?.voter_authority.as_ref(), 
+            reward_pool.key().as_ref()
+        ], 
+        bump, 
+        seeds::program = rewards_program.key()
+    )]
     pub new_delegate_mining: UncheckedAccount<'info>,
 
     /// CHECK:
@@ -61,12 +69,26 @@ pub struct ChangeDelegate<'info> {
 /// Rewards will be recalculated, and the new delegate will start receiving rewards.
 /// The old delegate will stop receiving rewards.
 /// It might be done once per five days.
-pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
+pub fn change_delegate(
+    ctx: Context<ChangeDelegate>,
+    deposit_entry_index: u8,
+) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
     let voter_authority = voter.voter_authority;
     let target = voter.active_deposit_mut(deposit_entry_index)?;
     let curr_ts = clock_unix_timestamp();
+
+    let (calculated_old_delegate_mining, _) = find_mining_address(
+        &ctx.accounts.rewards_program.key(),
+        &target.delegate,
+        &ctx.accounts.reward_pool.key(),
+    );
+    require_eq!(
+        calculated_old_delegate_mining,
+        ctx.accounts.old_delegate_mining.key(),
+        MplStakingError::InvalidMining
+    );
 
     require!(
         ctx.accounts.rewards_program.key() == registrar.rewards_program,
