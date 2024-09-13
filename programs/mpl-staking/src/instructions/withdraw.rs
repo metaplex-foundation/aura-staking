@@ -4,11 +4,14 @@ use crate::{
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
+use mpl_common_constants::constants::GOVERNANCE_PROGRAM_ID;
 use mplx_staking_states::{
     error::MplStakingError,
     state::{DepositEntry, LockupKind, LockupPeriod, Registrar, Voter},
     voter_seeds,
 };
+use spl_governance::state::realm::get_governing_token_holding_address_seeds;
+use std::str::FromStr;
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -184,7 +187,22 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
         )?;
 
         if slashing_penalty > 0 {
+            let registrar = ctx.accounts.registrar.load()?;
             let realm_treasury = ctx.accounts.realm_treasury.to_account_info();
+            let treasury_seeds = get_governing_token_holding_address_seeds(
+                &registrar.realm,
+                &registrar.realm_governing_token_mint,
+            );
+            let (treasury_addr, _) = Pubkey::find_program_address(
+                &treasury_seeds,
+                &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+            );
+
+            require!(
+                treasury_addr == realm_treasury.key(),
+                MplStakingError::InvalidTreasury
+            );
+
             token::transfer(
                 ctx.accounts
                     .transfer_ctx(realm_treasury)
