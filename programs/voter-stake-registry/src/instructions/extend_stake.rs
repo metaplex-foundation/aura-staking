@@ -100,6 +100,7 @@ pub fn extend_stake(
         &[registrar.bump][..],
     ];
     let mining_owner = &ctx.accounts.voter_authority.key();
+    let delegate_mining_owner = &ctx.accounts.delegate.key();
 
     cpi_instructions::extend_stake(
         ctx.accounts.rewards_program.to_account_info(),
@@ -113,6 +114,7 @@ pub fn extend_stake(
         target_basic_amount,
         additional_amount,
         mining_owner,
+        delegate_mining_owner,
         signers_seeds,
     )?;
 

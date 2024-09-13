@@ -137,6 +137,7 @@ impl RewardsCookie {
         amount: u64,
         lockup_period: LockupPeriod,
         owner: &Pubkey,
+        delegate_mining_owner: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let (mining, _bump) = Pubkey::find_program_address(
             &[
@@ -159,6 +160,7 @@ impl RewardsCookie {
                 amount,
                 lockup_period,
                 owner: *owner,
+                delegate_mining_owner: *delegate_mining_owner,
             },
             accounts,
         );

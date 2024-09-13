@@ -5,7 +5,7 @@ use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
     instruction::{AccountMeta, Instruction},
-    program::{invoke, invoke_signed},
+    program::invoke_signed,
     system_program,
 };
 
@@ -75,6 +75,8 @@ pub enum RewardsInstruction {
         lockup_period: LockupPeriod,
         /// Specifies the owner of the Mining Account
         owner: Pubkey,
+        /// The wallet who owns the delegate mining account
+        delegate_mining_owner: Pubkey,
     },
 
     /// Withdraws amount of supply to the mining account
@@ -89,6 +91,8 @@ pub enum RewardsInstruction {
         amount: u64,
         /// Specifies the owner of the Mining Account
         owner: Pubkey,
+        /// The wallet who owns the delegate mining account
+        delegate_mining_owner: Pubkey,
     },
 
     /// Claims amount of rewards
@@ -129,6 +133,8 @@ pub enum RewardsInstruction {
         additional_amount: u64,
         /// The wallet who owns the mining account
         mining_owner: Pubkey,
+        /// The wallet who owns the delegate mining account
+        delegate_mining_owner: Pubkey,
     },
 
     /// Distributes tokens among mining owners
@@ -224,12 +230,15 @@ pub fn initialize_mining<'a>(
     mining: AccountInfo<'a>,
     mining_owner: &Pubkey,
     payer: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
     system_program: AccountInfo<'a>,
+    signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
         AccountMeta::new(reward_pool.key(), false),
         AccountMeta::new(mining.key(), false),
         AccountMeta::new(payer.key(), true),
+        AccountMeta::new_readonly(deposit_authority.key(), true),
         AccountMeta::new_readonly(system_program::id(), false),
     ];
 
@@ -241,9 +250,17 @@ pub fn initialize_mining<'a>(
         accounts,
     );
 
-    invoke(
+    invoke_signed(
         &ix,
-        &[reward_pool, mining, payer, system_program, program_id],
+        &[
+            reward_pool,
+            mining,
+            payer,
+            deposit_authority,
+            system_program,
+            program_id,
+        ],
+        &[signers_seeds],
     )
 }
 
@@ -258,6 +275,7 @@ pub fn deposit_mining<'a>(
     amount: u64,
     lockup_period: LockupPeriod,
     owner: &Pubkey,
+    delegate_mining_owner: &Pubkey,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
@@ -273,6 +291,7 @@ pub fn deposit_mining<'a>(
             amount,
             lockup_period,
             owner: *owner,
+            delegate_mining_owner: *delegate_mining_owner,
         },
         accounts,
     );
@@ -304,6 +323,7 @@ pub fn extend_stake<'a>(
     base_amount: u64,
     additional_amount: u64,
     mining_owner: &Pubkey,
+    delegate_mining_owner: &Pubkey,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
@@ -322,6 +342,7 @@ pub fn extend_stake<'a>(
             base_amount,
             additional_amount,
             mining_owner: *mining_owner,
+            delegate_mining_owner: *delegate_mining_owner,
         },
         accounts,
     );
@@ -351,6 +372,7 @@ pub fn withdraw_mining<'a>(
     delegate_mining: AccountInfo<'a>,
     amount: u64,
     owner: &Pubkey,
+    delegate_mining_owner: &Pubkey,
     signers_seeds: &[&[u8]],
 ) -> ProgramResult {
     let accounts = vec![
@@ -365,6 +387,7 @@ pub fn withdraw_mining<'a>(
         &RewardsInstruction::WithdrawMining {
             amount,
             owner: *owner,
+            delegate_mining_owner: *delegate_mining_owner,
         },
         accounts,
     );

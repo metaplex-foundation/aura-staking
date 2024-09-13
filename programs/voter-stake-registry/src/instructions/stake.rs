@@ -93,6 +93,7 @@ pub fn stake(
         &[registrar.bump][..],
     ];
     let owner = &ctx.accounts.voter_authority.key();
+    let delegate_mining_owner = &ctx.accounts.delegate.key();
 
     cpi_instructions::deposit_mining(
         ctx.accounts.rewards_program.to_account_info(),
@@ -103,6 +104,7 @@ pub fn stake(
         amount,
         target.lockup.period,
         owner,
+        delegate_mining_owner,
         signers_seeds,
     )?;
 

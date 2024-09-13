@@ -42,6 +42,7 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
     let mining = ctx.accounts.deposit_mining.to_account_info();
     let delegate_mining = ctx.accounts.delegate_mining.to_account_info();
     let owner = ctx.accounts.voter_authority.to_account_info();
+    let delegate_mining_owner = &ctx.accounts.delegate.key();
     let deposit_authority = ctx.accounts.registrar.to_account_info();
     let signers_seeds = &[
         registrar.realm.as_ref(),
@@ -58,6 +59,7 @@ pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()>
         delegate_mining,
         deposit_entry.amount_deposited_native,
         owner.key,
+        delegate_mining_owner,
         signers_seeds,
     )?;
 
