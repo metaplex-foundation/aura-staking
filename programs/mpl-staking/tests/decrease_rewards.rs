@@ -155,6 +155,9 @@ async fn decrease_rewards_poc() -> Result<(), TransportError> {
         )
         .await?;
 
+    let voter = voter.get_voter(&context.solana).await;
+    assert_eq!(voter.decreased_weighted_stake_by, 1000);
+
     Ok(())
 }
 

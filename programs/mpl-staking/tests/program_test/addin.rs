@@ -1,6 +1,6 @@
 use crate::*;
 use anchor_lang::InstructionData;
-use mplx_staking_states::state::Voter;
+use mplx_staking_states::state::{DepositEntry, Voter};
 use solana_sdk::{
     instruction::Instruction,
     pubkey::Pubkey,
@@ -1005,9 +1005,13 @@ impl VotingMintConfigCookie {
 }
 
 impl VoterCookie {
-    pub async fn deposit_amount(&self, solana: &SolanaCookie, deposit_id: u8) -> u64 {
-        solana.get_account::<Voter>(self.address).await.deposits[deposit_id as usize]
-            .amount_deposited_native
+    pub async fn get_voter(&self, solana: &SolanaCookie) -> Voter {
+        solana.get_account::<Voter>(self.address).await
+    }
+
+    pub async fn get_deposit_entry(&self, solana: &SolanaCookie, deposit_id: u8) -> DepositEntry {
+        let voter = Self::get_voter(&self, solana).await;
+        voter.deposits[deposit_id as usize]
     }
 
     pub fn vault_address(&self, mint: &VotingMintConfigCookie) -> Pubkey {

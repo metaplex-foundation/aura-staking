@@ -31,7 +31,10 @@ async fn balances(
 
     let token = context.solana.token_account_balance(address).await;
     let vault = voting_mint.vault_balance(&context.solana, voter).await;
-    let deposit = voter.deposit_amount(&context.solana, deposit_id).await;
+    let deposit = voter
+        .get_deposit_entry(&context.solana, deposit_id)
+        .await
+        .amount_deposited_native;
     let vwr = context
         .addin
         .update_voter_weight_record(registrar, voter)
@@ -257,7 +260,10 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
 
     // check that the voter2 account is still at 0
     context.solana.advance_clock_by_slots(2).await;
-    let voter2_deposit = voter.deposit_amount(&context.solana, 0).await;
+    let voter2_deposit = voter
+        .get_deposit_entry(&context.solana, 0)
+        .await
+        .amount_deposited_native;
     let voter2_voter_weight = context
         .addin
         .update_voter_weight_record(&registrar, &voter2)

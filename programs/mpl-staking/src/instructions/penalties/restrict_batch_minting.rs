@@ -1,6 +1,5 @@
-use crate::clock_unix_timestamp;
-
 use super::Penalty;
+use crate::clock_unix_timestamp;
 use anchor_lang::prelude::*;
 use mplx_staking_states::error::MplStakingError;
 
