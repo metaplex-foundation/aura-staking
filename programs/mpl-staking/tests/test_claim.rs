@@ -1,4 +1,6 @@
+use crate::program_test::utils::assert_custom_on_chain_error::AssertCustomOnChainErr;
 use anchor_spl::token::TokenAccount;
+use mplx_staking_states::error::MplStakingError;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program::pubkey::Pubkey;
@@ -6,8 +8,6 @@ use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 use spl_governance::state::vote_record::get_vote_record_address;
 use std::str::FromStr;
-use mplx_staking_states::error::MplStakingError;
-use crate::program_test::utils::assert_custom_on_chain_error::AssertCustomOnChainErr;
 
 mod program_test;
 
@@ -27,7 +27,7 @@ struct CLaimSetup {
     payer: Keypair,
 }
 
-async fn setup(realm_name: &str) -> Result<CLaimSetup, TransportError>  {
+async fn setup(realm_name: &str) -> Result<CLaimSetup, TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -247,14 +247,16 @@ async fn setup(realm_name: &str) -> Result<CLaimSetup, TransportError>  {
 async fn successeful_claim() -> Result<(), TransportError> {
     let claim_setup = setup(REALM_NAME).await?;
 
-    claim_setup.realm
+    claim_setup
+        .realm
         .cast_vote(
             claim_setup.mint_governance.address,
             &claim_setup.proposal,
             &claim_setup.voter,
             &claim_setup.voter_authority,
             &claim_setup.payer,
-            claim_setup.context
+            claim_setup
+                .context
                 .addin
                 .update_voter_weight_record_instruction(&claim_setup.registrar, &claim_setup.voter),
         )
@@ -266,7 +268,8 @@ async fn successeful_claim() -> Result<(), TransportError> {
         &claim_setup.proposal.owner_token_owner_record,
     );
 
-    claim_setup.context
+    claim_setup
+        .context
         .addin
         .claim(
             &claim_setup.rewards_pool,
@@ -282,7 +285,8 @@ async fn successeful_claim() -> Result<(), TransportError> {
         )
         .await?;
 
-    let claimed_amount = claim_setup.context
+    let claimed_amount = claim_setup
+        .context
         .solana
         .token_account_balance(claim_setup.voter_authority_ata)
         .await;
@@ -295,14 +299,16 @@ async fn successeful_claim() -> Result<(), TransportError> {
 async fn claim_is_restricted() -> Result<(), TransportError> {
     let claim_setup = setup(REALM_NAME).await?;
 
-    claim_setup.realm
+    claim_setup
+        .realm
         .cast_vote(
             claim_setup.mint_governance.address,
             &claim_setup.proposal,
             &claim_setup.voter,
             &claim_setup.voter_authority,
             &claim_setup.payer,
-            claim_setup.context
+            claim_setup
+                .context
                 .addin
                 .update_voter_weight_record_instruction(&claim_setup.registrar, &claim_setup.voter),
         )
@@ -314,7 +320,8 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
         &claim_setup.proposal.owner_token_owner_record,
     );
 
-    claim_setup.context
+    claim_setup
+        .context
         .addin
         .restrict_tokenflow(
             &claim_setup.rewards_pool,
@@ -327,7 +334,8 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
         .await
         .unwrap();
 
-    claim_setup.context
+    claim_setup
+        .context
         .addin
         .claim(
             &claim_setup.rewards_pool,
@@ -351,14 +359,16 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
 async fn claim_is_allowed() -> Result<(), TransportError> {
     let claim_setup = setup(REALM_NAME).await?;
 
-    claim_setup.realm
+    claim_setup
+        .realm
         .cast_vote(
             claim_setup.mint_governance.address,
             &claim_setup.proposal,
             &claim_setup.voter,
             &claim_setup.voter_authority,
             &claim_setup.payer,
-            claim_setup.context
+            claim_setup
+                .context
                 .addin
                 .update_voter_weight_record_instruction(&claim_setup.registrar, &claim_setup.voter),
         )
@@ -370,7 +380,8 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         &claim_setup.proposal.owner_token_owner_record,
     );
 
-    claim_setup.context
+    claim_setup
+        .context
         .addin
         .restrict_tokenflow(
             &claim_setup.rewards_pool,
@@ -382,7 +393,8 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         )
         .await?;
 
-    claim_setup.context
+    claim_setup
+        .context
         .addin
         .claim(
             &claim_setup.rewards_pool,
@@ -399,7 +411,8 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         .await
         .expect_err("Claiming is restricted by Rewards program");
 
-    claim_setup.context
+    claim_setup
+        .context
         .addin
         .allow_tokenflow(
             &claim_setup.rewards_pool,
@@ -411,7 +424,8 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         )
         .await?;
 
-    claim_setup.context
+    claim_setup
+        .context
         .addin
         .claim(
             &claim_setup.rewards_pool,
@@ -427,7 +441,8 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         )
         .await?;
 
-    let claimed_amount = claim_setup.context
+    let claimed_amount = claim_setup
+        .context
         .solana
         .token_account_balance(claim_setup.voter_authority_ata)
         .await;
@@ -442,14 +457,16 @@ async fn claim_without_dao_vote_fail() -> Result<(), TransportError> {
     let claim_setup = setup("Realm").await?;
 
     // DAO with invalid seed vote
-    claim_setup.realm
+    claim_setup
+        .realm
         .cast_vote(
             claim_setup.mint_governance.address,
             &claim_setup.proposal,
             &claim_setup.voter,
             &claim_setup.voter_authority,
             &claim_setup.payer,
-            claim_setup.context
+            claim_setup
+                .context
                 .addin
                 .update_voter_weight_record_instruction(&claim_setup.registrar, &claim_setup.voter),
         )
@@ -462,7 +479,8 @@ async fn claim_without_dao_vote_fail() -> Result<(), TransportError> {
     );
 
     // Check do we voted into valid DAO, but we dont
-    claim_setup.context
+    claim_setup
+        .context
         .addin
         .claim(
             &claim_setup.rewards_pool,

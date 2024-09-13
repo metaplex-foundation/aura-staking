@@ -85,7 +85,8 @@ pub fn claim(
         realm_pubkey == Pubkey::from_str(DAO_PUBKEY).unwrap()
             && governance.realm == realm_pubkey
             && proposal.governance == ctx.accounts.governance.key()
-            && vote_record.governing_token_owner == *ctx.accounts.mining_owner.key,
+            && (vote_record.governing_token_owner == *ctx.accounts.mining_owner.key
+                || proposal.token_owner_record == *ctx.accounts.mining_owner.key),
         MplStakingError::NoDaoInteractionFound
     );
 
