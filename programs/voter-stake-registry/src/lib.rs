@@ -51,13 +51,9 @@ declare_id!("9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8");
 /// # Max Vote Weight
 ///
 /// Given that one can use multiple tokens to vote, the max vote weight needs
-/// to be a function of the total supply of all tokens, converted into a common
-/// currency. For example, if you have Token A and Token B, where 1 Token B =
-/// 10 Token A, then the `max_vote_weight` should be `supply(A) + supply(B)*10`
-/// where both are converted into common decimals. Then, when calculating the
-/// weight of an individual voter, one can convert B into A via the given
-/// exchange rate, which must be fixed.
-///
+/// to be a function of the total supply of all tokens. The ratio for all tokens to
+/// their voting power always remains 1:1, so there's no possibility to have voting
+/// power larger than total number of tokens.
 /// Note that the above also implies that the `max_vote_weight` must fit into
 /// a u64.
 #[program]
