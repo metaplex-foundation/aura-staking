@@ -7,15 +7,19 @@ pub struct Voter {
     pub deposits: [DepositEntry; 32],
     pub voter_authority: Pubkey,
     pub registrar: Pubkey,
+    pub decreased_weighted_stake_by: u64,
+    pub batch_minting_restricted_until: u64,
     pub voter_bump: u8,
     pub voter_weight_record_bump: u8,
-    pub _reserved1: [u8; 14],
+    pub penalties: u8,
+    pub _reserved1: [u8; 13],
 }
-const_assert!(std::mem::size_of::<Voter>() == 144 * 32 + 32 + 32 + 1 + 1 + 14);
+const_assert!(std::mem::size_of::<Voter>() == 144 * 32 + 32 + 32 + 8 + 8 + 1 + 1 + 1 + 13);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
 impl Voter {
     pub const MIN_OWN_WEIGHTED_STAKE: u64 = 15_000_000;
+    const IS_TOKENFLOW_RESTRICTED_MASK: u8 = 1 << 0;
 
     /// The full vote weight available to the voter
     pub fn weight(&self) -> Result<u64> {
@@ -67,6 +71,34 @@ impl Voter {
         let d = &self.deposits[index];
         require!(d.is_used, MplStakingError::UnusedDepositEntryIndex);
         Ok(d)
+    }
+
+    pub fn restrict_tokenflow(&mut self) -> Result<()> {
+        if self.is_tokenflow_restricted() {
+            Err(MplStakingError::MiningAlreadyRestricted.into())
+        } else {
+            self.penalties |= Self::IS_TOKENFLOW_RESTRICTED_MASK;
+            Ok(())
+        }
+    }
+
+    pub fn allow_tokenflow(&mut self) -> Result<()> {
+        if !self.is_tokenflow_restricted() {
+            Err(MplStakingError::MiningAlreadyRestricted.into())
+        } else {
+            self.penalties &= !(Self::IS_TOKENFLOW_RESTRICTED_MASK);
+            Ok(())
+        }
+    }
+
+    pub fn is_tokenflow_restricted(&self) -> bool {
+        self.penalties & Self::IS_TOKENFLOW_RESTRICTED_MASK > 0
+    }
+
+    pub fn is_batch_minting_restricted(&self) -> bool {
+        let curr_ts = Clock::get().unwrap().unix_timestamp as u64;
+
+        self.batch_minting_restricted_until > curr_ts
     }
 }
 

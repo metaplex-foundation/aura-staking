@@ -93,6 +93,11 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
         let registrar = &ctx.accounts.registrar.load()?;
         let voter = &mut ctx.accounts.voter.load_mut()?;
 
+        require!(
+            !voter.is_tokenflow_restricted(),
+            MplStakingError::TokenflowRestricted
+        );
+
         // Get the exchange rate for the token being withdrawn.
         let mint_idx = registrar.voting_mint_config_index(ctx.accounts.destination.mint)?;
 

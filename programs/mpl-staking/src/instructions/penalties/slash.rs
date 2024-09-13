@@ -104,12 +104,6 @@ pub fn slash(
     };
     let signers_seeds = registrar_seeds!(&registrar);
 
-    msg!("Slashing amount: {}", amount);
-    msg!(
-        "Slash amount multiplied by period: {}",
-        slash_amount_multiplied_by_period
-    );
-
     cpi_instructions::slash(
         ctx.accounts.rewards_program.to_account_info(),
         ctx.accounts.registrar.to_account_info(),

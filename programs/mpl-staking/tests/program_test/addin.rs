@@ -766,26 +766,19 @@ impl AddinCookie {
     #[allow(clippy::too_many_arguments)]
     pub async fn restrict_batch_minting(
         &self,
-        reward_pool: &Pubkey,
-        deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
-        mining_owner: &Pubkey,
+        voter: &VoterCookie,
         until_ts: u64,
-        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::RestrictBatchMinting {
-            until_ts,
-            mining_owner: *mining_owner,
-        });
+        let data =
+            InstructionData::data(&mpl_staking::instruction::RestrictBatchMinting { until_ts });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Penalty {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
-                reward_pool: *reward_pool,
-                deposit_mining: *deposit_mining,
-                rewards_program: *rewards_program,
+                voter: voter.address,
             },
             None,
         );
@@ -808,20 +801,21 @@ impl AddinCookie {
         deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
-        mining_owner: &Pubkey,
         decreased_weighted_stake_number: u64,
+        voter: &VoterCookie,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let data = InstructionData::data(&mpl_staking::instruction::DecreaseRewards {
-            mining_owner: *mining_owner,
             decreased_weighted_stake_number,
         });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
-            &mpl_staking::accounts::Penalty {
+            &mpl_staking::accounts::DecreaseRewards {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
                 reward_pool: *reward_pool,
+                voter: voter.address,
+                voter_authority: voter.authority.pubkey(),
                 deposit_mining: *deposit_mining,
                 rewards_program: *rewards_program,
             },
@@ -888,24 +882,17 @@ impl AddinCookie {
 
     pub async fn restrict_tokenflow(
         &self,
-        reward_pool: &Pubkey,
-        deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
-        mining_owner: &Pubkey,
-        rewards_program: &Pubkey,
+        voter: &VoterCookie,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::RestrictTokenflow {
-            mining_owner: *mining_owner,
-        });
+        let data = InstructionData::data(&mpl_staking::instruction::RestrictTokenflow {});
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Penalty {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
-                reward_pool: *reward_pool,
-                deposit_mining: *deposit_mining,
-                rewards_program: *rewards_program,
+                voter: voter.address,
             },
             None,
         );
@@ -923,24 +910,17 @@ impl AddinCookie {
 
     pub async fn allow_tokenflow(
         &self,
-        reward_pool: &Pubkey,
-        deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
-        mining_owner: &Pubkey,
-        rewards_program: &Pubkey,
+        voter: &VoterCookie,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::AllowTokenflow {
-            mining_owner: *mining_owner,
-        });
+        let data = InstructionData::data(&mpl_staking::instruction::AllowTokenflow {});
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Penalty {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
-                reward_pool: *reward_pool,
-                deposit_mining: *deposit_mining,
-                rewards_program: *rewards_program,
+                voter: voter.address,
             },
             None,
         );
@@ -968,6 +948,7 @@ impl AddinCookie {
         registrar: &RegistrarCookie,
         governance: &Pubkey,
         proposal: &Pubkey,
+        voter: &VoterCookie,
         vote_record: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let data = InstructionData::data(&mpl_staking::instruction::Claim {
@@ -991,7 +972,8 @@ impl AddinCookie {
                 reward_mint: *reward_mint,
                 vault: vault_pubkey,
                 deposit_mining: *reward_mining,
-                mining_owner: mining_owner.pubkey(),
+                voter: voter.address,
+                voter_authority: voter.authority.pubkey(),
                 registrar: registrar.address,
                 governance: *governance,
                 proposal: *proposal,
