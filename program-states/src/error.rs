@@ -114,8 +114,8 @@ pub enum MplStakingError {
     #[msg("Invalid treasury account")]
     InvalidTreasury,
     // 6037 / 0x1795
-    #[msg("MiningAlreadyRestricted")]
-    MiningAlreadyRestricted,
+    #[msg("Tokenflow is already restricted by DAO authority")]
+    TokenflowRestrictedAlready,
     // 6038 / 0x1796
     #[msg("TokenflowRestricted has been restricted by DAO authority")]
     TokenflowRestricted,

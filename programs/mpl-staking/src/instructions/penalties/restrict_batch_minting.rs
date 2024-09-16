@@ -1,5 +1,4 @@
 use super::Penalty;
-use crate::clock_unix_timestamp;
 use anchor_lang::prelude::*;
 use mplx_staking_states::error::MplStakingError;
 
@@ -11,11 +10,6 @@ pub fn restrict_batch_minting(ctx: Context<Penalty>, until_ts: u64) -> Result<()
         registrar.realm_authority,
         ctx.accounts.realm_authority.key(),
         MplStakingError::InvalidRealmAuthority
-    );
-
-    require!(
-        until_ts > clock_unix_timestamp(),
-        MplStakingError::InvalidTimestampArguments
     );
 
     let mut voter = ctx.accounts.voter.load_mut()?;

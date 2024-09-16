@@ -75,7 +75,7 @@ impl Voter {
 
     pub fn restrict_tokenflow(&mut self) -> Result<()> {
         if self.is_tokenflow_restricted() {
-            Err(MplStakingError::MiningAlreadyRestricted.into())
+            Err(MplStakingError::TokenflowRestrictedAlready.into())
         } else {
             self.penalties |= Self::IS_TOKENFLOW_RESTRICTED_MASK;
             Ok(())
@@ -84,7 +84,7 @@ impl Voter {
 
     pub fn allow_tokenflow(&mut self) -> Result<()> {
         if !self.is_tokenflow_restricted() {
-            Err(MplStakingError::MiningAlreadyRestricted.into())
+            Err(MplStakingError::TokenflowRestrictedAlready.into())
         } else {
             self.penalties &= !(Self::IS_TOKENFLOW_RESTRICTED_MASK);
             Ok(())
