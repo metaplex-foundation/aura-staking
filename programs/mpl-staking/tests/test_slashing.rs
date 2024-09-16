@@ -153,6 +153,8 @@ async fn slash_success() -> Result<(), TransportError> {
         )
         .await
         .unwrap();
+    let deposit_entry = voter.get_deposit_entry(&context.solana, 1).await;
+    assert_eq!(deposit_entry.slashing_penalty, 5000);
 
     let voter_authority_ata = context
         .rewards

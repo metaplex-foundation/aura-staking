@@ -149,17 +149,20 @@ async fn decrease_rewards_poc() -> Result<(), TransportError> {
             &deposit_mining,
             &registrar,
             &realm_authority,
-            &voter_authority.pubkey(),
             decreased_weighted_stake_number,
+            &voter,
             &context.rewards.program_id,
         )
         .await?;
+
+    let voter = voter.get_voter(&context.solana).await;
+    assert_eq!(voter.decreased_weighted_stake_by, 1000);
 
     Ok(())
 }
 
 #[tokio::test]
-async fn penalty_is_to_severe() -> Result<(), TransportError> {
+async fn penalty_is_too_severe() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -300,8 +303,8 @@ async fn penalty_is_to_severe() -> Result<(), TransportError> {
             &deposit_mining,
             &registrar,
             &realm_authority,
-            &voter_authority.pubkey(),
             decreased_weighted_stake_number,
+            &voter,
             &context.rewards.program_id,
         )
         .await

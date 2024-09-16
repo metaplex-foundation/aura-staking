@@ -97,7 +97,10 @@ async fn test_basic() -> Result<(), TransportError> {
         .solana
         .token_account_balance(reference_account)
         .await;
-    let balance_initial = voter.deposit_amount(&context.solana, 0).await;
+    let balance_initial = voter
+        .get_deposit_entry(&context.solana, 0)
+        .await
+        .amount_deposited_native;
     assert_eq!(balance_initial, 0);
 
     context
@@ -161,7 +164,10 @@ async fn test_basic() -> Result<(), TransportError> {
         .vault_balance(&context.solana, &voter)
         .await;
     assert_eq!(vault_after_deposit, 10000);
-    let balance_after_deposit = voter.deposit_amount(&context.solana, 1).await;
+    let balance_after_deposit = voter
+        .get_deposit_entry(&context.solana, 1)
+        .await
+        .amount_deposited_native;
     assert_eq!(balance_after_deposit, 10000);
 
     context
@@ -210,7 +216,10 @@ async fn test_basic() -> Result<(), TransportError> {
         .vault_balance(&context.solana, &voter)
         .await;
     assert_eq!(vault_after_withdraw, 0);
-    let balance_after_withdraw = voter.deposit_amount(&context.solana, 0).await;
+    let balance_after_withdraw = voter
+        .get_deposit_entry(&context.solana, 0)
+        .await
+        .amount_deposited_native;
     assert_eq!(balance_after_withdraw, 0);
 
     let lamports_before = context

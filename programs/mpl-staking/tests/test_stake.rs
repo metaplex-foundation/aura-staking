@@ -211,7 +211,10 @@ async fn stake_with_delegate() -> Result<(), TransportError> {
     let vault_balance = mngo_voting_mint
         .vault_balance(&context.solana, &voter)
         .await;
-    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
+    let deposit_amount = voter
+        .get_deposit_entry(&context.solana, 1)
+        .await
+        .amount_deposited_native;
 
     assert_eq!(vault_balance, 10000);
     assert_eq!(deposit_amount, 10000);

@@ -154,15 +154,7 @@ async fn restrict_batch_minting_poc() -> Result<(), TransportError> {
 
     context
         .addin
-        .restrict_batch_minting(
-            &rewards_pool,
-            &deposit_mining,
-            &registrar,
-            &realm_authority,
-            &voter_authority.pubkey(),
-            distribution_ends_at,
-            &context.rewards.program_id,
-        )
+        .restrict_batch_minting(&registrar, &realm_authority, &voter, distribution_ends_at)
         .await?;
 
     Ok(())

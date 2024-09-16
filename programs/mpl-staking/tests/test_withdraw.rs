@@ -222,14 +222,7 @@ async fn withdraw_is_restricted() -> Result<(), TransportError> {
 
     context
         .addin
-        .restrict_tokenflow(
-            &rewards_pool,
-            &deposit_mining,
-            &registrar,
-            &realm_authority,
-            &voter_authority.pubkey(),
-            &context.rewards.program_id,
-        )
+        .restrict_tokenflow(&registrar, &realm_authority, &voter)
         .await?;
 
     context
