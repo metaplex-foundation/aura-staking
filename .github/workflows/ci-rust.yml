@@ -63,7 +63,6 @@ jobs:
         run: |
           git config --global url."https://${{ secrets.CI_TOKEN }}@github.com".insteadOf ssh://git@github.com
 
-
       - name: Install Linux dependencies
         run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev
 
