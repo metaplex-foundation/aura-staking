@@ -139,8 +139,14 @@ Nevertheless, it might be done manually by invoking transactions directly.
 
 - [`Clawback`](programs/mpl-staking/src/instructions/clawback.rs) TBD
 
-- [`Slash`](programs/mpl-staking/src/instructions/slash.rs) TBD
+### Penalties
+NB: All of the penalties are supposed to be executed by DAO after a dedicated proposal had been provided.
 
+- [`RestrictTokenflow`](programs/mpl-staking/src/instructions/restrict_tokenflow.rs) Prevents an end-user from claiming and withdrawing their tokens.
+- [`AllowTokenflow`](programs/mpl-staking/src/instructions/allow_tokenflow.rs) Turns off restriction flag and tokens can be both claimed and withdrawn again.
+- [`DecreaseRewards`](programs/mpl-staking/src/instructions/decrease_rewards.rs) Takes weighted stake as a parameter and reduces a dedicated coefficient of a mining account of an end-user. That means, the end-user will receive decreased rewards from a penalized stake.
+- [`RestrictBatchMinting`](programs/mpl-staking/src/instructions/restrict_batch_minting.rs) This operation enables the flag that is responsible for the storing of the allowance for the batch minting. To work properly, a timestamp should be provided, which means until that time batch minting will be restricted. To interrupt penalty before the specified timestamp, another timestamp may be provided which will be lower, than the current time in the UNIX format.
+- [`Slash`](programs/mpl-staking/src/instructions/slash.rs) Instantly applies a penalty for the user in terms of the voting possibilities and receiving rewards, that being said it doesn't withdraw tokens from the stake immediately. Instead, tokens will be transfered to the treasury of a DAO when end-user decides to withdraw the penalized stake.
 
 # License
 
