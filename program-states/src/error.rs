@@ -90,24 +90,33 @@ pub enum MplStakingError {
     #[msg("Arithmetic operation has beed overflowed")]
     ArithmeticOverflow,
     // 6029 / 0x178d
-    #[msg("Rewards: Delegate must have at least 15_000_000 of own weighted stake")]
+    #[msg("Delegate must have at least 15_000_000 of own weighted stake")]
     InsufficientWeightedStake,
     // 6030 / 0x178e
-    #[msg("Rewards: Invalid delegate account")]
+    #[msg("Invalid delegate account")]
     InvalidDelegate,
     // 6031 / 0x178f
-    #[msg("Rewards: Invalid mining account")]
+    #[msg("Invalid mining account")]
     InvalidMining,
     // 6032 / 0x1790
-    #[msg("Rewards: Updating delegate is sooner than 5 days")]
+    #[msg("Updating delegate is sooner than 5 days")]
     DelegateUpdateIsTooSoon,
     // 6033 / 0x1791
-    #[msg("Rewards: Cannot change delegate to the same delegate")]
+    #[msg("Cannot change delegate to the same delegate")]
     SameDelegate,
     // 6034 / 0x1792
-    #[msg("Rewards: Invalid reward pool account")]
+    #[msg("Invalid reward pool account")]
     InvalidRewardPool,
     // 6035 / 0x1793
-    #[msg("Rewards: Passed remaining accounts are invalid, interaction with dao was'nt found")]
+    #[msg("Passed remaining accounts are invalid, interaction with dao wasn't found")]
     NoDaoInteractionFound,
+    // 6036 / 0x1794
+    #[msg("Invalid treasury account")]
+    InvalidTreasury,
+    // 6037 / 0x1795
+    #[msg("Tokenflow is already restricted by DAO authority")]
+    TokenflowRestrictedAlready,
+    // 6038 / 0x1796
+    #[msg("TokenflowRestricted has been restricted by DAO authority")]
+    TokenflowRestricted,
 }

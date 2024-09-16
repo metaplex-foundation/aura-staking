@@ -144,9 +144,7 @@ async fn slash_success() -> Result<(), TransportError> {
         .addin
         .slash(
             &registrar,
-            &realm,
             &voter,
-            &mngo_voting_mint,
             &realm_authority,
             1,
             5000,
@@ -155,6 +153,46 @@ async fn slash_success() -> Result<(), TransportError> {
         )
         .await
         .unwrap();
+    let deposit_entry = voter.get_deposit_entry(&context.solana, 1).await;
+    assert_eq!(deposit_entry.slashing_penalty, 5000);
+
+    let voter_authority_ata = context
+        .rewards
+        .solana
+        .create_spl_ata(
+            &voter_authority.pubkey(),
+            &mngo_voting_mint.mint.pubkey.unwrap(),
+            payer,
+        )
+        .await;
+
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 90 * 86400).await;
+    context
+        .addin
+        .unlock_tokens(
+            &registrar,
+            &voter,
+            &voter,
+            1,
+            &rewards_pool,
+            &context.rewards.program_id,
+        )
+        .await?;
+
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400).await;
+    context
+        .addin
+        .withdraw(
+            &registrar,
+            &voter,
+            &mngo_voting_mint,
+            voter_authority,
+            voter_authority_ata,
+            realm.community_token_account,
+            1,
+            5000,
+        )
+        .await?;
 
     let claimed_amount = context
         .solana

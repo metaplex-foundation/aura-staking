@@ -160,6 +160,7 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             voter_mngo,
+            realm.community_token_account,
             0,
             1000,
         )

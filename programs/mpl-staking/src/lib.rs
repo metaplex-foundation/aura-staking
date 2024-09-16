@@ -181,20 +181,16 @@ pub mod mpl_staking {
         instructions::change_delegate(ctx, deposit_entry_index)
     }
 
-    pub fn restrict_tokenflow(ctx: Context<Penalty>, mining_owner: Pubkey) -> Result<()> {
-        instructions::restrict_tokenflow(ctx, mining_owner)
+    pub fn restrict_tokenflow(ctx: Context<Penalty>) -> Result<()> {
+        instructions::restrict_tokenflow(ctx)
     }
 
-    pub fn allow_tokenflow(ctx: Context<Penalty>, mining_owner: Pubkey) -> Result<()> {
-        instructions::allow_tokenflow(ctx, mining_owner)
+    pub fn allow_tokenflow(ctx: Context<Penalty>) -> Result<()> {
+        instructions::allow_tokenflow(ctx)
     }
 
-    pub fn restrict_batch_minting(
-        ctx: Context<Penalty>,
-        until_ts: u64,
-        mining_owner: Pubkey,
-    ) -> Result<()> {
-        instructions::restrict_batch_minting(ctx, until_ts, mining_owner)
+    pub fn restrict_batch_minting(ctx: Context<Penalty>, until_ts: u64) -> Result<()> {
+        instructions::restrict_batch_minting(ctx, until_ts)
     }
 
     pub fn slash(
@@ -207,11 +203,10 @@ pub mod mpl_staking {
     }
 
     pub fn decrease_rewards(
-        ctx: Context<Penalty>,
+        ctx: Context<DecreaseRewards>,
         decreased_weighted_stake_number: u64,
-        mining_owner: Pubkey,
     ) -> Result<()> {
-        instructions::decrease_rewards(ctx, decreased_weighted_stake_number, mining_owner)
+        instructions::decrease_rewards(ctx, decreased_weighted_stake_number)
     }
 }
 

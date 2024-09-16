@@ -1,14 +1,9 @@
 use super::Penalty;
-use crate::cpi_instructions;
 use anchor_lang::prelude::*;
-use mplx_staking_states::{error::MplStakingError, registrar_seeds};
+use mplx_staking_states::error::MplStakingError;
 
 /// Restricts batch minting operation for the account until the specified timestamp.
-pub fn restrict_batch_minting(
-    ctx: Context<Penalty>,
-    until_ts: u64,
-    mining_owner: Pubkey,
-) -> Result<()> {
+pub fn restrict_batch_minting(ctx: Context<Penalty>, until_ts: u64) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
 
     require_keys_eq!(
@@ -17,17 +12,8 @@ pub fn restrict_batch_minting(
         MplStakingError::InvalidRealmAuthority
     );
 
-    let signers_seeds = registrar_seeds!(&registrar);
-
-    cpi_instructions::restrict_batch_minting(
-        ctx.accounts.rewards_program.to_account_info(),
-        ctx.accounts.registrar.to_account_info(),
-        ctx.accounts.reward_pool.to_account_info(),
-        ctx.accounts.deposit_mining.to_account_info(),
-        &mining_owner,
-        until_ts,
-        signers_seeds,
-    )?;
+    let mut voter = ctx.accounts.voter.load_mut()?;
+    voter.batch_minting_restricted_until = until_ts;
 
     Ok(())
 }

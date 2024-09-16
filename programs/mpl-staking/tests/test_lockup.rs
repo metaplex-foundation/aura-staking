@@ -164,6 +164,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
             &mngo_voting_mint,
             &context.users[1].key,
             reference_account,
+            realm.community_token_account,
             1,
             10000,
         )
@@ -334,6 +335,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
             &mngo_voting_mint,
             &context.users[1].key,
             reference_account,
+            realm.community_token_account,
             1,
             10000,
         )
@@ -508,6 +510,7 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
             &mngo_voting_mint,
             &context.users[1].key,
             reference_account,
+            realm.community_token_account,
             1,
             10000,
         )
