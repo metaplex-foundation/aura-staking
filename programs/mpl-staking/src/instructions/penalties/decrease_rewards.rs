@@ -20,6 +20,7 @@ pub struct DecreaseRewards<'info> {
         has_one = voter_authority,
     )]
     pub voter: AccountLoader<'info, Voter>,
+    /// CHECK: might be an arbitrary account
     pub voter_authority: UncheckedAccount<'info>,
 
     /// CHECK:
