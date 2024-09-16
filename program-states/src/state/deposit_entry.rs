@@ -19,6 +19,8 @@ pub struct DepositEntry {
     pub amount_deposited_native: u64,
     /// The last time when the delegate was updated
     pub delegate_last_update_ts: u64,
+    /// The slashing penalty for this deposit.
+    pub slashing_penalty: u64,
     // Points to the VotingMintConfig this deposit uses.
     pub voting_mint_config_idx: u8,
     // True if the deposit entry is being used.
@@ -26,7 +28,7 @@ pub struct DepositEntry {
     pub _reserved0: [u8; 32],
     pub _reserved1: [u8; 6],
 }
-const_assert!(std::mem::size_of::<DepositEntry>() == 48 + 32 + 8 + 8 + 1 + 1 + 32 + 6);
+const_assert!(std::mem::size_of::<DepositEntry>() == 48 + 32 + 8 + 8 + 8 + 1 + 1 + 32 + 6);
 const_assert!(std::mem::size_of::<DepositEntry>() % 8 == 0);
 
 impl DepositEntry {

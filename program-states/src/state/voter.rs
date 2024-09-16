@@ -7,11 +7,14 @@ pub struct Voter {
     pub deposits: [DepositEntry; 32],
     pub voter_authority: Pubkey,
     pub registrar: Pubkey,
+    pub decreased_weighted_stake_by: u64,
+    pub batch_minting_restricted_until: u64,
     pub voter_bump: u8,
     pub voter_weight_record_bump: u8,
-    pub _reserved1: [u8; 14],
+    pub penalties: u8,
+    pub _reserved1: [u8; 13],
 }
-const_assert!(std::mem::size_of::<Voter>() == 136 * 32 + 32 + 32 + 1 + 1 + 14);
+const_assert!(std::mem::size_of::<Voter>() == 144 * 32 + 32 + 32 + 8 + 8 + 1 + 1 + 1 + 13);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
 impl Voter {
