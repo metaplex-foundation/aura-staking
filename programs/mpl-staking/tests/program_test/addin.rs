@@ -1,6 +1,6 @@
 use crate::*;
 use anchor_lang::InstructionData;
-use mplx_staking_states::state::Voter;
+use mplx_staking_states::state::{DepositEntry, Voter};
 use solana_sdk::{
     instruction::Instruction,
     pubkey::Pubkey,
@@ -560,6 +560,7 @@ impl AddinCookie {
         voting_mint: &VotingMintConfigCookie,
         authority: &Keypair,
         token_address: Pubkey,
+        realm_treasury: Pubkey,
         deposit_entry_index: u8,
         amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
@@ -577,6 +578,7 @@ impl AddinCookie {
                 token_owner_record: voter.token_owner_record,
                 voter_weight_record: voter.voter_weight_record,
                 vault,
+                realm_treasury,
                 destination: token_address,
                 voter_authority: authority.pubkey(),
                 token_program: spl_token::id(),
@@ -764,25 +766,104 @@ impl AddinCookie {
     #[allow(clippy::too_many_arguments)]
     pub async fn restrict_batch_minting(
         &self,
-        reward_pool: &Pubkey,
-        deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
-        mining_owner: &Pubkey,
+        voter: &VoterCookie,
         until_ts: u64,
-        rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::RestrictBatchMinting {
-            until_ts,
-            mining_owner: *mining_owner,
-        });
+        let data =
+            InstructionData::data(&mpl_staking::instruction::RestrictBatchMinting { until_ts });
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Penalty {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
+                voter: voter.address,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[realm_authority]))
+            .await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn decrease_rewards(
+        &self,
+        reward_pool: &Pubkey,
+        deposit_mining: &Pubkey,
+        registrar: &RegistrarCookie,
+        realm_authority: &Keypair,
+        decreased_weighted_stake_number: u64,
+        voter: &VoterCookie,
+        rewards_program: &Pubkey,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data = InstructionData::data(&mpl_staking::instruction::DecreaseRewards {
+            decreased_weighted_stake_number,
+        });
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &mpl_staking::accounts::DecreaseRewards {
+                registrar: registrar.address,
+                realm_authority: realm_authority.pubkey(),
                 reward_pool: *reward_pool,
+                voter: voter.address,
+                voter_authority: voter.authority.pubkey(),
                 deposit_mining: *deposit_mining,
+                rewards_program: *rewards_program,
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[realm_authority]))
+            .await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn slash(
+        &self,
+        registrar: &RegistrarCookie,
+        voter: &VoterCookie,
+        realm_authority: &Keypair,
+        deposit_entry_index: u8,
+        amount: u64,
+        mining_owner: &Pubkey,
+        rewards_program: &Pubkey,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data = InstructionData::data(&mpl_staking::instruction::Slash {
+            deposit_entry_index,
+            amount,
+            mining_owner: *mining_owner,
+        });
+
+        let (deposit_mining, _) = find_deposit_mining_addr(
+            rewards_program,
+            &voter.authority.pubkey(),
+            &registrar.reward_pool,
+        );
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &mpl_staking::accounts::Slashing {
+                registrar: registrar.address,
+                voter: voter.address,
+                voter_weight_record: voter.voter_weight_record,
+                realm_authority: realm_authority.pubkey(),
+                reward_pool: registrar.reward_pool,
+                deposit_mining,
                 rewards_program: *rewards_program,
             },
             None,
@@ -801,25 +882,17 @@ impl AddinCookie {
 
     pub async fn restrict_tokenflow(
         &self,
-        reward_pool: &Pubkey,
-        deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
-
-        mining_owner: &Pubkey,
-        rewards_program: &Pubkey,
+        voter: &VoterCookie,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::RestrictTokenflow {
-            mining_owner: *mining_owner,
-        });
+        let data = InstructionData::data(&mpl_staking::instruction::RestrictTokenflow {});
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Penalty {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
-                reward_pool: *reward_pool,
-                deposit_mining: *deposit_mining,
-                rewards_program: *rewards_program,
+                voter: voter.address,
             },
             None,
         );
@@ -837,24 +910,17 @@ impl AddinCookie {
 
     pub async fn allow_tokenflow(
         &self,
-        reward_pool: &Pubkey,
-        deposit_mining: &Pubkey,
         registrar: &RegistrarCookie,
         realm_authority: &Keypair,
-        mining_owner: &Pubkey,
-        rewards_program: &Pubkey,
+        voter: &VoterCookie,
     ) -> std::result::Result<(), BanksClientError> {
-        let data = InstructionData::data(&mpl_staking::instruction::AllowTokenflow {
-            mining_owner: *mining_owner,
-        });
+        let data = InstructionData::data(&mpl_staking::instruction::AllowTokenflow {});
 
         let accounts = anchor_lang::ToAccountMetas::to_account_metas(
             &mpl_staking::accounts::Penalty {
                 registrar: registrar.address,
                 realm_authority: realm_authority.pubkey(),
-                reward_pool: *reward_pool,
-                deposit_mining: *deposit_mining,
-                rewards_program: *rewards_program,
+                voter: voter.address,
             },
             None,
         );
@@ -882,6 +948,7 @@ impl AddinCookie {
         registrar: &RegistrarCookie,
         governance: &Pubkey,
         proposal: &Pubkey,
+        voter: &VoterCookie,
         vote_record: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
         let data = InstructionData::data(&mpl_staking::instruction::Claim {
@@ -905,7 +972,8 @@ impl AddinCookie {
                 reward_mint: *reward_mint,
                 vault: vault_pubkey,
                 deposit_mining: *reward_mining,
-                mining_owner: mining_owner.pubkey(),
+                voter: voter.address,
+                voter_authority: voter.authority.pubkey(),
                 registrar: registrar.address,
                 governance: *governance,
                 proposal: *proposal,
@@ -937,9 +1005,13 @@ impl VotingMintConfigCookie {
 }
 
 impl VoterCookie {
-    pub async fn deposit_amount(&self, solana: &SolanaCookie, deposit_id: u8) -> u64 {
-        solana.get_account::<Voter>(self.address).await.deposits[deposit_id as usize]
-            .amount_deposited_native
+    pub async fn get_voter(&self, solana: &SolanaCookie) -> Voter {
+        solana.get_account::<Voter>(self.address).await
+    }
+
+    pub async fn get_deposit_entry(&self, solana: &SolanaCookie, deposit_id: u8) -> DepositEntry {
+        let voter = Self::get_voter(&self, solana).await;
+        voter.deposits[deposit_id as usize]
     }
 
     pub fn vault_address(&self, mint: &VotingMintConfigCookie) -> Pubkey {

@@ -3,10 +3,7 @@ use anchor_lang::prelude::*;
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Seconds in one day.
-pub const SECS_PER_DAY: u64 = 86_400;
-
-/// Seconds in one month.
-pub const SECS_PER_MONTH: u64 = 365 * SECS_PER_DAY / 12;
+pub const SECONDS_PER_DAY: u64 = 86_400;
 
 /// Seconds in cooldown (5 days)
 pub const COOLDOWN_SECS: u64 = 86_400 * 5;
@@ -53,6 +50,7 @@ impl Lockup {
         Ok(Self {
             kind,
             start_ts,
+            // end_ts will be finally determined at the moment of stake
             end_ts,
             period,
             // 0 means cooldown hasn't been requested
@@ -190,10 +188,10 @@ impl Default for LockupPeriod {
 impl LockupPeriod {
     pub fn to_secs(&self) -> u64 {
         match self {
-            LockupPeriod::ThreeMonths => SECS_PER_MONTH * 3,
-            LockupPeriod::SixMonths => SECS_PER_MONTH * 6,
-            LockupPeriod::OneYear => SECS_PER_MONTH * 12,
-            LockupPeriod::Flex => SECS_PER_DAY * 5,
+            LockupPeriod::ThreeMonths => SECONDS_PER_DAY * 90,
+            LockupPeriod::SixMonths => SECONDS_PER_DAY * 180,
+            LockupPeriod::OneYear => SECONDS_PER_DAY * 365,
+            LockupPeriod::Flex => SECONDS_PER_DAY * 5,
             LockupPeriod::None => 0,
         }
     }
@@ -232,7 +230,7 @@ impl LockupKind {
     pub fn period_secs(&self) -> u64 {
         match self {
             LockupKind::None => 0,
-            LockupKind::Constant => SECS_PER_DAY, // arbitrary choice
+            LockupKind::Constant => SECONDS_PER_DAY, // arbitrary choice
         }
     }
 

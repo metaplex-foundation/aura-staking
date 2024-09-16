@@ -1,5 +1,10 @@
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
+use assert_custom_on_chain_error::AssertCustomOnChainErr;
+use mpl_common_constants::constants::{GOVERNANCE_PROGRAM_ID, REALM_NAME};
+use mplx_staking_states::{
+    error::MplStakingError,
+    state::{LockupKind, LockupPeriod},
+};
 use program_test::*;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
@@ -239,6 +244,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
             &registrar,
             &mint_governance.address,
             &proposal.address,
+            &voter,
             &vote_record,
         )
         .await?;
@@ -472,14 +478,7 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
 
     context
         .addin
-        .restrict_tokenflow(
-            &rewards_pool,
-            &deposit_mining,
-            &registrar,
-            &realm_authority,
-            &voter_authority.pubkey(),
-            &context.rewards.program_id,
-        )
+        .restrict_tokenflow(&registrar, &realm_authority, &voter)
         .await
         .unwrap();
 
@@ -495,10 +494,11 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
             &registrar,
             &mint_governance.address,
             &proposal.address,
+            &voter,
             &vote_record,
         )
         .await
-        .expect_err("Claiming is restricted by Rewards program");
+        .assert_on_chain_err(MplStakingError::TokenflowRestricted);
 
     Ok(())
 }
@@ -723,14 +723,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
 
     context
         .addin
-        .restrict_tokenflow(
-            &rewards_pool,
-            &deposit_mining,
-            &registrar,
-            &realm_authority,
-            &voter_authority.pubkey(),
-            &context.rewards.program_id,
-        )
+        .restrict_tokenflow(&registrar, &realm_authority, &voter)
         .await?;
 
     context
@@ -745,6 +738,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
             &registrar,
             &mint_governance.address,
             &proposal.address,
+            &voter,
             &vote_record,
         )
         .await
@@ -752,14 +746,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
 
     context
         .addin
-        .allow_tokenflow(
-            &rewards_pool,
-            &deposit_mining,
-            &registrar,
-            &realm_authority,
-            &voter_authority.pubkey(),
-            &context.rewards.program_id,
-        )
+        .allow_tokenflow(&registrar, &realm_authority, &voter)
         .await?;
 
     context
@@ -774,6 +761,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
             &registrar,
             &mint_governance.address,
             &proposal.address,
+            &voter,
             &vote_record,
         )
         .await?;

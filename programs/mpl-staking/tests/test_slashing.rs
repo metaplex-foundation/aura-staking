@@ -1,21 +1,22 @@
 use anchor_spl::token::TokenAccount;
+use mpl_common_constants::constants::REALM_NAME;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 
 mod program_test;
+
 #[tokio::test]
-async fn test_all_deposits() -> Result<(), TransportError> {
+async fn slash_success() -> Result<(), TransportError> {
     let context = TestContext::new().await;
-    let addin = &context.addin;
 
     let payer = &context.users[0].key;
     let realm_authority = Keypair::new();
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            REALM_NAME,
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -23,10 +24,9 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         )
         .await;
 
-    let voter_authority = &context.users[1].key;
-    let voter_mngo = context.users[1].token_accounts[0];
+    let deposit_authority = &context.users[1].key;
     let token_owner_record = realm
-        .create_token_owner_record(voter_authority.pubkey(), payer)
+        .create_token_owner_record(deposit_authority.pubkey(), payer)
         .await;
 
     let fill_authority = Keypair::from_bytes(&context.users[3].key.to_bytes()).unwrap();
@@ -42,7 +42,20 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             &context.rewards.program_id,
         )
         .await;
-    let mngo_voting_mint = addin
+    context
+        .addin
+        .configure_voting_mint(
+            &registrar,
+            &realm_authority,
+            payer,
+            0,
+            &context.mints[0],
+            None,
+            None,
+        )
+        .await;
+    let mngo_voting_mint = context
+        .addin
         .configure_voting_mint(
             &registrar,
             &realm_authority,
@@ -54,13 +67,15 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         )
         .await;
 
+    // TODO: ??? voter_authority == deposit_authority ???
+    let voter_authority = deposit_authority;
     let (deposit_mining, _) = find_deposit_mining_addr(
         &context.rewards.program_id,
         &voter_authority.pubkey(),
         &rewards_pool,
     );
-
-    let voter = addin
+    let voter = context
+        .addin
         .create_voter(
             &registrar,
             &token_owner_record,
@@ -72,7 +87,10 @@ async fn test_all_deposits() -> Result<(), TransportError> {
         )
         .await;
 
-    addin
+    let depositer_token_account = context.users[1].token_accounts[0];
+
+    context
+        .addin
         .create_deposit_entry(
             &registrar,
             &voter,
@@ -82,93 +100,105 @@ async fn test_all_deposits() -> Result<(), TransportError> {
             LockupKind::None,
             LockupPeriod::None,
         )
-        .await
-        .unwrap();
-    addin
+        .await?;
+    context
+        .addin
+        .create_deposit_entry(
+            &registrar,
+            &voter,
+            &voter,
+            &mngo_voting_mint,
+            1,
+            LockupKind::Constant,
+            LockupPeriod::ThreeMonths,
+        )
+        .await?;
+
+    context
+        .addin
         .deposit(
             &registrar,
             &voter,
             &mngo_voting_mint,
-            voter_authority,
-            voter_mngo,
+            deposit_authority,
+            depositer_token_account,
             0,
-            32000,
+            10000,
+        )
+        .await?;
+
+    context
+        .addin
+        .stake(
+            &registrar,
+            &voter,
+            voter.authority.pubkey(),
+            &context.rewards.program_id,
+            0,
+            1,
+            10000,
+        )
+        .await?;
+
+    context
+        .addin
+        .slash(
+            &registrar,
+            &voter,
+            &realm_authority,
+            1,
+            5000,
+            &voter_authority.pubkey(),
+            &context.rewards.program_id,
         )
         .await
         .unwrap();
+    let deposit_entry = voter.get_deposit_entry(&context.solana, 1).await;
+    assert_eq!(deposit_entry.slashing_penalty, 5000);
 
-    for i in 1..32 {
-        addin
-            .create_deposit_entry(
-                &registrar,
-                &voter,
-                &voter,
-                &mngo_voting_mint,
-                i,
-                LockupKind::Constant,
-                LockupPeriod::ThreeMonths,
-            )
-            .await
-            .unwrap();
-        addin
-            .stake(
-                &registrar,
-                &voter,
-                voter.authority.pubkey(),
-                &context.rewards.program_id,
-                0,
-                i,
-                1000,
-            )
-            .await?;
-    }
+    let voter_authority_ata = context
+        .rewards
+        .solana
+        .create_spl_ata(
+            &voter_authority.pubkey(),
+            &mngo_voting_mint.mint.pubkey.unwrap(),
+            payer,
+        )
+        .await;
 
-    // advance time, to be in the middle of all deposit lockups
-    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 45 * 86400).await;
-
-    // the two most expensive calls which scale with number of deposits
-    // are update_voter_weight_record and withdraw - both compute the vote weight
-
-    let vwr = addin
-        .update_voter_weight_record(&registrar, &voter)
-        .await
-        .unwrap();
-    assert_eq!(vwr.voter_weight, 1000 * 32);
-
-    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 50 * 86400).await;
-
+    advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 90 * 86400).await;
     context
         .addin
         .unlock_tokens(
             &registrar,
             &voter,
             &voter,
-            0,
+            1,
             &rewards_pool,
             &context.rewards.program_id,
         )
-        .await
-        .unwrap();
+        .await?;
 
     advance_clock_by_ts(&mut context.solana.context.borrow_mut(), 5 * 86400).await;
-
-    // make sure withdrawing works with all deposits filled
-    addin
+    context
+        .addin
         .withdraw(
             &registrar,
             &voter,
             &mngo_voting_mint,
             voter_authority,
-            voter_mngo,
+            voter_authority_ata,
             realm.community_token_account,
-            0,
-            1000,
+            1,
+            5000,
         )
-        .await
-        .unwrap();
+        .await?;
 
-    // logging can take a lot of cu/mem
-    addin.log_voter_info(&registrar, &voter, 0).await;
+    let claimed_amount = context
+        .solana
+        .token_account_balance(realm.community_token_account)
+        .await;
+    assert_eq!(5000, claimed_amount);
 
     Ok(())
 }

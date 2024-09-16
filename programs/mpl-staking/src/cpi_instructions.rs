@@ -9,9 +9,6 @@ use solana_program::{
     system_program,
 };
 
-pub const REWARD_CONTRACT_ID: Pubkey =
-    solana_program::pubkey!("BF5PatmRTQDgEKoXR7iHRbkibEEi83nVM38cUKWzQcTR");
-
 #[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
 
 pub enum RewardsInstruction {
@@ -164,123 +161,33 @@ pub enum RewardsInstruction {
         new_delegate: Pubkey,
     },
 
-    /// Restricts claiming rewards from the specified mining account
+    /// Slashes the specified stake and transfers money to the treasury
     ///
     /// Accounts:
     /// [RS] Deposit authority
-    /// [S] Reward pool account
+    /// [W] Reward pool account
     /// [W] Mining
-    RestrictTokenFlow { mining_owner: Pubkey },
-
-    /// Allows claiming rewards from the specified mining account
-    ///
-    /// Accounts:
-    /// [RS] Deposit authority
-    /// [S] Reward pool account
-    /// [W] Mining
-    AllowTokenFlow { mining_owner: Pubkey },
-
-    /// Restricts batch minting until the specified time
-    ///
-    /// Accounts:
-    /// [RS] Deposit authority
-    /// [S] Reward pool account
-    /// [W] Mining
-    RestrictBatchMinting {
-        /// Time until batch minting is restricted
-        until_ts: u64,
-        /// Owner of the mining account
+    Slash {
         mining_owner: Pubkey,
+        // number of tokens that had been slashed
+        slash_amount_in_native: u64,
+        // weighted stake part for the slashed number of tokens multiplied by the period
+        slash_amount_multiplied_by_period: u64,
+        // None if it's Flex period, because it's already expired
+        stake_expiration_date: Option<u64>,
     },
-}
 
-pub fn restrict_batch_minting<'a>(
-    program_id: AccountInfo<'a>,
-    deposit_authority: AccountInfo<'a>,
-    reward_pool: AccountInfo<'a>,
-    mining: AccountInfo<'a>,
-    mining_owner: &Pubkey,
-    until_ts: u64,
-    signers_seeds: &[&[u8]],
-) -> ProgramResult {
-    let accounts = vec![
-        AccountMeta::new_readonly(deposit_authority.key(), true),
-        AccountMeta::new_readonly(reward_pool.key(), false),
-        AccountMeta::new(mining.key(), false),
-    ];
-
-    let ix = Instruction::new_with_borsh(
-        program_id.key(),
-        &RewardsInstruction::RestrictBatchMinting {
-            until_ts,
-            mining_owner: *mining_owner,
-        },
-        accounts,
-    );
-
-    invoke_signed(
-        &ix,
-        &[deposit_authority, reward_pool, mining, program_id],
-        &[signers_seeds],
-    )
-}
-
-pub fn restrict_tokenflow<'a>(
-    program_id: AccountInfo<'a>,
-    deposit_authority: AccountInfo<'a>,
-    reward_pool: AccountInfo<'a>,
-    mining: AccountInfo<'a>,
-    mining_owner: &Pubkey,
-    signers_seeds: &[&[u8]],
-) -> ProgramResult {
-    let accounts = vec![
-        AccountMeta::new_readonly(deposit_authority.key(), true),
-        AccountMeta::new_readonly(reward_pool.key(), false),
-        AccountMeta::new(mining.key(), false),
-    ];
-
-    let ix = Instruction::new_with_borsh(
-        program_id.key(),
-        &RewardsInstruction::RestrictTokenFlow {
-            mining_owner: *mining_owner,
-        },
-        accounts,
-    );
-
-    invoke_signed(
-        &ix,
-        &[deposit_authority, reward_pool, mining, program_id],
-        &[signers_seeds],
-    )
-}
-
-pub fn allow_tokenflow<'a>(
-    program_id: AccountInfo<'a>,
-    deposit_authority: AccountInfo<'a>,
-    reward_pool: AccountInfo<'a>,
-    mining: AccountInfo<'a>,
-    mining_owner: &Pubkey,
-    signers_seeds: &[&[u8]],
-) -> ProgramResult {
-    let accounts = vec![
-        AccountMeta::new_readonly(deposit_authority.key(), true),
-        AccountMeta::new_readonly(reward_pool.key(), false),
-        AccountMeta::new(mining.key(), false),
-    ];
-
-    let ix = Instruction::new_with_borsh(
-        program_id.key(),
-        &RewardsInstruction::AllowTokenFlow {
-            mining_owner: *mining_owner,
-        },
-        accounts,
-    );
-
-    invoke_signed(
-        &ix,
-        &[deposit_authority, reward_pool, mining, program_id],
-        &[signers_seeds],
-    )
+    /// Decreaese miner's weighted stake by specified amount
+    ///
+    /// Accounts:
+    /// [RS] Deposit authority
+    /// [W] Reward pool account
+    /// [W] Mining
+    DecreaseRewards {
+        mining_owner: Pubkey,
+        // The number by which weighted stake should be decreased
+        decreased_weighted_stake_number: u64,
+    },
 }
 
 /// This function initializes pool. Some sort of a "root"
@@ -631,6 +538,73 @@ pub fn change_delegate<'a>(
             new_delegate_mining,
             program_id,
         ],
+        &[signers_seeds],
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn slash<'a>(
+    program_id: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    mining_owner: &Pubkey,
+    slash_amount_in_native: u64,
+    slash_amount_multiplied_by_period: u64,
+    stake_expiration_date: Option<u64>,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::Slash {
+            mining_owner: *mining_owner,
+            slash_amount_in_native,
+            slash_amount_multiplied_by_period,
+            stake_expiration_date,
+        },
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[reward_pool, mining, deposit_authority, program_id],
+        &[signers_seeds],
+    )
+}
+
+pub fn decrease_rewards<'a>(
+    program_id: AccountInfo<'a>,
+    deposit_authority: AccountInfo<'a>,
+    reward_pool: AccountInfo<'a>,
+    mining: AccountInfo<'a>,
+    decreased_weighted_stake_number: u64,
+    mining_owner: &Pubkey,
+    signers_seeds: &[&[u8]],
+) -> ProgramResult {
+    let accounts = vec![
+        AccountMeta::new_readonly(deposit_authority.key(), true),
+        AccountMeta::new_readonly(reward_pool.key(), false),
+        AccountMeta::new(mining.key(), false),
+    ];
+
+    let ix = Instruction::new_with_borsh(
+        program_id.key(),
+        &RewardsInstruction::DecreaseRewards {
+            mining_owner: *mining_owner,
+            decreased_weighted_stake_number,
+        },
+        accounts,
+    );
+
+    invoke_signed(
+        &ix,
+        &[deposit_authority, reward_pool, mining, program_id],
         &[signers_seeds],
     )
 }
