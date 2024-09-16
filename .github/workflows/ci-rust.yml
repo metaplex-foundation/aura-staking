@@ -21,7 +21,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Set up authentication for private repo
+        run: |
+          git config --global url."https://${{ secrets.CI_TOKEN }}@github.com".insteadOf ssh://git@github.com
 
       - name: Install stable Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -54,6 +58,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up authentication for private repo
+        run: |
+          git config --global url."https://${{ secrets.CI_TOKEN }}@github.com".insteadOf ssh://git@github.com
 
       - name: Install Linux dependencies
         run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev

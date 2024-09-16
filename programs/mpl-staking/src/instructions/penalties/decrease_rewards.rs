@@ -71,7 +71,7 @@ pub fn decrease_rewards(
         ctx.accounts.reward_pool.to_account_info(),
         ctx.accounts.deposit_mining.to_account_info(),
         decreased_weighted_stake_number,
-        &mining_owner,
+        mining_owner,
         signers_seeds,
     )?;
 

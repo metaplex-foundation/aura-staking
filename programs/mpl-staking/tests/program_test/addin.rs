@@ -1010,7 +1010,7 @@ impl VoterCookie {
     }
 
     pub async fn get_deposit_entry(&self, solana: &SolanaCookie, deposit_id: u8) -> DepositEntry {
-        let voter = Self::get_voter(&self, solana).await;
+        let voter = Self::get_voter(self, solana).await;
         voter.deposits[deposit_id as usize]
     }
 
