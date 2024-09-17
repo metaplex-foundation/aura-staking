@@ -1,4 +1,4 @@
-use crate::{clock_unix_timestamp, cpi_instructions, find_mining_address};
+use crate::{clock_unix_timestamp, cpi_instructions, find_mining_address, LockupPeriod};
 use anchor_lang::prelude::*;
 use crate::{
     error::MplStakingError,
@@ -106,10 +106,18 @@ pub fn change_delegate(
         .checked_sub(target.delegate_last_update_ts)
         .ok_or(MplStakingError::ArithmeticOverflow)?;
 
-    require!(
-        delegate_last_update_diff > DELEGATE_UPDATE_DIFF_THRESHOLD,
-        MplStakingError::DelegateUpdateIsTooSoon
-    );
+    if target.lockup.period == LockupPeriod::Test {
+        require!(
+            delegate_last_update_diff > 120,
+            MplStakingError::DelegateUpdateIsTooSoon
+        );
+    } else {
+        require!(
+            delegate_last_update_diff > DELEGATE_UPDATE_DIFF_THRESHOLD,
+            MplStakingError::DelegateUpdateIsTooSoon
+        );
+
+    }
 
     if ctx.accounts.voter.key() == new_delegate {
         require!(
