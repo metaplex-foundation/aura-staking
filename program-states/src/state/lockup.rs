@@ -172,6 +172,7 @@ impl Lockup {
 #[derive(BorshDeserialize, BorshSerialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LockupPeriod {
     None,
+    Test,
     Flex,
     ThreeMonths,
     SixMonths,
@@ -192,6 +193,7 @@ impl LockupPeriod {
             LockupPeriod::OneYear => SECONDS_PER_DAY * 365,
             LockupPeriod::Flex => SECONDS_PER_DAY * 5,
             LockupPeriod::None => 0,
+            LockupPeriod::Test => 120,
         }
     }
 
@@ -202,6 +204,7 @@ impl LockupPeriod {
             LockupPeriod::SixMonths => 4,
             LockupPeriod::OneYear => 6,
             LockupPeriod::Flex => 1,
+            LockupPeriod::Test => 1,
         }
     }
 }
