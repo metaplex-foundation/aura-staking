@@ -9,9 +9,6 @@ use solana_program::{
     system_program,
 };
 
-pub const REWARD_CONTRACT_ID: Pubkey =
-    solana_program::pubkey!("BF5PatmRTQDgEKoXR7iHRbkibEEi83nVM38cUKWzQcTR");
-
 #[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
 
 pub enum RewardsInstruction {

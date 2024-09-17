@@ -5,6 +5,7 @@ pub use addin::*;
 pub use cookies::*;
 pub use governance::*;
 use log::*;
+use mpl_common_constants::constants::GOVERNANCE_PROGRAM_ID;
 pub use solana::*;
 use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
@@ -27,12 +28,6 @@ pub mod governance;
 pub mod rewards;
 pub mod solana;
 pub mod utils;
-
-// TODO: Change values of this constants to derive correct PDA for `DAO_PUBKEY` constant in
-//  `claim.rs` file.
-// Link to ticket: https://linear.app/mplx/issue/MTG-546/replace-dao-pubkey-constant-with-actual-public-key-in-staking-contract
-pub const GOVERNANCE_PROGRAM_ID: &str = "GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw";
-pub const REALM_NAME: &str = "VSR Rewards 21";
 
 trait AddPacked {
     fn add_packable_account<T: Pack>(
@@ -126,7 +121,7 @@ impl TestContext {
         // intentionally set to half the limit, to catch potential problems early
         test.set_compute_max_units(120000);
 
-        let governance_program_id = Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap();
+        let governance_program_id = Pubkey::from(GOVERNANCE_PROGRAM_ID);
         test.add_program(
             "spl_governance_3_1_1",
             governance_program_id,
