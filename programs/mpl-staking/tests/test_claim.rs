@@ -10,7 +10,6 @@ use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 use spl_governance::state::vote_record::get_vote_record_address;
-use std::str::FromStr;
 
 mod program_test;
 
@@ -227,7 +226,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .await
         .unwrap();
     let vote_record = get_vote_record_address(
-        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &Pubkey::from(GOVERNANCE_PROGRAM_ID),
         &proposal.address,
         &proposal.owner_token_owner_record,
     );
@@ -471,7 +470,7 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
         .await
         .unwrap();
     let vote_record = get_vote_record_address(
-        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &Pubkey::from(GOVERNANCE_PROGRAM_ID),
         &proposal.address,
         &proposal.owner_token_owner_record,
     );
@@ -716,7 +715,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         .await
         .unwrap();
     let vote_record = get_vote_record_address(
-        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &Pubkey::from(GOVERNANCE_PROGRAM_ID),
         &proposal.address,
         &proposal.owner_token_owner_record,
     );

@@ -10,7 +10,7 @@ use solana_program::program::get_return_data;
 use spl_governance::state::{
     governance::GovernanceV2, proposal::ProposalV2, vote_record::VoteRecordV2,
 };
-use std::{borrow::Borrow, str::FromStr};
+use std::borrow::Borrow;
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
@@ -86,7 +86,7 @@ pub fn claim(
         VoteRecordV2::deserialize(&mut &ctx.accounts.vote_record.data.borrow_mut()[..])?;
 
     require!(
-        realm_pubkey == Pubkey::from_str(DAO_PUBKEY).unwrap()
+        realm_pubkey == DAO_PUBKEY.into()
             && governance.realm == realm_pubkey
             && proposal.governance == ctx.accounts.governance.key()
             && vote_record.governing_token_owner == *ctx.accounts.voter_authority.key,

@@ -11,7 +11,6 @@ use mplx_staking_states::{
     voter_seeds,
 };
 use spl_governance::state::realm::get_governing_token_holding_address_seeds;
-use std::str::FromStr;
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -198,10 +197,8 @@ pub fn withdraw(ctx: Context<Withdraw>, deposit_entry_index: u8, amount: u64) ->
                 &registrar.realm,
                 &registrar.realm_governing_token_mint,
             );
-            let (treasury_addr, _) = Pubkey::find_program_address(
-                &treasury_seeds,
-                &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
-            );
+            let (treasury_addr, _) =
+                Pubkey::find_program_address(&treasury_seeds, &Pubkey::from(GOVERNANCE_PROGRAM_ID));
 
             require!(
                 treasury_addr == realm_treasury.key(),

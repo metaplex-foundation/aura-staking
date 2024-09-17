@@ -120,7 +120,7 @@ impl TestContext {
         // intentionally set to half the limit, to catch potential problems early
         test.set_compute_max_units(120000);
 
-        let governance_program_id = Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap();
+        let governance_program_id = Pubkey::from(GOVERNANCE_PROGRAM_ID);
         test.add_program(
             "spl_governance_3_1_1",
             governance_program_id,
