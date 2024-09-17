@@ -64,3 +64,4 @@ macro_rules! registrar_seeds {
 }
 
 pub use registrar_seeds;
+use static_assertions::const_assert;

@@ -1,17 +1,14 @@
 use anchor_lang::prelude::*;
+use error::*;
 use instructions::*;
-use mplx_staking_states::{
-    error::MplStakingError,
-    state::{
-        lockup::{LockupKind, LockupPeriod},
-        DepositEntry, Registrar, Voter,
-    },
-};
+use state::*;
 
 pub mod cpi_instructions;
+pub mod error;
 pub mod events;
 mod governance;
 mod instructions;
+pub mod state;
 pub mod voter;
 
 // The program address.

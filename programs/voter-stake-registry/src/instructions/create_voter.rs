@@ -1,10 +1,10 @@
 use crate::{cpi_instructions, voter::VoterWeightRecord};
-use anchor_lang::prelude::*;
-use mplx_staking_states::{
+use crate::{
     error::MplStakingError,
     registrar_seeds,
     state::{Registrar, Voter},
 };
+use anchor_lang::prelude::*;
 use solana_program::instruction::{get_stack_height, TRANSACTION_LEVEL_STACK_HEIGHT};
 use std::mem::size_of;
 

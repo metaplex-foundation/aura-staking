@@ -85,4 +85,5 @@ macro_rules! voter_seeds {
     };
 }
 
+use static_assertions::const_assert;
 pub use voter_seeds;

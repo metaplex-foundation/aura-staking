@@ -1,6 +1,6 @@
 use crate::{clock_unix_timestamp, cpi_instructions, find_mining_address};
 use anchor_lang::prelude::*;
-use mplx_staking_states::{
+use crate::{
     error::MplStakingError,
     state::{Registrar, Voter},
 };

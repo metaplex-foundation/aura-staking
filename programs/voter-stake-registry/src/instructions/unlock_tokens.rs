@@ -1,9 +1,9 @@
 use crate::{clock_unix_timestamp, cpi_instructions::withdraw_mining, Stake};
-use anchor_lang::prelude::*;
-use mplx_staking_states::{
+use crate::{
     error::MplStakingError,
     state::{LockupPeriod, COOLDOWN_SECS},
 };
+use anchor_lang::prelude::*;
 
 pub fn unlock_tokens(ctx: Context<Stake>, deposit_entry_index: u8) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
