@@ -1,10 +1,5 @@
-use crate::cpi_instructions;
 use anchor_lang::prelude::*;
-use mplx_staking_states::{
-    error::MplStakingError,
-    registrar_seeds,
-    state::{Registrar, Voter},
-};
+use mplx_staking_states::state::{Registrar, Voter};
 
 #[derive(Accounts)]
 pub struct ChangeAuthorizedAgent<'info> {
@@ -26,7 +21,6 @@ pub struct ChangeAuthorizedAgent<'info> {
 pub fn change_authorized_agent(ctx: Context<ChangeAuthorizedAgent>, agent: Pubkey) -> Result<()> {
     let voter = &mut ctx.accounts.voter.load_mut()?;
     voter.authorized_agent = agent;
-    let voter_authority = voter.voter_authority;
 
     Ok(())
 }
