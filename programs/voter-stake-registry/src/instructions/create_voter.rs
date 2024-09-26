@@ -104,6 +104,7 @@ pub fn create_voter(
         voter.voter_bump = voter_bump;
         voter.voter_weight_record_bump = voter_weight_record_bump;
         voter.voter_authority = voter_authority;
+        voter.authorized_agent = voter_authority;
         voter.registrar = ctx.accounts.registrar.key();
 
         let voter_weight_record = &mut ctx.accounts.voter_weight_record;
