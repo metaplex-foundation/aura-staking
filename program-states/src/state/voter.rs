@@ -6,13 +6,18 @@ use anchor_lang::prelude::*;
 pub struct Voter {
     /// The deposits that the voter has made.
     pub deposits: [DepositEntry; 32],
-    /// Authorized agent. This pubkey is authorized by the staker/voter to perform permissioned actions that require stake. This is the same as the voter_authority initially, but may be changed by the voter_authority in order to not expose the voter_authority's private key.
+    /// Authorized agent. This pubkey is authorized by the staker/voter to perform permissioned
+    /// actions that require stake. This is the same as the voter_authority initially, but may be
+    /// changed by the voter_authority in order to not expose the voter_authority's private key.
     pub authorized_agent: Pubkey,
-    /// The voter_authority is the account that has the right to vote with the voter's stake. This is the account that will sign the vote transactions as well as the account that will sign the withdrawal transactions.
+    /// The voter_authority is the account that has the right to vote with the voter's stake. This
+    /// is the account that will sign the vote transactions as well as the account that will sign
+    /// the withdrawal transactions.
     pub voter_authority: Pubkey,
     /// The pubkey of the registrar that the voter is registered with.
     pub registrar: Pubkey,
-    /// The total weighted stake that the voter was penalized for. This reduces the voter's effective stake.
+    /// The total weighted stake that the voter was penalized for. This reduces the voter's
+    /// effective stake.
     pub decreased_weighted_stake_by: u64,
     /// The batch minting is restricted until this timestamp.
     pub batch_minting_restricted_until: u64,

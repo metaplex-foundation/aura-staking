@@ -163,6 +163,13 @@ pub mod mpl_staking {
         instructions::claim(ctx, realm_pubkey)
     }
 
+    pub fn change_authorized_agent(
+        ctx: Context<ChangeAuthorizedAgent>,
+        agent: Pubkey,
+    ) -> Result<()> {
+        instructions::change_authorized_agent(ctx, agent)
+    }
+
     pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
         instructions::change_delegate(ctx, deposit_entry_index)
     }
