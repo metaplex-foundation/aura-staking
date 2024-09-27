@@ -31,6 +31,7 @@ pub struct CreateDepositEntry<'info> {
     )]
     pub vault: Box<Account<'info, TokenAccount>>,
     pub voter_authority: Signer<'info>,
+    #[account(has_one = registrar)]
     pub delegate_voter: AccountLoader<'info, Voter>,
 
     #[account(mut)]

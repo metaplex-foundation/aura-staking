@@ -22,6 +22,7 @@ pub struct ChangeDelegate<'info> {
     pub voter: AccountLoader<'info, Voter>,
     pub voter_authority: Signer<'info>,
 
+    #[account(has_one = registrar)]
     pub delegate_voter: AccountLoader<'info, Voter>,
 
     /// CHECK: Mining Account that belongs to Rewards Program and some delegate
