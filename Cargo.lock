@@ -1980,7 +1980,7 @@ dependencies = [
 [[package]]
 name = "mpl-common-constants"
 version = "0.1.0"
-source = "git+ssh://git@github.com/adm-metaex/mpl-common-constants#cfbd4284f2963c797ca2cff68b1f5878f8d2795e"
+source = "git+https://github.com/metaplex-foundation/mpl-common-constants#46675e94a5f5e383543d08e71e2ef8e111edb52a"
 
 [[package]]
 name = "mpl-staking"
