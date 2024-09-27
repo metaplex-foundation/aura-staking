@@ -90,7 +90,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
 
         // will close all the token accounts owned by the voter
         for deposit_vault_raw in ctx.remaining_accounts {
-            let deposit_vault_ta = Account::<TokenAccount>::try_from(&deposit_vault_raw)
+            let deposit_vault_ta = Account::<TokenAccount>::try_from(deposit_vault_raw)
                 .map_err(|_| MplStakingError::DeserializationError)?;
             require_keys_eq!(
                 deposit_vault_ta.owner,
