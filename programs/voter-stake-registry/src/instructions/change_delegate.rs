@@ -35,13 +35,13 @@ pub struct ChangeDelegate<'info> {
     /// The address of the mining account on the rewards program
     /// derived from PDA(["mining", delegate wallet addr, reward_pool], rewards_program)
     #[account(
-        mut, 
+        mut,
         seeds = [
             b"mining",
-            delegate_voter.load()?.voter_authority.as_ref(), 
+            delegate_voter.load()?.voter_authority.as_ref(),
             reward_pool.key().as_ref()
-        ], 
-        bump, 
+        ],
+        bump,
         seeds::program = rewards_program.key()
     )]
     pub new_delegate_mining: UncheckedAccount<'info>,
@@ -69,10 +69,7 @@ pub struct ChangeDelegate<'info> {
 /// Rewards will be recalculated, and the new delegate will start receiving rewards.
 /// The old delegate will stop receiving rewards.
 /// It might be done once per five days.
-pub fn change_delegate(
-    ctx: Context<ChangeDelegate>,
-    deposit_entry_index: u8,
-) -> Result<()> {
+pub fn change_delegate(ctx: Context<ChangeDelegate>, deposit_entry_index: u8) -> Result<()> {
     let registrar = &ctx.accounts.registrar.load()?;
     let voter = &mut ctx.accounts.voter.load_mut()?;
     let voter_authority = voter.voter_authority;

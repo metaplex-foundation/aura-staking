@@ -4,17 +4,33 @@ use anchor_lang::prelude::*;
 /// User account for minting voting rights.
 #[account(zero_copy)]
 pub struct Voter {
+    /// The deposits that the voter has made.
     pub deposits: [DepositEntry; 32],
+    /// Authorized agent. This pubkey is authorized by the staker/voter to perform permissioned
+    /// actions that require stake. This is the same as the voter_authority initially, but may be
+    /// changed by the voter_authority in order to not expose the voter_authority's private key.
+    pub authorized_agent: Pubkey,
+    /// The voter_authority is the account that has the right to vote with the voter's stake. This
+    /// is the account that will sign the vote transactions as well as the account that will sign
+    /// the withdrawal transactions.
     pub voter_authority: Pubkey,
+    /// The pubkey of the registrar that the voter is registered with.
     pub registrar: Pubkey,
+    /// The total weighted stake that the voter was penalized for. This reduces the voter's
+    /// effective stake.
     pub decreased_weighted_stake_by: u64,
+    /// The batch minting is restricted until this timestamp.
     pub batch_minting_restricted_until: u64,
+    /// The bump seed used to derive the voter_authority.
     pub voter_bump: u8,
+    /// The bump seed used to derive the voter_weight_record.
     pub voter_weight_record_bump: u8,
+    /// The bitmap of penalties that the voter has incurred.
     pub penalties: u8,
+    /// Reserved for allignment and future use.
     pub _reserved1: [u8; 13],
 }
-const_assert!(std::mem::size_of::<Voter>() == 144 * 32 + 32 + 32 + 8 + 8 + 1 + 1 + 1 + 13);
+const_assert!(std::mem::size_of::<Voter>() == 144 * 32 + 32 + 32 + 32 + 8 + 8 + 1 + 1 + 1 + 13);
 const_assert!(std::mem::size_of::<Voter>() % 8 == 0);
 
 impl Voter {

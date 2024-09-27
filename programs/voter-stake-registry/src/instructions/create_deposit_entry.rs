@@ -13,7 +13,7 @@ use mplx_staking_states::{
 pub struct CreateDepositEntry<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
 
-    // checking the PDA address it just an extra precaution,
+    // checking the PDA address is just an extra precaution,
     // the other constraints must be exhaustive
     #[account(
         mut,
