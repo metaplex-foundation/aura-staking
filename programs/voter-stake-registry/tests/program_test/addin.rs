@@ -819,6 +819,37 @@ impl AddinCookie {
             .process_transaction(&instructions, Some(&[mining_owner]))
             .await
     }
+
+    pub async fn change_authorized_agent(
+        &self,
+        registrar: &RegistrarCookie,
+        voter: &VoterCookie,
+        agent: Pubkey,
+    ) -> std::result::Result<(), BanksClientError> {
+        let data =
+            anchor_lang::InstructionData::data(&mpl_staking::instruction::ChangeAuthorizedAgent {
+                agent,
+            });
+
+        let accounts = anchor_lang::ToAccountMetas::to_account_metas(
+            &mpl_staking::accounts::ChangeAuthorizedAgent {
+                registrar: registrar.address,
+                voter: voter.address,
+                voter_authority: voter.authority.pubkey(),
+            },
+            None,
+        );
+
+        let instructions = vec![Instruction {
+            program_id: self.program_id,
+            accounts,
+            data,
+        }];
+
+        self.solana
+            .process_transaction(&instructions, Some(&[&voter.authority]))
+            .await
+    }
 }
 
 impl VotingMintConfigCookie {
@@ -829,9 +860,13 @@ impl VotingMintConfigCookie {
 }
 
 impl VoterCookie {
+    pub async fn get_voter(&self, solana: &SolanaCookie) -> Voter {
+        solana.get_account::<Voter>(self.address).await
+    }
+
     pub async fn deposit_amount(&self, solana: &SolanaCookie, deposit_id: u8) -> u64 {
-        solana.get_account::<Voter>(self.address).await.deposits[deposit_id as usize]
-            .amount_deposited_native
+        let voter = self.get_voter(solana).await;
+        voter.deposits[deposit_id as usize].amount_deposited_native
     }
 
     pub fn vault_address(&self, mint: &VotingMintConfigCookie) -> Pubkey {
