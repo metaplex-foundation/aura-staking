@@ -128,4 +128,7 @@ pub enum MplStakingError {
     // 6041 / 0x1799
     #[msg("Cannot deserialize an account")]
     DeserializationError,
+    // 6042 / 0x179a
+    #[msg("Invalid governing token mint")]
+    InvalidGoverningTokenMint,
 }

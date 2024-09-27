@@ -1,12 +1,13 @@
 use crate::cpi_instructions;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
+use anchor_spl::token::{self, CloseAccount, Mint, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
     error::MplStakingError,
     state::{LockupKind, LockupPeriod, Registrar, Voter},
     voter_seeds,
 };
+use spl_associated_token_account::get_associated_token_address;
 use std::ops::DerefMut;
 
 // Remaining accounts must be all the token token accounts owned by voter, he wants to close,
@@ -42,6 +43,8 @@ pub struct CloseVoter<'info> {
     /// keep track of all rewards and staking logic.
     pub reward_pool: UncheckedAccount<'info>,
 
+    pub deposit_mint: Account<'info, Mint>,
+
     #[account(mut)]
     /// CHECK: Destination may be any address.
     pub sol_destination: UncheckedAccount<'info>,
@@ -58,6 +61,11 @@ pub struct CloseVoter<'info> {
 /// Only accounts with no remaining stakes can be closed.
 pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
+
+    require!(
+        ctx.accounts.deposit_mint.key() == registrar.realm_governing_token_mint,
+        MplStakingError::InvalidGoverningTokenMint,
+    );
 
     require!(
         ctx.accounts.rewards_program.key() == registrar.rewards_program,
@@ -89,8 +97,16 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
         let voter_seeds = voter_seeds!(voter);
 
         // will close all the token accounts owned by the voter
-        for deposit_vault_raw in ctx.remaining_accounts {
-            let deposit_vault_ta = Account::<TokenAccount>::try_from(deposit_vault_raw)
+        for deposit_vault_info in ctx.remaining_accounts {
+            require_keys_eq!(
+                *deposit_vault_info.key,
+                get_associated_token_address(
+                    &ctx.accounts.voter.key(),
+                    &ctx.accounts.deposit_mint.key()
+                ),
+            );
+
+            let deposit_vault_ta = Account::<TokenAccount>::try_from(&deposit_vault_info)
                 .map_err(|_| MplStakingError::DeserializationError)?;
             require_keys_eq!(
                 deposit_vault_ta.owner,
