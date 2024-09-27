@@ -1,3 +1,4 @@
+cargo-features = ["workspace-inheritance"]
 [package]
 name = "mplx-staking-states"
 version = "0.0.1"
