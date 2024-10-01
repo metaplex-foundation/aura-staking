@@ -1,13 +1,16 @@
 use crate::program_test::utils::assert_custom_on_chain_error::AssertCustomOnChainErr;
 use anchor_spl::token::TokenAccount;
-use mplx_staking_states::error::MplStakingError;
-use mplx_staking_states::state::{LockupKind, LockupPeriod};
+use assert_custom_on_chain_error::AssertCustomOnChainErr;
+use mpl_common_constants::constants::{GOVERNANCE_PROGRAM_ID, REALM_NAME};
+use mplx_staking_states::{
+    error::MplStakingError,
+    state::{LockupKind, LockupPeriod},
+};
 use program_test::*;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 use spl_governance::state::vote_record::get_vote_record_address;
-use std::str::FromStr;
 
 mod program_test;
 
@@ -265,7 +268,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .await
         .unwrap();
     let vote_record = get_vote_record_address(
-        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &Pubkey::from(GOVERNANCE_PROGRAM_ID),
         &claim_setup.proposal.address,
         &claim_setup.proposal.owner_token_owner_record,
     );
@@ -283,6 +286,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
             &claim_setup.registrar,
             &claim_setup.mint_governance.address,
             &claim_setup.proposal.address,
+            &voter,
             &vote_record,
         )
         .await?;
@@ -475,7 +479,7 @@ async fn claim_without_dao_vote_fail() -> Result<(), TransportError> {
         .await
         .unwrap();
     let vote_record = get_vote_record_address(
-        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &Pubkey::from(GOVERNANCE_PROGRAM_ID),
         &claim_setup.proposal.address,
         &claim_setup.proposal.owner_token_owner_record,
     );
@@ -497,7 +501,7 @@ async fn claim_without_dao_vote_fail() -> Result<(), TransportError> {
             &vote_record,
         )
         .await
-        .assert_on_chain_err(MplStakingError::NoDaoInteractionFound);
+        .assert_on_chain_err(MplStakingError::TokenflowRestricted);
 
     Ok(())
 }

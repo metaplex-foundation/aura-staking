@@ -1978,6 +1978,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "mpl-common-constants"
+version = "0.1.0"
+source = "git+ssh://git@github.com/adm-metaex/mpl-common-constants#33f85f5ae4cade52a8eebdf96833bfe6026e6203"
+
+[[package]]
 name = "mpl-staking"
 version = "0.1.0"
 dependencies = [
@@ -1987,6 +1992,7 @@ dependencies = [
  "bytemuck",
  "env_logger",
  "log",
+ "mpl-common-constants",
  "mplx-staking-states",
  "solana-program",
  "solana-program-test",
@@ -4388,9 +4394,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "1.5.1"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c1c1d5a42b6245520c249549ec267180beaffcc0615401ac8e31853d4b6d8d2"
+checksum = "445e881f4f6d382d5f27c034e25eb92edd7c784ceab92a0937db7f2e9471b938"
 dependencies = [
  "tinyvec_macros",
 ]

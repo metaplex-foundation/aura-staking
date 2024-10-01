@@ -1,4 +1,5 @@
 use anchor_spl::token::TokenAccount;
+use mpl_common_constants::constants::REALM_NAME;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
@@ -221,14 +222,7 @@ async fn withdraw_is_restricted() -> Result<(), TransportError> {
 
     context
         .addin
-        .restrict_tokenflow(
-            &rewards_pool,
-            &deposit_mining,
-            &registrar,
-            &realm_authority,
-            &voter_authority.pubkey(),
-            &context.rewards.program_id,
-        )
+        .restrict_tokenflow(&registrar, &realm_authority, &voter)
         .await?;
 
     context
@@ -239,6 +233,7 @@ async fn withdraw_is_restricted() -> Result<(), TransportError> {
             &mngo_voting_mint,
             voter_authority,
             voter_authority_ata,
+            realm.community_token_mint.pubkey.unwrap(),
             0,
             amount,
         )

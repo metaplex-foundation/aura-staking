@@ -1,4 +1,5 @@
 use anchor_spl::token::TokenAccount;
+use mpl_common_constants::constants::REALM_NAME;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program_test::*;
@@ -153,15 +154,7 @@ async fn restrict_batch_minting_poc() -> Result<(), TransportError> {
 
     context
         .addin
-        .restrict_batch_minting(
-            &rewards_pool,
-            &deposit_mining,
-            &registrar,
-            &realm_authority,
-            &voter_authority.pubkey(),
-            distribution_ends_at,
-            &context.rewards.program_id,
-        )
+        .restrict_batch_minting(&registrar, &realm_authority, &voter, distribution_ends_at)
         .await?;
 
     Ok(())

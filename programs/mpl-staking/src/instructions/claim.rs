@@ -1,20 +1,16 @@
 use crate::{borsh::BorshDeserialize, cpi_instructions};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
-use mplx_staking_states::{error::MplStakingError, state::Registrar};
+use mpl_common_constants::constants::DAO_PUBKEY;
+use mplx_staking_states::{
+    error::MplStakingError,
+    state::{Registrar, Voter},
+};
 use solana_program::program::get_return_data;
 use spl_governance::state::{
     governance::GovernanceV2, proposal::ProposalV2, vote_record::VoteRecordV2,
 };
-use std::{borrow::Borrow, str::FromStr};
-
-// TODO: Replace placeholder with the actual DAO pubkey.
-// TODO: Current `DAO_PUBKEY` is invalid and used only for `test_claim.rs` test,
-//  pls put actual DAO pubkey, when will we deploy.
-// TODO: Also don't forget to change `GOVERNANCE_PROGRAM_ID` and `REALM_NAME` constants in
-//  `program_test/mod.rs` to derive valid PDA.
-// Link to ticket: https://linear.app/mplx/issue/MTG-546/replace-dao-pubkey-constant-with-actual-public-key-in-staking-contract
-pub const DAO_PUBKEY: &str = "89wVNeyqqDaWKWtS4rbunYdsxxbe5V3VRx6g8GWNMTMt";
+use std::borrow::Borrow;
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
@@ -39,7 +35,15 @@ pub struct Claim<'info> {
     #[account(mut)]
     pub deposit_mining: UncheckedAccount<'info>,
 
-    pub mining_owner: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
+        bump = voter.load()?.voter_bump,
+        has_one = registrar,
+        has_one = voter_authority,
+    )]
+    pub voter: AccountLoader<'info, Voter>,
+    pub voter_authority: Signer<'info>,
 
     /// CHECK: Registrar plays the role of deposit_authority on the Rewards Contract,
     /// therefore their PDA that should sign the CPI call
@@ -82,11 +86,10 @@ pub fn claim(
         VoteRecordV2::deserialize(&mut &ctx.accounts.vote_record.data.borrow_mut()[..])?;
 
     require!(
-        realm_pubkey == Pubkey::from_str(DAO_PUBKEY).unwrap()
+        realm_pubkey == DAO_PUBKEY.into()
             && governance.realm == realm_pubkey
             && proposal.governance == ctx.accounts.governance.key()
-            && (vote_record.governing_token_owner == *ctx.accounts.mining_owner.key
-                || proposal.token_owner_record == *ctx.accounts.mining_owner.key),
+            && vote_record.governing_token_owner == *ctx.accounts.voter_authority.key,
         MplStakingError::NoDaoInteractionFound
     );
 
@@ -97,13 +100,19 @@ pub fn claim(
         MplStakingError::InvalidRewardPool
     );
 
+    let voter = ctx.accounts.voter.load()?;
+    require!(
+        !voter.is_tokenflow_restricted(),
+        MplStakingError::TokenflowRestricted
+    );
+
     let rewards_program = ctx.accounts.rewards_program.to_account_info();
     let reward_pool = ctx.accounts.reward_pool.to_account_info();
     let rewards_mint = ctx.accounts.reward_mint.to_account_info();
     let vault = ctx.accounts.vault.to_account_info();
     let deposit_mining = ctx.accounts.deposit_mining.to_account_info();
     let deposit_authority = ctx.accounts.registrar.to_account_info();
-    let mining_owner = ctx.accounts.mining_owner.to_account_info();
+    let mining_owner = ctx.accounts.voter_authority.to_account_info();
     let user_reward_token_account = ctx.accounts.user_reward_token_account.to_account_info();
     let token_program = ctx.accounts.token_program.to_account_info();
     let signers_seeds = &[

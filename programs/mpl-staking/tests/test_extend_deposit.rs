@@ -165,7 +165,10 @@ async fn extend_from_flex() -> Result<(), TransportError> {
     let vault_balance = mngo_voting_mint
         .vault_balance(&context.solana, &voter)
         .await;
-    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
+    let deposit_amount = voter
+        .get_deposit_entry(&context.solana, 1)
+        .await
+        .amount_deposited_native;
 
     assert_eq!(vault_balance, 10000);
     assert_eq!(deposit_amount, 10000);
@@ -326,7 +329,10 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
     let vault_balance = mngo_voting_mint
         .vault_balance(&context.solana, &voter)
         .await;
-    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
+    let deposit_amount = voter
+        .get_deposit_entry(&context.solana, 1)
+        .await
+        .amount_deposited_native;
 
     assert_eq!(vault_balance, 10000);
     assert_eq!(deposit_amount, 10000);
@@ -488,7 +494,10 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
     let vault_balance = mngo_voting_mint
         .vault_balance(&context.solana, &voter)
         .await;
-    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
+    let deposit_amount = voter
+        .get_deposit_entry(&context.solana, 1)
+        .await
+        .amount_deposited_native;
 
     assert_eq!(vault_balance, 10500);
     assert_eq!(deposit_amount, 10500);
@@ -646,7 +655,10 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
         )
         .await?;
 
-    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
+    let deposit_amount = voter
+        .get_deposit_entry(&context.solana, 1)
+        .await
+        .amount_deposited_native;
 
     assert_eq!(deposit_amount, 10500);
 
@@ -1027,7 +1039,10 @@ async fn prolongs_with_delegate() -> Result<(), TransportError> {
     let vault_balance = mngo_voting_mint
         .vault_balance(&context.solana, &voter)
         .await;
-    let deposit_amount = voter.deposit_amount(&context.solana, 1).await;
+    let deposit_amount = voter
+        .get_deposit_entry(&context.solana, 1)
+        .await
+        .amount_deposited_native;
 
     assert_eq!(vault_balance, 10000);
     assert_eq!(deposit_amount, 10000);
