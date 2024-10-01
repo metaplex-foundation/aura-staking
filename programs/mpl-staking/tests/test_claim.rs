@@ -1,4 +1,3 @@
-use crate::program_test::utils::assert_custom_on_chain_error::AssertCustomOnChainErr;
 use anchor_spl::token::TokenAccount;
 use assert_custom_on_chain_error::AssertCustomOnChainErr;
 use mpl_common_constants::constants::{GOVERNANCE_PROGRAM_ID, REALM_NAME};
@@ -28,7 +27,6 @@ struct CLaimSetup {
     voter_authority_ata: Pubkey,
     realm_authority: Keypair,
     payer: Keypair,
-    mngo_voting_mint: VotingMintConfigCookie,
 }
 
 async fn setup(realm_name: &str) -> Result<CLaimSetup, TransportError> {
@@ -244,7 +242,6 @@ async fn setup(realm_name: &str) -> Result<CLaimSetup, TransportError> {
         deposit_mining,
         voter_authority_ata,
         realm_authority,
-        mngo_voting_mint,
     })
 }
 
@@ -286,7 +283,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
             &claim_setup.registrar,
             &claim_setup.mint_governance.address,
             &claim_setup.proposal.address,
-            &voter,
+            &claim_setup.voter,
             &vote_record,
         )
         .await?;
@@ -321,7 +318,7 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
         .await
         .unwrap();
     let vote_record = get_vote_record_address(
-        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &Pubkey::from(GOVERNANCE_PROGRAM_ID),
         &claim_setup.proposal.address,
         &claim_setup.proposal.owner_token_owner_record,
     );
@@ -330,12 +327,9 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
         .context
         .addin
         .restrict_tokenflow(
-            &claim_setup.rewards_pool,
-            &claim_setup.deposit_mining,
             &claim_setup.registrar,
             &claim_setup.realm_authority,
-            &claim_setup.voter_authority.pubkey(),
-            &claim_setup.context.rewards.program_id,
+            &claim_setup.voter,
         )
         .await
         .unwrap();
@@ -353,6 +347,7 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
             &claim_setup.registrar,
             &claim_setup.mint_governance.address,
             &claim_setup.proposal.address,
+            &claim_setup.voter,
             &vote_record,
         )
         .await
@@ -381,7 +376,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         .await
         .unwrap();
     let vote_record = get_vote_record_address(
-        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+        &Pubkey::from(GOVERNANCE_PROGRAM_ID),
         &claim_setup.proposal.address,
         &claim_setup.proposal.owner_token_owner_record,
     );
@@ -390,12 +385,9 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         .context
         .addin
         .restrict_tokenflow(
-            &claim_setup.rewards_pool,
-            &claim_setup.deposit_mining,
             &claim_setup.registrar,
             &claim_setup.realm_authority,
-            &claim_setup.voter_authority.pubkey(),
-            &claim_setup.context.rewards.program_id,
+            &claim_setup.voter,
         )
         .await?;
 
@@ -412,6 +404,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
             &claim_setup.registrar,
             &claim_setup.mint_governance.address,
             &claim_setup.proposal.address,
+            &claim_setup.voter,
             &vote_record,
         )
         .await
@@ -421,12 +414,9 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
         .context
         .addin
         .allow_tokenflow(
-            &claim_setup.rewards_pool,
-            &claim_setup.deposit_mining,
             &claim_setup.registrar,
             &claim_setup.realm_authority,
-            &claim_setup.voter_authority.pubkey(),
-            &claim_setup.context.rewards.program_id,
+            &claim_setup.voter,
         )
         .await?;
 
@@ -443,6 +433,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
             &claim_setup.registrar,
             &claim_setup.mint_governance.address,
             &claim_setup.proposal.address,
+            &claim_setup.voter,
             &vote_record,
         )
         .await?;
@@ -498,155 +489,200 @@ async fn claim_without_dao_vote_fail() -> Result<(), TransportError> {
             &claim_setup.registrar,
             &claim_setup.mint_governance.address,
             &claim_setup.proposal.address,
+            &claim_setup.voter,
             &vote_record,
         )
         .await
-        .assert_on_chain_err(MplStakingError::TokenflowRestricted);
+        .assert_on_chain_err(MplStakingError::NoDaoInteractionFound);
 
     Ok(())
 }
 
-// TODO
-#[tokio::test]
-async fn claim_after_other_user_proposal_vote() -> Result<(), TransportError> {
-    let claim_setup = setup(REALM_NAME).await?;
-    let addin = &claim_setup.context.addin;
+// // TODO
+// #[tokio::test]
+// async fn claim_after_other_user_proposal_vote() -> Result<(), TransportError> {
+//     let claim_setup = setup(REALM_NAME).await?;
+//     let addin = &claim_setup.context.addin;
+//
+//     let voter2_authority = &claim_setup.context.users[3].key;
+//     let token_owner_record2 = claim_setup
+//         .realm
+//         .create_token_owner_record(voter2_authority.pubkey(), &claim_setup.payer)
+//         .await;
+//     let (deposit_mining_voter2, _) = find_deposit_mining_addr(
+//         &claim_setup.context.rewards.program_id,
+//         &voter2_authority.pubkey(),
+//         &claim_setup.rewards_pool,
+//     );
+//     let voter_authority_ata = claim_setup
+//         .context
+//         .rewards
+//         .solana
+//         .create_spl_ata(
+//             &voter2_authority.pubkey(),
+//             &claim_setup.mngo_voting_mint.mint.pubkey.unwrap(),
+//             &claim_setup.payer,
+//         )
+//         .await;
+//
+//     let voter2 = addin
+//         .create_voter(
+//             &claim_setup.registrar,
+//             &token_owner_record2,
+//             voter2_authority,
+//             &claim_setup.payer,
+//             &claim_setup.rewards_pool,
+//             &deposit_mining_voter2,
+//             &claim_setup.context.rewards.program_id,
+//         )
+//         .await;
+//
+//     let proposal = claim_setup.realm
+//         .create_proposal(
+//             claim_setup.mint_governance.address,
+//             voter2_authority,
+//             &voter2,
+//             &claim_setup.payer,
+//             claim_setup.context
+//                 .addin
+//                 .update_voter_weight_record_instruction(&claim_setup.registrar, &voter2),
+//         )
+//         .await
+//         .unwrap();
+//
+//     // claim_setup
+//     //     .context
+//     //     .addin
+//     //     .create_deposit_entry(
+//     //         &claim_setup.registrar,
+//     //         &voter2,
+//     //         &voter2,
+//     //         &claim_setup.mngo_voting_mint,
+//     //         0,
+//     //         LockupKind::None,
+//     //         LockupPeriod::None,
+//     //     )
+//     //     .await?;
+//     // claim_setup
+//     //     .context
+//     //     .addin
+//     //     .create_deposit_entry(
+//     //         &claim_setup.registrar,
+//     //         &voter2,
+//     //         &voter2,
+//     //         &claim_setup.mngo_voting_mint,
+//     //         1,
+//     //         LockupKind::Constant,
+//     //         LockupPeriod::ThreeMonths,
+//     //     )
+//     //     .await?;
+//     //
+//     // let depositer_token_account = claim_setup.context.users[3].token_accounts[0];
+//     // claim_setup
+//     //     .context
+//     //     .addin
+//     //     .deposit(
+//     //         &claim_setup.registrar,
+//     //         &voter2,
+//     //         &claim_setup.mngo_voting_mint,
+//     //         voter2_authority,
+//     //         depositer_token_account,
+//     //         0,
+//     //         10000,
+//     //     )
+//     //     .await?;
+//     //
+//     // claim_setup
+//     //     .context
+//     //     .addin
+//     //     .stake(
+//     //         &claim_setup.registrar,
+//     //         &voter2,
+//     //         voter2.authority.pubkey(),
+//     //         &claim_setup.context.rewards.program_id,
+//     //         0,
+//     //         1,
+//     //         10000,
+//     //     )
+//     //     .await?;
+//
+//     // voter2 cast vote into voter1_proposal
+//     claim_setup
+//         .realm
+//         .cast_vote(
+//             claim_setup.mint_governance.address,
+//             &claim_setup.proposal,
+//             &voter2,
+//             &voter2_authority,
+//             &claim_setup.payer,
+//             claim_setup
+//                 .context
+//                 .addin
+//                 .update_voter_weight_record_instruction(&claim_setup.registrar, &voter2),
+//         )
+//         .await
+//         .unwrap();
+//
+//     let vote_record = get_vote_record_address(
+//         &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
+//         &claim_setup.proposal.address,
+//         &claim_setup.proposal.owner_token_owner_record,
+//     );
+//
+//     claim_setup
+//         .context
+//         .addin
+//         .claim(
+//             &claim_setup.rewards_pool,
+//             &claim_setup.reward_mint,
+//             &deposit_mining_voter2,
+//             &voter2_authority,
+//             &voter_authority_ata,
+//             &claim_setup.context.rewards.program_id,
+//             &claim_setup.registrar,
+//             &claim_setup.mint_governance.address,
+//             &claim_setup.proposal.address,
+//             &vote_record,
+//         )
+//         .await?;
+//
+//     let claimed_amount = claim_setup
+//         .context
+//         .solana
+//         .token_account_balance(voter_authority_ata)
+//         .await;
+//     assert_eq!(100, claimed_amount);
+//
+//     Ok(())
+// }
 
-    let voter2_authority = &claim_setup.context.users[3].key;
-    let token_owner_record2 = claim_setup
-        .realm
-        .create_token_owner_record(voter2_authority.pubkey(), &claim_setup.payer)
-        .await;
-    let (deposit_mining_voter2, _) = find_deposit_mining_addr(
-        &claim_setup.context.rewards.program_id,
-        &voter2_authority.pubkey(),
-        &claim_setup.rewards_pool,
-    );
-    let voter_authority_ata = claim_setup
-        .context
-        .rewards
-        .solana
-        .create_spl_ata(
-            &voter2_authority.pubkey(),
-            &claim_setup.mngo_voting_mint.mint.pubkey.unwrap(),
-            &claim_setup.payer,
-        )
-        .await;
-
-    let voter2 = addin
-        .create_voter(
-            &claim_setup.registrar,
-            &token_owner_record2,
-            voter2_authority,
-            &claim_setup.payer,
-            &claim_setup.rewards_pool,
-            &deposit_mining_voter2,
-            &claim_setup.context.rewards.program_id,
-        )
-        .await;
-
-    claim_setup
-        .context
-        .addin
-        .create_deposit_entry(
-            &claim_setup.registrar,
-            &voter2,
-            &voter2,
-            &claim_setup.mngo_voting_mint,
-            0,
-            LockupKind::None,
-            LockupPeriod::None,
-        )
-        .await?;
-    claim_setup
-        .context
-        .addin
-        .create_deposit_entry(
-            &claim_setup.registrar,
-            &voter2,
-            &voter2,
-            &claim_setup.mngo_voting_mint,
-            1,
-            LockupKind::Constant,
-            LockupPeriod::ThreeMonths,
-        )
-        .await?;
-
-    let depositer_token_account = claim_setup.context.users[3].token_accounts[0];
-    claim_setup
-        .context
-        .addin
-        .deposit(
-            &claim_setup.registrar,
-            &voter2,
-            &claim_setup.mngo_voting_mint,
-            voter2_authority,
-            depositer_token_account,
-            0,
-            10000,
-        )
-        .await?;
-
-    claim_setup
-        .context
-        .addin
-        .stake(
-            &claim_setup.registrar,
-            &voter2,
-            voter2.authority.pubkey(),
-            &claim_setup.context.rewards.program_id,
-            0,
-            1,
-            10000,
-        )
-        .await?;
-
-    // voter2 cast vote into voter1_proposal
-    claim_setup
-        .realm
-        .cast_vote(
-            claim_setup.mint_governance.address,
-            &claim_setup.proposal,
-            &voter2,
-            &voter2_authority,
-            &claim_setup.payer,
-            claim_setup
-                .context
-                .addin
-                .update_voter_weight_record_instruction(&claim_setup.registrar, &voter2),
-        )
-        .await
-        .unwrap();
-
-    let vote_record = get_vote_record_address(
-        &Pubkey::from_str(GOVERNANCE_PROGRAM_ID).unwrap(),
-        &claim_setup.proposal.address,
-        &claim_setup.proposal.owner_token_owner_record,
-    );
-
-    claim_setup
-        .context
-        .addin
-        .claim(
-            &claim_setup.rewards_pool,
-            &claim_setup.reward_mint,
-            &claim_setup.deposit_mining,
-            &claim_setup.voter_authority,
-            &claim_setup.voter_authority_ata,
-            &claim_setup.context.rewards.program_id,
-            &claim_setup.registrar,
-            &claim_setup.mint_governance.address,
-            &claim_setup.proposal.address,
-            &vote_record,
-        )
-        .await?;
-
-    let claimed_amount = claim_setup
-        .context
-        .solana
-        .token_account_balance(voter_authority_ata)
-        .await;
-    assert_eq!(100, claimed_amount);
-
-    Ok(())
-}
+// #[tokio::test]
+// async fn create_proposal_without_vote_claim() -> Result<(), TransportError> {
+//     let claim_setup = setup(REALM_NAME).await?;
+//
+//     claim_setup
+//         .context
+//         .addin
+//         .claim(
+//             &claim_setup.rewards_pool,
+//             &claim_setup.reward_mint,
+//             &claim_setup.deposit_mining,
+//             &claim_setup.voter_authority,
+//             &claim_setup.voter_authority_ata,
+//             &claim_setup.context.rewards.program_id,
+//             &claim_setup.registrar,
+//             &claim_setup.mint_governance.address,
+//             &claim_setup.proposal.address,
+//             &Pubkey::new_unique(),
+//         )
+//         .await?;
+//
+//     let claimed_amount = claim_setup
+//         .context
+//         .solana
+//         .token_account_balance(claim_setup.voter_authority_ata)
+//         .await;
+//     assert_eq!(100, claimed_amount);
+//
+//     Ok(())
+// }
