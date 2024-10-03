@@ -351,7 +351,7 @@ async fn claim_is_restricted() -> Result<(), TransportError> {
             &vote_record,
         )
         .await
-        .expect_err("Claiming is restricted by Rewards program");
+        .assert_on_chain_err(MplStakingError::TokenflowRestricted);
 
     Ok(())
 }
@@ -408,7 +408,7 @@ async fn claim_is_allowed() -> Result<(), TransportError> {
             &vote_record,
         )
         .await
-        .expect_err("Claiming is restricted by Rewards program");
+        .assert_on_chain_err(MplStakingError::TokenflowRestricted);
 
     claim_setup
         .context
