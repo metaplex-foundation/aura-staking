@@ -21,7 +21,7 @@ pub struct CloseVoter<'info> {
     // the other constraints must be exhaustive
     #[account(
         mut,
-        seeds = [voter.load()?.registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
+        seeds = [registrar.key().as_ref(), b"voter".as_ref(), voter_authority.key().as_ref()],
         bump = voter.load()?.voter_bump,
         has_one = voter_authority,
         close = sol_destination
@@ -34,7 +34,12 @@ pub struct CloseVoter<'info> {
     /// CHECK: mining PDA will be checked in the rewards contract
     /// PDA(["mining", mining owner <aka voter_authority in our case>, reward_pool],
     /// reward_program)
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [b"mining", voter_authority.key().as_ref(), reward_pool.key().as_ref()],
+        seeds::program = rewards_program.key(),
+        bump,
+    )]
     pub deposit_mining: UncheckedAccount<'info>,
 
     /// CHECK:
@@ -94,7 +99,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
 
         // will close all the token accounts owned by the voter
         for deposit_vault_info in ctx.remaining_accounts {
-            let deposit_vault_ta = Account::<TokenAccount>::try_from(&deposit_vault_info)
+            let deposit_vault_ta = Account::<TokenAccount>::try_from(deposit_vault_info)
                 .map_err(|_| MplStakingError::DeserializationError)?;
             registrar.voting_mint_config_index(deposit_vault_ta.mint)?;
 
