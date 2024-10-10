@@ -1,6 +1,6 @@
 use crate::cpi_instructions;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, CloseAccount, Mint, Token, TokenAccount};
+use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
     error::MplStakingError,
@@ -43,8 +43,6 @@ pub struct CloseVoter<'info> {
     /// keep track of all rewards and staking logic.
     pub reward_pool: UncheckedAccount<'info>,
 
-    pub deposit_mint: Account<'info, Mint>,
-
     #[account(mut)]
     /// CHECK: Destination may be any address.
     pub sol_destination: UncheckedAccount<'info>,
@@ -56,16 +54,14 @@ pub struct CloseVoter<'info> {
     pub rewards_program: UncheckedAccount<'info>,
 }
 
-/// Closes the voter account, and specified token vault if any provided,
+/// Closes the voter account, and specified token vaults if provided in the remaining accounts,
 /// allowing to retrieve rent examption SOL.
 /// Only accounts with no remaining stakes can be closed.
+///
+/// Remaining accounts should containt the complete list of ATA that must be closed,
+/// the length of those accounts should be equal to the number of mint configs in the registrar.
 pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
-
-    require!(
-        ctx.accounts.deposit_mint.key() == registrar.realm_governing_token_mint,
-        MplStakingError::InvalidGoverningTokenMint,
-    );
 
     require!(
         ctx.accounts.rewards_program.key() == registrar.rewards_program,
@@ -98,16 +94,15 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
 
         // will close all the token accounts owned by the voter
         for deposit_vault_info in ctx.remaining_accounts {
-            require_keys_eq!(
-                *deposit_vault_info.key,
-                get_associated_token_address(
-                    &ctx.accounts.voter.key(),
-                    &ctx.accounts.deposit_mint.key()
-                ),
-            );
-
             let deposit_vault_ta = Account::<TokenAccount>::try_from(&deposit_vault_info)
                 .map_err(|_| MplStakingError::DeserializationError)?;
+            registrar.voting_mint_config_index(deposit_vault_ta.mint)?;
+
+            require_keys_eq!(
+                *deposit_vault_info.key,
+                get_associated_token_address(&ctx.accounts.voter.key(), &deposit_vault_ta.mint),
+            );
+
             require_keys_eq!(
                 deposit_vault_ta.owner,
                 ctx.accounts.voter.key(),
