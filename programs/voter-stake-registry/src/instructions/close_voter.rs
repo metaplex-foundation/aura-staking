@@ -1,5 +1,5 @@
 use crate::cpi_instructions;
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program};
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
@@ -72,10 +72,14 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
         ctx.accounts.rewards_program.key() == registrar.rewards_program,
         MplStakingError::InvalidRewardsProgram
     );
-
     require!(
         registrar.reward_pool == ctx.accounts.reward_pool.key(),
         MplStakingError::InvalidRewardPool
+    );
+
+    require!(
+        registrar.voting_mints.len() == ctx.remaining_accounts.len(),
+        MplStakingError::InvalidAssoctiatedTokenAccounts
     );
 
     {
@@ -97,31 +101,36 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
 
         let voter_seeds = voter_seeds!(voter);
 
-        // will close all the token accounts owned by the voter
-        for deposit_vault_info in ctx.remaining_accounts {
-            let deposit_vault_ta = Account::<TokenAccount>::try_from(deposit_vault_info)
+        let calculated_atas_to_close = registrar.voting_mints.map(|voting_mint_config| {
+            get_associated_token_address(&ctx.accounts.voter.key(), &voting_mint_config.mint)
+        });
+
+        for calculated_ata_to_close in calculated_atas_to_close.iter() {
+            let ata_info_to_close = ctx
+                .remaining_accounts
+                .iter()
+                .find(|ata| ata.key == calculated_ata_to_close)
+                .ok_or(MplStakingError::InvalidAssoctiatedTokenAccounts)?;
+
+            if ata_info_to_close.data_is_empty()
+                && ata_info_to_close.owner == &system_program::ID
+                && **ata_info_to_close.lamports.borrow() == 0
+            {
+                continue;
+            }
+
+            let ata = Account::<TokenAccount>::try_from(ata_info_to_close)
                 .map_err(|_| MplStakingError::DeserializationError)?;
-            registrar.voting_mint_config_index(deposit_vault_ta.mint)?;
-
             require_keys_eq!(
-                *deposit_vault_info.key,
-                get_associated_token_address(&ctx.accounts.voter.key(), &deposit_vault_ta.mint),
-            );
-
-            require_keys_eq!(
-                deposit_vault_ta.owner,
+                ata.owner,
                 ctx.accounts.voter.key(),
                 MplStakingError::InvalidAuthority
             );
-            require_eq!(
-                deposit_vault_ta.amount,
-                0,
-                MplStakingError::VaultTokenNonZero
-            );
+            require_eq!(ata.amount, 0, MplStakingError::VaultTokenNonZero);
 
             // close vault
             let cpi_close_accounts = CloseAccount {
-                account: deposit_vault_ta.to_account_info(),
+                account: ata.to_account_info(),
                 destination: ctx.accounts.sol_destination.to_account_info(),
                 authority: ctx.accounts.voter.to_account_info(),
             };
@@ -131,7 +140,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
                 &[voter_seeds],
             ))?;
 
-            deposit_vault_ta.exit(ctx.program_id)?;
+            ata.exit(ctx.program_id)?;
         }
     }
 
