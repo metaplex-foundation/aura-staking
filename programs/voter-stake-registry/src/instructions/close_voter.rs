@@ -67,6 +67,11 @@ pub struct CloseVoter<'info> {
 /// the length of those accounts should be equal to the number of mint configs in the registrar.
 pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
+    let filtered_mints = registrar
+        .voting_mints
+        .iter()
+        .filter(|mint_config| mint_config.mint != Pubkey::default())
+        .collect::<Vec<_>>();
 
     require!(
         ctx.accounts.rewards_program.key() == registrar.rewards_program,
@@ -76,9 +81,8 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
         registrar.reward_pool == ctx.accounts.reward_pool.key(),
         MplStakingError::InvalidRewardPool
     );
-
     require!(
-        registrar.voting_mints.len() == ctx.remaining_accounts.len(),
+        ctx.remaining_accounts.len() >= filtered_mints.len(),
         MplStakingError::InvalidAssoctiatedTokenAccounts
     );
 
@@ -101,15 +105,15 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
 
         let voter_seeds = voter_seeds!(voter);
 
-        let calculated_atas_to_close = registrar.voting_mints.map(|voting_mint_config| {
+        let calculated_atas_to_close = filtered_mints.into_iter().map(|voting_mint_config| {
             get_associated_token_address(&ctx.accounts.voter.key(), &voting_mint_config.mint)
         });
 
-        for calculated_ata_to_close in calculated_atas_to_close.iter() {
+        for calculated_ata_to_close in calculated_atas_to_close {
             let ata_info_to_close = ctx
                 .remaining_accounts
                 .iter()
-                .find(|ata| ata.key == calculated_ata_to_close)
+                .find(|ata| *ata.key == calculated_ata_to_close)
                 .ok_or(MplStakingError::InvalidAssoctiatedTokenAccounts)?;
 
             if ata_info_to_close.data_is_empty()
