@@ -18,7 +18,7 @@ defaults:
 jobs:
   lint:
     name: Linter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v2
@@ -50,13 +50,13 @@ jobs:
 
   tests:
     name: Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Linux dependencies
-        run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
 
       - name: Install stable Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -90,4 +90,4 @@ jobs:
           echo "debug = 0" >> Cargo.toml    
 
       - name: Run tests
-        run: cargo test-bpf
+        run: cargo test-sbf
