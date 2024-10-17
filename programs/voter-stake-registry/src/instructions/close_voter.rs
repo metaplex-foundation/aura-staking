@@ -10,9 +10,15 @@ use mplx_staking_states::{
 use spl_associated_token_account::get_associated_token_address;
 use std::ops::DerefMut;
 
-// Remaining accounts must be all the token token accounts owned by voter, he wants to close,
-// they should be writable so that they can be closed and sol required for rent
-// can then be sent back to the sol_destination
+/// Remaining accounts must be all the token token accounts owned by voter,
+/// they should be writable so that they can be closed and sol required for rent
+/// can then be sent back to the sol_destination
+///
+/// Remaining account must be passed in the order of the mint configs in the registrar
+/// that aren't default Pubkey addresses. E.g.
+/// Registrar { voting_mint: [Pubkey::default, mint2, mint3] }
+/// then remaining accounts must be:
+/// [mint2 ATA, mint3 ATA]
 #[derive(Accounts)]
 pub struct CloseVoter<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
@@ -109,12 +115,18 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
             get_associated_token_address(&ctx.accounts.voter.key(), &voting_mint_config.mint)
         });
 
-        for calculated_ata_to_close in calculated_atas_to_close {
-            let ata_info_to_close = ctx
-                .remaining_accounts
-                .iter()
-                .find(|ata| *ata.key == calculated_ata_to_close)
-                .ok_or(MplStakingError::InvalidAssoctiatedTokenAccounts)?;
+        for (index, calculated_ata_to_close) in calculated_atas_to_close.enumerate() {
+            require!(
+                ctx.remaining_accounts.len() > index,
+                MplStakingError::InvalidAssoctiatedTokenAccounts
+            );
+
+            let ata_info_to_close = ctx.remaining_accounts[index].to_account_info();
+            require_keys_eq!(
+                *ata_info_to_close.key,
+                calculated_ata_to_close,
+                MplStakingError::InvalidAssoctiatedTokenAccounts
+            );
 
             if ata_info_to_close.data_is_empty()
                 && ata_info_to_close.owner == &system_program::ID
@@ -123,7 +135,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
                 continue;
             }
 
-            let ata = Account::<TokenAccount>::try_from(ata_info_to_close)
+            let ata = Account::<TokenAccount>::try_from(&ata_info_to_close)
                 .map_err(|_| MplStakingError::DeserializationError)?;
             require_keys_eq!(
                 ata.owner,
