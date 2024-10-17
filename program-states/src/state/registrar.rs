@@ -38,10 +38,12 @@ impl Registrar {
                 if !voting_mint_config.in_use() {
                     return Ok(sum);
                 }
+
                 let mint_account = mint_accounts
                     .iter()
-                    .find(|a| a.key() == voting_mint_config.mint)
+                    .find(|mint_account| mint_account.key() == voting_mint_config.mint)
                     .ok_or_else(|| error!(MplStakingError::VotingMintNotFound))?;
+
                 let mint = Account::<Mint>::try_from(mint_account)?;
                 sum = sum
                     .checked_add(mint.supply)

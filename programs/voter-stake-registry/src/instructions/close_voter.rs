@@ -1,5 +1,5 @@
 use crate::cpi_instructions;
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program};
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
@@ -10,9 +10,15 @@ use mplx_staking_states::{
 use spl_associated_token_account::get_associated_token_address;
 use std::ops::DerefMut;
 
-// Remaining accounts must be all the token token accounts owned by voter, he wants to close,
-// they should be writable so that they can be closed and sol required for rent
-// can then be sent back to the sol_destination
+/// Remaining accounts must be all the token token accounts owned by voter,
+/// they should be writable so that they can be closed and sol required for rent
+/// can then be sent back to the sol_destination
+///
+/// Remaining account must be passed in the order of the mint configs in the registrar
+/// that aren't default Pubkey addresses. E.g.
+/// Registrar { voting_mint: [Pubkey::default, mint2, mint3] }
+/// then remaining accounts must be:
+/// [mint2 ATA, mint3 ATA]
 #[derive(Accounts)]
 pub struct CloseVoter<'info> {
     pub registrar: AccountLoader<'info, Registrar>,
@@ -67,15 +73,23 @@ pub struct CloseVoter<'info> {
 /// the length of those accounts should be equal to the number of mint configs in the registrar.
 pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) -> Result<()> {
     let registrar = ctx.accounts.registrar.load()?;
+    let filtered_mints = registrar
+        .voting_mints
+        .iter()
+        .filter(|mint_config| mint_config.mint != Pubkey::default())
+        .collect::<Vec<_>>();
 
     require!(
         ctx.accounts.rewards_program.key() == registrar.rewards_program,
         MplStakingError::InvalidRewardsProgram
     );
-
     require!(
         registrar.reward_pool == ctx.accounts.reward_pool.key(),
         MplStakingError::InvalidRewardPool
+    );
+    require!(
+        ctx.remaining_accounts.len() >= filtered_mints.len(),
+        MplStakingError::InvalidAssoctiatedTokenAccounts
     );
 
     {
@@ -97,31 +111,37 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
 
         let voter_seeds = voter_seeds!(voter);
 
-        // will close all the token accounts owned by the voter
-        for deposit_vault_info in ctx.remaining_accounts {
-            let deposit_vault_ta = Account::<TokenAccount>::try_from(deposit_vault_info)
-                .map_err(|_| MplStakingError::DeserializationError)?;
-            registrar.voting_mint_config_index(deposit_vault_ta.mint)?;
+        let calculated_atas_to_close = filtered_mints.into_iter().map(|voting_mint_config| {
+            get_associated_token_address(&ctx.accounts.voter.key(), &voting_mint_config.mint)
+        });
 
+        for (index, calculated_ata_to_close) in calculated_atas_to_close.enumerate() {
+            let ata_info_to_close = ctx.remaining_accounts[index].to_account_info();
             require_keys_eq!(
-                *deposit_vault_info.key,
-                get_associated_token_address(&ctx.accounts.voter.key(), &deposit_vault_ta.mint),
+                *ata_info_to_close.key,
+                calculated_ata_to_close,
+                MplStakingError::InvalidAssoctiatedTokenAccounts
             );
 
+            if ata_info_to_close.data_is_empty()
+                && ata_info_to_close.owner == &system_program::ID
+                && **ata_info_to_close.lamports.borrow() == 0
+            {
+                continue;
+            }
+
+            let ata = Account::<TokenAccount>::try_from(&ata_info_to_close)
+                .map_err(|_| MplStakingError::DeserializationError)?;
             require_keys_eq!(
-                deposit_vault_ta.owner,
+                ata.owner,
                 ctx.accounts.voter.key(),
                 MplStakingError::InvalidAuthority
             );
-            require_eq!(
-                deposit_vault_ta.amount,
-                0,
-                MplStakingError::VaultTokenNonZero
-            );
+            require_eq!(ata.amount, 0, MplStakingError::VaultTokenNonZero);
 
             // close vault
             let cpi_close_accounts = CloseAccount {
-                account: deposit_vault_ta.to_account_info(),
+                account: ata.to_account_info(),
                 destination: ctx.accounts.sol_destination.to_account_info(),
                 authority: ctx.accounts.voter.to_account_info(),
             };
@@ -131,7 +151,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
                 &[voter_seeds],
             ))?;
 
-            deposit_vault_ta.exit(ctx.program_id)?;
+            ata.exit(ctx.program_id)?;
         }
     }
 

@@ -224,7 +224,7 @@ async fn test_basic() -> Result<(), TransportError> {
         .close_voter(
             &registrar,
             &voter,
-            &mngo_voting_mint,
+            &context.mints[..],
             voter_authority,
             &context.rewards.program_id,
         )
@@ -380,7 +380,7 @@ async fn close_voter_with_locked_tokens_should_fail() -> Result<(), TransportErr
         .close_voter(
             &registrar,
             &voter,
-            &mngo_voting_mint,
+            &context.mints[..],
             voter_authority,
             &context.rewards.program_id,
         )

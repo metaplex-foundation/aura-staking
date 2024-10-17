@@ -1,4 +1,5 @@
 use crate::*;
+use anchor_lang::prelude::AccountMeta;
 use mplx_staking_states::state::Voter;
 use solana_sdk::{
     instruction::Instruction,
@@ -371,7 +372,7 @@ impl AddinCookie {
         lockup_kind: LockupKind,
         period: LockupPeriod,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(voting_mint);
+        let vault = voter.vault_address(voting_mint.mint.pubkey.as_ref().unwrap());
 
         let data =
             anchor_lang::InstructionData::data(&mpl_staking::instruction::CreateDepositEntry {
@@ -418,7 +419,7 @@ impl AddinCookie {
         deposit_entry_index: u8,
         amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(voting_mint);
+        let vault = voter.vault_address(voting_mint.mint.pubkey.as_ref().unwrap());
 
         let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::Deposit {
             deposit_entry_index,
@@ -563,7 +564,7 @@ impl AddinCookie {
         deposit_entry_index: u8,
         amount: u64,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(voting_mint);
+        let vault = voter.vault_address(voting_mint.mint.pubkey.as_ref().unwrap());
 
         let data = anchor_lang::InstructionData::data(&mpl_staking::instruction::Withdraw {
             deposit_entry_index,
@@ -599,12 +600,10 @@ impl AddinCookie {
         &self,
         registrar: &RegistrarCookie,
         voter: &VoterCookie,
-        voting_mint: &VotingMintConfigCookie,
+        voting_mints: &[MintCookie],
         voter_authority: &Keypair,
         rewards_program: &Pubkey,
     ) -> std::result::Result<(), BanksClientError> {
-        let vault = voter.vault_address(voting_mint);
-
         let (deposit_mining, _) = find_deposit_mining_addr(
             rewards_program,
             &voter_authority.pubkey(),
@@ -626,7 +625,11 @@ impl AddinCookie {
             },
             None,
         );
-        accounts.push(anchor_lang::prelude::AccountMeta::new(vault, false));
+        let vaults = voting_mints
+            .iter()
+            .map(|mint| AccountMeta::new(voter.vault_address(mint.pubkey.as_ref().unwrap()), false))
+            .collect::<Vec<_>>();
+        accounts.extend(vaults);
 
         let instructions = vec![Instruction {
             program_id: self.program_id,
@@ -854,7 +857,7 @@ impl AddinCookie {
 
 impl VotingMintConfigCookie {
     pub async fn vault_balance(&self, solana: &SolanaCookie, voter: &VoterCookie) -> u64 {
-        let vault = voter.vault_address(self);
+        let vault = voter.vault_address(self.mint.pubkey.as_ref().unwrap());
         solana.get_account::<TokenAccount>(vault).await.amount
     }
 }
@@ -869,10 +872,7 @@ impl VoterCookie {
         voter.deposits[deposit_id as usize].amount_deposited_native
     }
 
-    pub fn vault_address(&self, mint: &VotingMintConfigCookie) -> Pubkey {
-        spl_associated_token_account::get_associated_token_address(
-            &self.address,
-            &mint.mint.pubkey.unwrap(),
-        )
+    pub fn vault_address(&self, mint: &Pubkey) -> Pubkey {
+        spl_associated_token_account::get_associated_token_address(&self.address, mint)
     }
 }

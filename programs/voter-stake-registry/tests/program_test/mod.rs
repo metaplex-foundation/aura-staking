@@ -141,7 +141,7 @@ impl TestContext {
                 unit: 10u64.pow(6) as f64,
                 base_lot: 100_f64,
                 quote_lot: 10_f64,
-                pubkey: None, //Some(mngo_token::ID),
+                pubkey: Some(Pubkey::new_unique()), //Some(mngo_token::ID),
                 authority: Keypair::new(),
             }, // symbol: "MNGO".to_string()
             MintCookie {
@@ -150,20 +150,14 @@ impl TestContext {
                 unit: 10u64.pow(6) as f64,
                 base_lot: 0 as f64,
                 quote_lot: 0 as f64,
-                pubkey: None,
+                pubkey: Some(Pubkey::new_unique()),
                 authority: Keypair::new(),
             }, // symbol: "USDC".to_string()
         ];
         // Add mints in loop
         for mint in mints.iter_mut() {
-            let mint_pk = if mint.pubkey.is_none() {
-                Pubkey::new_unique()
-            } else {
-                mint.pubkey.unwrap()
-            };
-
             test.add_packable_account(
-                mint_pk,
+                mint.pubkey.unwrap(),
                 u32::MAX as u64,
                 &Mint {
                     is_initialized: true,
@@ -173,7 +167,7 @@ impl TestContext {
                 },
                 &spl_token::id(),
             );
-            mint.pubkey = Some(mint_pk);
+            mint.pubkey = Some(mint.pubkey.unwrap());
         }
         let quote_index = mints.len() - 1;
 
