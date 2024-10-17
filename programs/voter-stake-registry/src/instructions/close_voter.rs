@@ -116,11 +116,6 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
         });
 
         for (index, calculated_ata_to_close) in calculated_atas_to_close.enumerate() {
-            require!(
-                ctx.remaining_accounts.len() > index,
-                MplStakingError::InvalidAssoctiatedTokenAccounts
-            );
-
             let ata_info_to_close = ctx.remaining_accounts[index].to_account_info();
             require_keys_eq!(
                 *ata_info_to_close.key,
