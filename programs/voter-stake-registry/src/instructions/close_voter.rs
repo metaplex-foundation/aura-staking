@@ -1,5 +1,5 @@
 use crate::cpi_instructions;
-use anchor_lang::{prelude::*, system_program};
+use anchor_lang::prelude::*;
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
 use mplx_staking_states::{
@@ -123,10 +123,7 @@ pub fn close_voter<'info>(ctx: Context<'_, '_, '_, 'info, CloseVoter<'info>>) ->
                 MplStakingError::InvalidAssoctiatedTokenAccounts
             );
 
-            if ata_info_to_close.data_is_empty()
-                && ata_info_to_close.owner == &system_program::ID
-                && **ata_info_to_close.lamports.borrow() == 0
-            {
+            if ata_info_to_close.owner != &Token::id() {
                 continue;
             }
 
