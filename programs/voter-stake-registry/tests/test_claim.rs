@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use anchor_spl::token::TokenAccount;
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
@@ -7,6 +5,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 use spl_governance::state::vote_record::get_vote_record_address;
+use std::str::FromStr;
 
 mod program_test;
 

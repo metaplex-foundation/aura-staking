@@ -12,7 +12,6 @@ use spl_governance::state::{
     governance::GovernanceV2, proposal::ProposalV2, vote_record::VoteRecordV2,
 };
 use std::borrow::Borrow;
-
 #[cfg(feature = "testing")]
 use std::str::FromStr;
 
