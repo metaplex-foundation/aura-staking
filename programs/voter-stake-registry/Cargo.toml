@@ -14,11 +14,8 @@ doctest = false
 
 [features]
 no-entrypoint = []
-no-idl = []
 cpi = ["no-entrypoint"]
-default = []
-localnet = []
-test-sbf = []
+testing = []
 
 [dependencies]
 # a) for deployment use these

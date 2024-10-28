@@ -19,7 +19,7 @@ async fn test_unlock_and_withdraw_before_end_ts() -> Result<(), TransportError> 
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -182,7 +182,7 @@ async fn test_unlock_after_end_ts() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -352,7 +352,7 @@ async fn test_unlock_and_withdraw_after_end_ts_and_cooldown() -> Result<(), Tran
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,

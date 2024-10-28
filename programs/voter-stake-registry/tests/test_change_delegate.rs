@@ -19,7 +19,7 @@ async fn change_from_own_delegate_to_new_delegate() -> Result<(), TransportError
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -244,7 +244,7 @@ async fn stake_is_too_little() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -467,7 +467,7 @@ async fn delegate_is_the_same() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -620,7 +620,7 @@ async fn change_from_own_delegate_to_new_delegate_and_back_with_cooldown(
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -858,7 +858,7 @@ async fn change_from_own_delegate_to_new_delegate_and_back_instantly() -> Result
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,

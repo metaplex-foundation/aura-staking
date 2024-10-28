@@ -21,7 +21,7 @@ async fn extend_from_flex() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -182,7 +182,7 @@ async fn extend_from_three_months_deposit() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -344,7 +344,7 @@ async fn extend_deposit_after_one_year_for_three_months_with_top_up() -> Result<
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -505,7 +505,7 @@ async fn extend_from_flex_deposit_with_top_up() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -662,7 +662,7 @@ async fn extend_from_three_month_to_one_year() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -816,7 +816,7 @@ async fn prolongs_with_delegate() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,

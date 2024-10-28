@@ -1,4 +1,4 @@
-use crate::cpi_instructions;
+use crate::cpi_instructions::{self, REWARDS_PROGRAM_ADDRESS};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
 use bytemuck::bytes_of_mut;
@@ -61,7 +61,7 @@ pub struct CloseVoter<'info> {
     pub token_program: Program<'info, Token>,
 
     /// CHECK: Rewards Program account
-    #[account(executable)]
+    #[account(executable, address = REWARDS_PROGRAM_ADDRESS)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 

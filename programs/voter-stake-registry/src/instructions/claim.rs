@@ -1,6 +1,10 @@
-use crate::{borsh::BorshDeserialize, cpi_instructions};
+use crate::{
+    borsh::BorshDeserialize,
+    cpi_instructions::{self, REWARDS_PROGRAM_ADDRESS},
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
+#[cfg(not(feature = "testing"))]
 use mpl_common_constants::constants::DAO_PUBKEY;
 use mplx_staking_states::{error::MplStakingError, state::Registrar};
 use solana_program::program::get_return_data;
@@ -8,6 +12,9 @@ use spl_governance::state::{
     governance::GovernanceV2, proposal::ProposalV2, vote_record::VoteRecordV2,
 };
 use std::borrow::Borrow;
+
+#[cfg(feature = "testing")]
+use std::str::FromStr;
 
 #[derive(Accounts)]
 pub struct Claim<'info> {
@@ -67,7 +74,7 @@ pub struct Claim<'info> {
     pub token_program: Program<'info, Token>,
 
     /// CHECK: Rewards Program account
-    #[account(executable)]
+    #[account(executable, address = REWARDS_PROGRAM_ADDRESS)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 
@@ -82,6 +89,16 @@ pub fn claim(ctx: Context<Claim>, realm_pubkey: Pubkey) -> Result<u64> {
     let vote_record =
         VoteRecordV2::deserialize(&mut &ctx.accounts.vote_record.data.borrow_mut()[..])?;
 
+    #[cfg(feature = "testing")]
+    require!(
+        realm_pubkey == Pubkey::from_str("DA5G7QQbFioZ6K33wQcH8fVdgFcnaDjLD7DLQkapZg5X").unwrap()
+            && governance.realm == realm_pubkey
+            && proposal.governance == ctx.accounts.governance.key()
+            && vote_record.governing_token_owner == *ctx.accounts.mining_owner.key,
+        MplStakingError::NoDaoInteractionFound
+    );
+
+    #[cfg(not(feature = "testing"))]
     require!(
         realm_pubkey == DAO_PUBKEY.into()
             && governance.realm == realm_pubkey
