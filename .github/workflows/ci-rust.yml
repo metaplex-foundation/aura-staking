@@ -90,4 +90,4 @@ jobs:
           echo "debug = 0" >> Cargo.toml    
 
       - name: Run tests
-        run: cargo test-sbf --features testing
+        run: cargo test-sbf
