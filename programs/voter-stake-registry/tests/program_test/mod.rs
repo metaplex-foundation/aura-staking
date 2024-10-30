@@ -5,7 +5,6 @@ pub use addin::*;
 pub use cookies::*;
 pub use governance::*;
 use log::*;
-use mpl_common_constants::constants::GOVERNANCE_PROGRAM_ID;
 pub use solana::*;
 use solana_program::{program_option::COption, program_pack::Pack};
 use solana_program_test::*;
@@ -121,14 +120,11 @@ impl TestContext {
         // intentionally set to half the limit, to catch potential problems early
         test.set_compute_max_units(120000);
 
-        let governance_program_id = Pubkey::from(GOVERNANCE_PROGRAM_ID);
-        test.add_program(
-            "spl_governance_3_1_1",
-            governance_program_id,
-            processor!(spl_governance::processor::process_instruction),
-        );
+        let governance_program_id =
+            Pubkey::from_str("AEauWRrpn9Cs6GXujzdp1YhMmv2288kBt3SdEcPYEerr").unwrap();
+        test.add_program("spl_governance_3_1_1", governance_program_id, None);
         let rewards_program_id =
-            Pubkey::from_str("J8oa8UUJBydrTKtCdkvwmQQ27ZFDq54zAxWJY5Ey72Ji").unwrap();
+            Pubkey::from_str("DdAfv8RS2BS41FRjDX5nLXSmQWrPsdC17sbgD66oKcU8").unwrap();
         test.add_program("mplx_rewards", rewards_program_id, None);
 
         // Setup the environment
@@ -141,7 +137,9 @@ impl TestContext {
                 unit: 10u64.pow(6) as f64,
                 base_lot: 100_f64,
                 quote_lot: 10_f64,
-                pubkey: Some(Pubkey::new_unique()), //Some(mngo_token::ID),
+                pubkey: Some(
+                    Pubkey::from_str("METAewgxyPbgwsseH8T16a39CQ5VyVxZi9zXiDPY18m").unwrap(),
+                ),
                 authority: Keypair::new(),
             }, // symbol: "MNGO".to_string()
             MintCookie {

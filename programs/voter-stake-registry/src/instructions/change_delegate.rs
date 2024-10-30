@@ -1,4 +1,8 @@
-use crate::{clock_unix_timestamp, cpi_instructions, find_mining_address};
+use crate::{
+    clock_unix_timestamp,
+    cpi_instructions::{self, REWARDS_PROGRAM_ADDRESS},
+    find_mining_address,
+};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{
     error::MplStakingError,
@@ -61,7 +65,7 @@ pub struct ChangeDelegate<'info> {
     pub deposit_mining: UncheckedAccount<'info>,
 
     /// CHECK: Rewards Program account
-    #[account(executable)]
+    #[account(executable, address = REWARDS_PROGRAM_ADDRESS)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 

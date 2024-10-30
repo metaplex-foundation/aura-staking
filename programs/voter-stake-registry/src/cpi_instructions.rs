@@ -9,8 +9,13 @@ use solana_program::{
     system_program,
 };
 
-#[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
+/// Address:
+pub const REWARDS_PROGRAM_ADDRESS: Pubkey = Pubkey::new_from_array([
+    187, 144, 22, 85, 66, 234, 175, 207, 244, 245, 195, 176, 62, 198, 185, 87, 88, 123, 166, 137,
+    125, 120, 47, 188, 37, 228, 127, 164, 75, 100, 222, 33,
+]);
 
+#[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
 pub enum RewardsInstruction {
     /// Creates and initializes a reward pool account
     ///

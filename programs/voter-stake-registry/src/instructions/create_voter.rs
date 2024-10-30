@@ -1,4 +1,7 @@
-use crate::{cpi_instructions, voter::VoterWeightRecord};
+use crate::{
+    cpi_instructions::{self, REWARDS_PROGRAM_ADDRESS},
+    voter::VoterWeightRecord,
+};
 use anchor_lang::prelude::*;
 use mplx_staking_states::{
     error::MplStakingError,
@@ -64,7 +67,7 @@ pub struct CreateVoter<'info> {
     pub deposit_mining: UncheckedAccount<'info>,
 
     /// CHECK: Rewards program ID
-    #[account(executable)]
+    #[account(executable, address = REWARDS_PROGRAM_ADDRESS)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 

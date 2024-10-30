@@ -1,4 +1,7 @@
-use crate::{borsh::BorshDeserialize, cpi_instructions};
+use crate::{
+    borsh::BorshDeserialize,
+    cpi_instructions::{self, REWARDS_PROGRAM_ADDRESS},
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 use mpl_common_constants::constants::DAO_PUBKEY;
@@ -67,7 +70,7 @@ pub struct Claim<'info> {
     pub token_program: Program<'info, Token>,
 
     /// CHECK: Rewards Program account
-    #[account(executable)]
+    #[account(executable, address = REWARDS_PROGRAM_ADDRESS)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 

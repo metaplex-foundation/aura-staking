@@ -1,16 +1,16 @@
 use anchor_spl::token::TokenAccount;
-use mpl_common_constants::constants::{GOVERNANCE_PROGRAM_ID, REALM_NAME};
 use mplx_staking_states::state::{LockupKind, LockupPeriod};
 use program_test::*;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer, transport::TransportError};
 use spl_governance::state::vote_record::get_vote_record_address;
+use std::str::FromStr;
 
 mod program_test;
 
 #[tokio::test]
-async fn successeful_claim() -> Result<(), TransportError> {
+async fn successful_claim() -> Result<(), TransportError> {
     let context = TestContext::new().await;
 
     let payer = &context.users[0].key;
@@ -18,7 +18,7 @@ async fn successeful_claim() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            REALM_NAME,
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -222,7 +222,8 @@ async fn successeful_claim() -> Result<(), TransportError> {
         .await
         .unwrap();
     let vote_record = get_vote_record_address(
-        &Pubkey::from(GOVERNANCE_PROGRAM_ID),
+        // MPL DAO Governance addr
+        &Pubkey::from_str("AEauWRrpn9Cs6GXujzdp1YhMmv2288kBt3SdEcPYEerr").unwrap(),
         &proposal.address,
         &proposal.owner_token_owner_record,
     );

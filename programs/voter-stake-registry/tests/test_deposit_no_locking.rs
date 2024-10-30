@@ -55,7 +55,7 @@ async fn test_deposit_no_locking() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "testrealm",
+            "Metaplex DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,

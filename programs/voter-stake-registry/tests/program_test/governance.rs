@@ -5,7 +5,10 @@ use solana_sdk::{
     signature::{Keypair, Signer},
 };
 use spl_governance::state::{
-    proposal, realm::GoverningTokenConfigAccountArgs, realm_config::GoverningTokenType, vote_record,
+    proposal,
+    realm::{get_realm_address, GoverningTokenConfigAccountArgs},
+    realm_config::GoverningTokenType,
+    vote_record,
 };
 use std::rc::Rc;
 
@@ -55,11 +58,8 @@ impl GovernanceCookie {
         payer: &Keypair,
         voter_weight_addin: &Pubkey,
     ) -> GovernanceRealmCookie {
-        let realm = Pubkey::find_program_address(
-            &[b"governance".as_ref(), name.as_ref()],
-            &self.program_id,
-        )
-        .0;
+        let realm = get_realm_address(&self.program_id, name);
+
         let community_token_account = Pubkey::find_program_address(
             &[
                 b"governance".as_ref(),

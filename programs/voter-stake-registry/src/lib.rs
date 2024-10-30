@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use cpi_instructions::REWARDS_PROGRAM_ADDRESS;
 use instructions::*;
 use mplx_staking_states::{
     error::MplStakingError,
@@ -15,7 +16,7 @@ mod instructions;
 pub mod voter;
 
 // The program address.
-declare_id!("9XZ7Ku7FYGVk3veKba6BRKTFXoYJyh4b4ZHC6MfaTUE8");
+declare_id!("C62KFt3Ujv4GmgaNRpTzyvkERVW2jPSje7cGaw4L5hAx");
 
 /// # Introduction
 ///
@@ -214,7 +215,7 @@ pub struct Stake<'info> {
     pub deposit_mining: UncheckedAccount<'info>,
 
     /// CHECK: Rewards Program account
-    #[account(executable)]
+    #[account(executable, address = REWARDS_PROGRAM_ADDRESS)]
     pub rewards_program: UncheckedAccount<'info>,
 }
 
