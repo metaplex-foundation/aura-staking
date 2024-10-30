@@ -79,9 +79,8 @@ pub struct Claim<'info> {
 /// Tokens will be transfered from Vault in Rewards account to User's user_reward_token_account.
 /// This call actually doesn't mutating Staking's accounts, only Reward's accounts will be mutated.
 pub fn claim(ctx: Context<Claim>, realm_pubkey: Pubkey) -> Result<u64> {
-    let deserialize =
+    let governance =
         GovernanceV2::deserialize(&mut &ctx.accounts.governance.data.borrow_mut()[..])?;
-    let governance = deserialize;
     let proposal = ProposalV2::deserialize(&mut &ctx.accounts.proposal.data.borrow_mut()[..])?;
     let vote_record =
         VoteRecordV2::deserialize(&mut &ctx.accounts.vote_record.data.borrow_mut()[..])?;

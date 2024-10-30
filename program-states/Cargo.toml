@@ -12,7 +12,8 @@ readme = "README.md"
 crate-type = ["cdylib", "lib"]
 
 [features]
-testing = []
+no-entrypoint = []
+cpi = ["no-entrypoint"]
 
 [dependencies]
 anchor-lang = { workspace = true, features = ["init-if-needed"] }
