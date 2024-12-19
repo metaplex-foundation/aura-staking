@@ -121,10 +121,10 @@ impl TestContext {
         test.set_compute_max_units(120000);
 
         let governance_program_id =
-            Pubkey::from_str("AEauWRrpn9Cs6GXujzdp1YhMmv2288kBt3SdEcPYEerr").unwrap();
+            Pubkey::from_str("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw").unwrap();
         test.add_program("spl_governance_3_1_1", governance_program_id, None);
         let rewards_program_id =
-            Pubkey::from_str("DdAfv8RS2BS41FRjDX5nLXSmQWrPsdC17sbgD66oKcU8").unwrap();
+            Pubkey::from_str("CnAF8KyrSH3mmzdyeRR7wh69ZxBrxf3diue7VbRH8Nzh").unwrap();
         test.add_program("mplx_rewards", rewards_program_id, None);
 
         // Setup the environment
@@ -138,7 +138,7 @@ impl TestContext {
                 base_lot: 100_f64,
                 quote_lot: 10_f64,
                 pubkey: Some(
-                    Pubkey::from_str("METAewgxyPbgwsseH8T16a39CQ5VyVxZi9zXiDPY18m").unwrap(),
+                    Pubkey::from_str("2BAXFATc1357naNu8yeYCYQzSVw5tPuj1BzjawrS4M4x").unwrap(),
                 ),
                 authority: Keypair::new(),
             }, // symbol: "MNGO".to_string()

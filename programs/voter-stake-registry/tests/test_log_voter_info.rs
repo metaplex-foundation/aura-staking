@@ -36,7 +36,7 @@ async fn test_log_voter_info() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "staking-test",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,

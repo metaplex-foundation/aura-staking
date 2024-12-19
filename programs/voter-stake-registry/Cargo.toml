@@ -27,7 +27,7 @@ bytemuck = "1.9.1"
 spl-governance = { version = "3.1.1", features = ["no-entrypoint"] }
 spl-governance-addin-api = "0.1.3"
 mplx-staking-states = { path="../../program-states" }
-mpl-common-constants = { git = "https://github.com/metaplex-foundation/mpl-common-constants", features = ["mainnet"] }
+mpl-common-constants = { git = "https://github.com/metaplex-foundation/mpl-common-constants", features = ["alternative-mainnet"] }
 spl-associated-token-account = { version = "^1.0.3", features = ["no-entrypoint"] }
 
 [dev-dependencies]

@@ -55,7 +55,7 @@ async fn test_deposit_constant() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "staking-test",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -244,7 +244,7 @@ async fn test_withdrawing_without_unlocking() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "staking-test",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
