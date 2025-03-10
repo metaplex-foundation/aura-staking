@@ -15,7 +15,7 @@ async fn test_all_deposits() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,

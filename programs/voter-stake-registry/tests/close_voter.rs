@@ -19,7 +19,7 @@ async fn two_the_same_voting_mints_fail() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -163,7 +163,7 @@ async fn zero_ata_passed_instead_of_two() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -306,7 +306,7 @@ async fn one_ata_passed_instead_of_two() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -449,7 +449,7 @@ async fn success() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -607,7 +607,7 @@ async fn wrong_order_of_passed_in_ata() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,

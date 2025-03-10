@@ -18,7 +18,7 @@ async fn successful_claim() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -223,7 +223,7 @@ async fn successful_claim() -> Result<(), TransportError> {
         .unwrap();
     let vote_record = get_vote_record_address(
         // MPL DAO Governance addr
-        &Pubkey::from_str("AEauWRrpn9Cs6GXujzdp1YhMmv2288kBt3SdEcPYEerr").unwrap(),
+        &Pubkey::from_str("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw").unwrap(),
         &proposal.address,
         &proposal.owner_token_owner_record,
     );

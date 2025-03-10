@@ -121,10 +121,10 @@ impl TestContext {
         test.set_compute_max_units(120000);
 
         let governance_program_id =
-            Pubkey::from_str("AEauWRrpn9Cs6GXujzdp1YhMmv2288kBt3SdEcPYEerr").unwrap();
+            Pubkey::from_str("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw").unwrap();
         test.add_program("spl_governance_3_1_1", governance_program_id, None);
         let rewards_program_id =
-            Pubkey::from_str("DdAfv8RS2BS41FRjDX5nLXSmQWrPsdC17sbgD66oKcU8").unwrap();
+            Pubkey::from_str("6C1SMoPKLwp6NRzaNVtbJWJKjbGNq95mG3MjvJ6NruX2").unwrap();
         test.add_program("mplx_rewards", rewards_program_id, None);
 
         // Setup the environment

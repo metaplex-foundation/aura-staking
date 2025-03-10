@@ -19,7 +19,7 @@ async fn test_basic() -> Result<(), TransportError> {
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,
@@ -250,7 +250,7 @@ async fn close_voter_with_locked_tokens_should_fail() -> Result<(), TransportErr
     let realm = context
         .governance
         .create_realm(
-            "Metaplex DAO",
+            "MPLX Test DAO",
             realm_authority.pubkey(),
             &context.mints[0],
             payer,

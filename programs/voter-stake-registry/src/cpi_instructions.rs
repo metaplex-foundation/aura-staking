@@ -9,10 +9,10 @@ use solana_program::{
     system_program,
 };
 
-/// Address:
+/// Address: 6C1SMoPKLwp6NRzaNVtbJWJKjbGNq95mG3MjvJ6NruX2
 pub const REWARDS_PROGRAM_ADDRESS: Pubkey = Pubkey::new_from_array([
-    187, 144, 22, 85, 66, 234, 175, 207, 244, 245, 195, 176, 62, 198, 185, 87, 88, 123, 166, 137,
-    125, 120, 47, 188, 37, 228, 127, 164, 75, 100, 222, 33,
+    77, 28, 81, 97, 145, 77, 128, 38, 146, 221, 165, 65, 223, 170, 148, 143, 29, 142, 27, 192, 191,
+    103, 35, 147, 182, 137, 45, 105, 32, 15, 122, 245,
 ]);
 
 #[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
