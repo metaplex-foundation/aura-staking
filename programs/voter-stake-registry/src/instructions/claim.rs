@@ -4,7 +4,6 @@ use crate::{
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
-use mpl_common_constants::constants::DAO_PUBKEY;
 use mplx_staking_states::{error::MplStakingError, state::Registrar};
 use solana_program::program::get_return_data;
 use spl_governance::state::{
@@ -73,6 +72,11 @@ pub struct Claim<'info> {
     #[account(executable, address = REWARDS_PROGRAM_ADDRESS)]
     pub rewards_program: UncheckedAccount<'info>,
 }
+
+const DAO_PUBKEY: Pubkey = Pubkey::new_from_array([
+    167, 91, 36, 144, 26, 51, 141, 10, 239, 181, 187, 163, 20, 191, 79, 101, 48, 159, 106, 77, 10,
+    92, 133, 79, 39, 167, 58, 97, 98, 253, 65, 204,
+]);
 
 /// Claims token from the Rewards Contract.
 ///

@@ -7,4 +7,4 @@ pub mod error;
 pub mod state;
 
 // Requires by Anchor to declare accounts in crate
-declare_id!("C62KFt3Ujv4GmgaNRpTzyvkERVW2jPSje7cGaw4L5hAx");
+declare_id!("BFzPVi4JULrec2xGWcUqtfNudZxUQQa2Qk2osn4uXB8P");

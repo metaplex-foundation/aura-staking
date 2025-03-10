@@ -11,8 +11,8 @@ use solana_program::{
 
 /// Address:
 pub const REWARDS_PROGRAM_ADDRESS: Pubkey = Pubkey::new_from_array([
-    187, 144, 22, 85, 66, 234, 175, 207, 244, 245, 195, 176, 62, 198, 185, 87, 88, 123, 166, 137,
-    125, 120, 47, 188, 37, 228, 127, 164, 75, 100, 222, 33,
+    65, 149, 122, 47, 185, 180, 130, 51, 171, 249, 46, 161, 78, 152, 35, 64, 250, 28, 9, 108, 110,
+    63, 77, 202, 141, 138, 53, 57, 0, 138, 240, 133,
 ]);
 
 #[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
